@@ -11,8 +11,9 @@ body{margin:0;background:#0b1020;color:#eef2ff;font-family:system-ui,sans-serif}
 <section id="app" class="hidden"><nav id="nav"></nav><div id="content"></div></section>
 </main>
 <script>
-const URL="https://ejzipstmvofhjsqrzvfs.supabase.co",KEY="sb_publishable_nNqB08asItxVhY0WAeGXKQ_fKGRC5va";
-const db=supabase.createClient(URL,KEY);let user,me;
+const SUPABASE_URL="https://ejzipstmvofhjsqrzvfs.supabase.co";
+const SUPABASE_KEY="sb_publishable_nNqB08asItxVhY0WAeGXKQ_fKGRC5va";
+const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const el=id=>document.getElementById(id);
 function message(t,c=""){ document.getElementById("msg").innerHTML=t?`<div class="${c}">${t}</div>`:""}
 function showAuth(){document.getElementById("auth").classList.remove("hidden")}
