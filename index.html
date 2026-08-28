@@ -15,7 +15,8 @@ const URL="https://ejzipstmvofhjsqrzvfs.supabase.co",KEY="sb_publishable_nNqB08a
 const db=supabase.createClient(URL,KEY);let user,me;
 const el=id=>document.getElementById(id);
 function message(t,c=""){ el("msg").innerHTML=t?`<div class="${c}">${t}</div>`:""}
-function showAuth(){el("auth").classList.remove("hidden")}function hideAuth(){el("auth").classList.add("hidden")}
+function showAuth(){document.getElementById("auth").classList.remove("hidden")}
+function hideAuth(){document.getElementById("auth").classList.add("hidden")}
 async function login(){let r=await db.auth.signInWithPassword({email:el("email").value.trim(),password:el("password").value});if(r.error)return message(r.error.message,"err");hideAuth();boot()}
 async function signup(){let n=el("managerName").value.trim(),e=el("email").value.trim(),p=el("password").value;if(!n||!e||p.length<6)return message("Inserisci nome, email e password (minimo 6 caratteri).","err");let r=await db.auth.signUp({email:e,password:p,options:{data:{manager_name:n}}});if(r.error)return message(r.error.message,"err");message("Registrazione effettuata. Ora puoi accedere.","ok")}
 async function boot(){let s=await db.auth.getSession();user=s.data.session?.user;if(!user)return;let r=await db.from("managers").select("*").eq("email",user.email).maybeSingle();me=r.data;if(!me){message("Account non ancora associato al fantallenatore. Registrati con il nome assegnato.","err");return} el("who").textContent=me.name+(me.is_admin?" · ADMIN":"");el("authBtn").innerHTML='<button class="secondary" onclick="logout()">Esci</button>';el("app").classList.remove("hidden");nav();home()}
