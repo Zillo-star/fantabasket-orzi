@@ -69,5 +69,35 @@ ${(m.data||[]).map(x=>`<p><b>${x.name}</b> · ${x.credits} crediti</p>`).join(""
 <p>+1 punto · +1,25 RD · +1,50 RO · +1,50 assist · +1,50 recupero · −1,50 persa · +1,50 stoppata · −0,50 stoppata subita · −1 tiro dal campo sbagliato · −1 libero sbagliato · DD +5 · TD +10 · vittoria +3 · capitano ×1,5.</p>
 </div>`;
 }
+async function addPlayerToRoster(){
+let manager=el("am").value;
+let player=el("ap").value;
+let price=Number(el("price").value);
+
+if(!price||price<1)return message("Inserisci il prezzo dell'asta.","err");
+
+let check=await db.from("rosters").select("players").eq("players",player).eq("active",true).maybeSingle();
+if(check.data)return message("Questo giocatore è già assegnato.","err");
+
+let x=await db.from("rosters").insert({
+manager:manager,
+players:player,
+purchased:price,
+active:true
+});
+
+if(x.error)return message(x.error.message,"err");
+
+let cm=await db.from("managers").select("credits").eq("id",manager).single();
+
+if(cm.data){
+await db.from("managers").update({
+credits:Number(cm.data.credits)-price
+}).eq("id",manager);
+}
+
+message("Giocatore assegnato alla rosa.","ok");
+admin();
+}
 boot();
 </script></body></html>
