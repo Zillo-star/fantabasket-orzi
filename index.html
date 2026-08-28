@@ -34,6 +34,40 @@ async function trades(){let r=await db.from("trades").select("*,proposer:propose
 async function trade(){let x=await db.from("trades").insert({proposer_id:me.id,receiver_id:el("tr").value,message:"Proposta di scambio"});if(x.error)return message(x.error.message,"err");trades()}
 async function accept(id){let x=await db.from("trades").update({status:"accepted",responded_at:new Date().toISOString()}).eq("id",id);if(x.error)return message(x.error.message,"err");trades()}
 async function standings(){let r=await db.from("league_matches").select("*,home:home_manager_id(name),away:away_manager_id(name)"),a={};(r.data||[]).forEach(x=>{a[x.home_manager_id]??={n:x.home.name,p:0};a[x.away_manager_id]??={n:x.away.name,p:0};a[x.home_manager_id].p+=x.home_points;a[x.away_manager_id].p+=x.away_points});let rows=Object.values(a).sort((x,y)=>y.p-x.p);el("content").innerHTML=`<div class="card"><h2>Classifica</h2><table><tr><th>#</th><th>Fantallenatore</th><th>Punti</th></tr>${rows.map((x,i)=>`<tr><td>${i+1}</td><td>${x.n}</td><td>${x.p}</td></tr>`).join("")}</table><p class="muted">Spareggi: scontri diretti → punteggi nelle singole giornate → punteggi negli scontri diretti.</p></div>`}
-async function admin(){if(!me.is_admin)return;let m=await db.from("managers").select("*").order("name");el("content").innerHTML=`<div class="card"><h2>Admin</h2>${(m.data||[]).map(x=>`<p>${x.name} ${x.is_admin?"⭐":""} · ${x.credits} crediti · ${x.email||"email non collegata"}</p>`).join("")}</div><div class="card"><h2>Regole punteggio</h2><p>+1 punto · +1,25 RD · +1,50 RO · +1,50 assist · +1,50 recupero · −1,50 persa · +1,50 stoppata · −0,50 stoppata subita · −1 tiro dal campo sbagliato · −1 libero sbagliato · DD +5 · TD +10 · vittoria +3 · capitano ×1,5.</p></div>`}
+async function admin(){
+if(!me.is_admin)return;
+let m=await db.from("managers").select("id,name,credits").order("name");
+let p=await db.from("players").select("id,name,position,is_foreign,real_teams(name)").order("name");
+
+el("content").innerHTML=`
+<div class="card">
+<h2>Gestione rose</h2>
+
+<label>Fantallenatore</label>
+<select id="am">
+${(m.data||[]).map(x=>`<option value="${x.id}">${x.name} · ${x.credits} crediti</option>`).join("")}
+</select>
+
+<label>Giocatore</label>
+<select id="ap">
+${(p.data||[]).map(x=>`<option value="${x.id}">${x.name} · ${x.position||""} · ${x.real_teams?.name||""}${x.is_foreign?" · STRANIERO":""}</option>`).join("")}
+</select>
+
+<label>Prezzo asta</label>
+<input id="price" type="number" min="1" placeholder="Crediti">
+
+<button onclick="addPlayerToRoster()">Assegna giocatore</button>
+</div>
+
+<div class="card">
+<h2>Fantallenatori</h2>
+${(m.data||[]).map(x=>`<p><b>${x.name}</b> · ${x.credits} crediti</p>`).join("")}
+</div>
+
+<div class="card">
+<h2>Regole punteggio</h2>
+<p>+1 punto · +1,25 RD · +1,50 RO · +1,50 assist · +1,50 recupero · −1,50 persa · +1,50 stoppata · −0,50 stoppata subita · −1 tiro dal campo sbagliato · −1 libero sbagliato · DD +5 · TD +10 · vittoria +3 · capitano ×1,5.</p>
+</div>`;
+}
 boot();
 </script></body></html>
