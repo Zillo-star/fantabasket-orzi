@@ -14,7 +14,7 @@ body{margin:0;background:#0b1020;color:#eef2ff;font-family:system-ui,sans-serif}
 const URL="https://ejzipstmvofhjsqrzvfs.supabase.co",KEY="sb_publishable_nNqB08asItxVhY0WAeGXKQ_fKGRC5va";
 const db=supabase.createClient(URL,KEY);let user,me;
 const el=id=>document.getElementById(id);
-function message(t,c=""){ el("msg").innerHTML=t?`<div class="${c}">${t}</div>`:""}
+function message(t,c=""){ document.getElementById("msg").innerHTML=t?`<div class="${c}">${t}</div>`:""}
 function showAuth(){document.getElementById("auth").classList.remove("hidden")}
 function hideAuth(){document.getElementById("auth").classList.add("hidden")}
 async function login(){let r=await db.auth.signInWithPassword({email:el("email").value.trim(),password:el("password").value});if(r.error)return message(r.error.message,"err");hideAuth();boot()}
