@@ -76,7 +76,8 @@ let price=Number(el("price").value);
 
 if(!price||price<1)return message("Inserisci il prezzo dell'asta.","err");
 
-let check=await db.from("rosters").select("players").eq("players",player).eq("active",true).maybeSingle();
+let check=await db.from("rosters").select("id").eq("players",player).eq("active",true).maybeSingle();
+if(check.error)return message(check.error.message,"err");
 if(check.data)return message("Questo giocatore è già assegnato.","err");
 
 let x=await db.from("rosters").insert({
@@ -89,12 +90,11 @@ active:true
 if(x.error)return message(x.error.message,"err");
 
 let cm=await db.from("managers").select("credits").eq("id",manager).single();
+if(cm.error)return message(cm.error.message,"err");
 
-if(cm.data){
 await db.from("managers").update({
 credits:Number(cm.data.credits)-price
 }).eq("id",manager);
-}
 
 message("Giocatore assegnato alla rosa.","ok");
 admin();
