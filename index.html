@@ -133,7 +133,107 @@ document.querySelectorAll('input[data-captain]').forEach(x=>{
 if(x!==box)x.checked=false;
 });
 }
-async function saveLineup(){let day=el("day").value;if(!day)return;let old=await db.from("lineups").select("id").eq("manager_id",me.id).eq("matchday_id",day).maybeSingle(),lid=old.data?.id;if(!lid){let x=await db.from("lineups").insert({manager_id:me.id,matchday_id:day}).select("id").single();if(x.error)return message(x.error.message,"err");lid=x.data.id}await db.from("lineup_players").delete().eq("lineup_id",lid);let vals=[...document.querySelectorAll("#lp select")].map(s=>({lineup_id:lid,player_id:s.dataset.p,role:s.value,captain:false}));let x=await db.from("lineup_players").insert(vals);if(x.error)return message(x.error.message,"err");message("Formazione salvata.","ok")}
+async function saveLineup(){
+let day=el("day").value;
+if(!day)return;
+
+let selects=[...document.querySelectorAll("#lp select[data-p]")];
+
+if(selects.length!==13)
+return message("La rosa deve avere 13 giocatori.","err");
+
+let starters=[];
+let sixth=[];
+let bench=[];
+let out=[];
+
+selects.forEach(s=>{
+if(s.value==="starter")starters.push(s);
+if(s.value==="sixth")sixth.push(s);
+if(s.value==="bench")bench.push(s);
+if(s.value==="out")out.push(s);
+});
+
+if(starters.length!==5)
+return message("Devi avere esattamente 5 titolari.","err");
+
+if(sixth.length!==1)
+return message("Devi avere esattamente 1 sesto uomo.","err");
+
+if(bench.length!==4)
+return message("Devi avere esattamente 4 panchinari.","err");
+
+if(out.length!==3)
+return message("Devi avere esattamente 3 giocatori fuori.","err");
+
+let g=0,a=0,c=0;
+
+starters.forEach(s=>{
+let card=s.closest(".card");
+let text=card?.innerText||"";
+
+if(text.includes(" G"))g++;
+if(text.includes(" A"))a++;
+if(text.includes(" C"))c++;
+});
+
+if(g!==2)
+return message("I titolari devono essere 2 guardie.","err");
+
+if(a!==2)
+return message("I titolari devono essere 2 ali.","err");
+
+if(c!==1)
+return message("I titolari devono essere 1 centro.","err");
+
+let captains=[...document.querySelectorAll('input[data-captain]:checked')];
+
+if(captains.length!==1)
+return message("Devi scegliere un capitano.","err");
+
+let captainId=captains[0].dataset.captain;
+
+let old=await db.from("lineups")
+.select("id")
+.eq("manager_id",me.id)
+.eq("matchday_id",day)
+.maybeSingle();
+
+let lid=old.data?.id;
+
+if(!lid){
+let x=await db.from("lineups")
+.insert({
+manager_id:me.id,
+matchday_id:day
+})
+.select("id")
+.single();
+
+if(x.error)return message(x.error.message,"err");
+
+lid=x.data.id;
+}
+
+let d=await db.from("lineup_players")
+.delete()
+.eq("lineup_id",lid);
+
+if(d.error)return message(d.error.message,"err");
+
+let vals=selects.map(s=>({
+lineup_id:lid,
+player_id:s.dataset.p,
+role:s.value,
+captain:s.dataset.p===captainId
+}));
+
+let x=await db.from("lineup_players").insert(vals);
+
+if(x.error)return message(x.error.message,"err");
+
+message("Formazione salvata correttamente.","ok");
+}
 async function trades(){let r=await db.from("trades").select("*,proposer:proposer_id(name),receiver:receiver_id(name)").or(`proposer_id.eq.${me.id},receiver_id.eq.${me.id}`).order("created_at",{ascending:false}),m=await db.from("managers").select("id,name").neq("id",me.id);el("content").innerHTML=`<div class="grid"><div class="card"><h2>Nuova proposta</h2><select id="tr">${(m.data||[]).map(x=>`<option value="${x.id}">${x.name}</option>`).join("")}</select><button onclick="trade()">Invia proposta</button><p class="muted">Gli scambi sono illimitati durante il campionato.</p></div><div class="card"><h2>Proposte</h2>${(r.data||[]).map(x=>`<p>${x.proposer.name} → ${x.receiver.name} · <b>${x.status}</b>${x.receiver_id===me.id&&x.status==="pending"?` <button onclick="accept('${x.id}')">Accetta</button>`:""}</p>`).join("")||"Nessuna proposta."}</div></div>`}
 async function trade(){let x=await db.from("trades").insert({proposer_id:me.id,receiver_id:el("tr").value,message:"Proposta di scambio"});if(x.error)return message(x.error.message,"err");trades()}
 async function accept(id){let x=await db.from("trades").update({status:"accepted",responded_at:new Date().toISOString()}).eq("id",id);if(x.error)return message(x.error.message,"err");trades()}
