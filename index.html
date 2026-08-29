@@ -164,11 +164,10 @@ active:true
 
 if(x.error)return message(x.error.message,"err");
 
-let newCredits=credits-price;
-
-let u=await db.from("managers")
-.update({credits:newCredits})
-.eq("id",manager);
+let u=await db.rpc("subtract_credits",{
+manager_id_input:manager,
+amount_input:price
+});
 
 if(u.error)return message("Errore aggiornamento crediti: "+u.error.message,"err");
 
