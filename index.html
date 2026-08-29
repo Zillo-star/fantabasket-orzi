@@ -182,20 +182,12 @@ let r=await db.from("rosters")
 
 if(r.error)return message(r.error.message,"err");
 
-let m=await db.from("managers")
-.select("credits")
-.eq("id",r.data.manager_id)
-.single();
+let u=await db.rpc("add_credits",{
+manager_id_input:r.data.manager_id,
+amount_input:r.data.purchase_price
+});
 
-if(m.error)return message(m.error.message,"err");
-
-let u=await db.from("managers")
-.update({
-credits:Number(m.data.credits)+Number(r.data.purchase_price)
-})
-.eq("id",r.data.manager_id);
-
-if(u.error)return message(u.error.message,"err");
+if(u.error)return message("Errore restituzione crediti: "+u.error.message,"err");
 
 let x=await db.from("rosters")
 .delete()
