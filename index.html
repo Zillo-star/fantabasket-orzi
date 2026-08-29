@@ -85,47 +85,6 @@ ${(r.data||[]).map(x=>`
 </p>
 </div>`;
 }
-function checkLineup(){
-let selects=[...document.querySelectorAll("#lp select[data-p]")];
-
-let roles={G:0,A:0,C:0};
-let starters=0;
-let sixth=0;
-let bench=0;
-let out=0;
-
-selects.forEach(s=>{
-let role=s.value;
-
-if(role==="starter"){
-starters++;
-let card=s.closest(".card");
-let text=card?.innerText||"";
-
-if(text.includes(" G"))roles.G++;
-if(text.includes(" A"))roles.A++;
-if(text.includes(" C"))roles.C++;
-}
-
-if(role==="sixth")sixth++;
-if(role==="bench")bench++;
-if(role==="out")out++;
-});
-
-let status=[];
-
-if(starters!==5)status.push(`Titolari ${starters}/5`);
-if(roles.G!==2)status.push(`Guardie ${roles.G}/2`);
-if(roles.A!==2)status.push(`Ali ${roles.A}/2`);
-if(roles.C!==1)status.push(`Centri ${roles.C}/1`);
-if(sixth!==1)status.push(`Sesto uomo ${sixth}/1`);
-if(bench!==4)status.push(`Panchina ${bench}/4`);
-if(out!==3)status.push(`Fuori ${out}/3`);
-
-el("lineupStatus").textContent=
-status.length ? status.join(" · ") : "Formazione valida ✓";
-}
-
 function checkCaptain(box){
 if(!box.checked)return;
 
