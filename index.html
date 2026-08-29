@@ -28,7 +28,63 @@ async function players(){let r=await db.from("players").select("id,name,position
 function render(a){el("pt").innerHTML=`<table><tr><th>Giocatore</th><th>Ruolo</th><th>Squadra</th><th>Str.</th></tr>${a.map(p=>`<tr><td>${p.name}</td><td>${p.position||"Da definire"}</td><td>${p.real_teams?.name||""}</td><td>${p.is_foreign?"Sì":""}</td></tr>`).join("")}</table>`}
 function filter(){let q=el("q").value.toLowerCase();render(pc.filter(p=>(p.name+" "+(p.real_teams?.name||"")).toLowerCase().includes(q)))}
 async function roster(){let r=await db.from("rosters").select("purchase_price,players(name,position,is_foreign,real_teams(name))").eq("manager_id",me.id).eq("active",true);el("content").innerHTML=`<div class="card"><h2>Rosa</h2><p>${(r.data||[]).length}/13 giocatori</p>${(r.data||[]).map(x=>`<p>${x.players.name} · ${x.players.position} · ${x.players.real_teams?.name||""}${x.players.is_foreign?" · STRANIERO":""}</p>`).join("")||"<p class='muted'>Rosa non ancora caricata.</p>"}</div>`}
-async function lineup(){let m=await db.from("matchdays").select("*").order("number"),r=await db.from("rosters").select("player_id,players(name,position)").eq("manager_id",me.id).eq("active",true);el("content").innerHTML=`<div class="card"><h2>Formazione</h2><select id="day">${(m.data||[]).map(x=>`<option value="${x.id}">${x.number}</option>`).join("")}</select><div id="lp">${(r.data||[]).map(x=>`<p>${x.players.name} (${x.players.position}) <select data-p="${x.player_id}"><option value="out">Fuori</option><option value="starter">Titolare</option><option value="sixth">Sesto uomo</option><option value="bench">Panchina 50%</option></select></p>`).join("")}</div><button onclick="saveLineup()">Salva</button><p class="muted">Regola: 2G+2A+1C titolari, sesto uomo 100%, 3 panchinari 50%, 2 fuori, un capitano. Blocco 2 ore prima.</p></div>`}
+async function lineup(){
+let m=await db.from("matchdays")
+.select("*")
+.order("number");
+
+let r=await db.from("rosters")
+.select("player_id,players(name,position)")
+.eq("manager_id",me.id)
+.eq("active",true);
+
+if(r.error)return message(r.error.message,"err");
+
+el("content").innerHTML=`
+<div class="card">
+<h2>Formazione</h2>
+
+<select id="day">
+${(m.data||[]).map(x=>`
+<option value="${x.id}">Giornata ${x.number}</option>
+`).join("")}
+</select>
+
+<div id="lp">
+${(r.data||[]).map(x=>`
+<div class="card">
+<b>${x.players.name}</b>
+ · ${x.players.position}
+
+<select data-p="${x.player_id}" onchange="checkLineup()">
+<option value="out">Fuori</option>
+<option value="starter">Titolare · 100%</option>
+<option value="sixth">Sesto uomo · 100%</option>
+<option value="bench">Panchina · 50%</option>
+</select>
+
+<label>
+<input type="checkbox" data-captain="${x.player_id}" onchange="checkCaptain(this)">
+ Capitano
+</label>
+
+</div>
+`).join("")}
+</div>
+
+<div id="lineupStatus" class="muted"></div>
+
+<button onclick="saveLineup()">Salva formazione</button>
+
+<p class="muted">
+5 titolari: 2G + 2A + 1C ·
+1 sesto uomo ·
+4 panchinari 50% ·
+3 fuori ·
+1 capitano.
+</p>
+</div>`;
+}
 async function saveLineup(){let day=el("day").value;if(!day)return;let old=await db.from("lineups").select("id").eq("manager_id",me.id).eq("matchday_id",day).maybeSingle(),lid=old.data?.id;if(!lid){let x=await db.from("lineups").insert({manager_id:me.id,matchday_id:day}).select("id").single();if(x.error)return message(x.error.message,"err");lid=x.data.id}await db.from("lineup_players").delete().eq("lineup_id",lid);let vals=[...document.querySelectorAll("#lp select")].map(s=>({lineup_id:lid,player_id:s.dataset.p,role:s.value,captain:false}));let x=await db.from("lineup_players").insert(vals);if(x.error)return message(x.error.message,"err");message("Formazione salvata.","ok")}
 async function trades(){let r=await db.from("trades").select("*,proposer:proposer_id(name),receiver:receiver_id(name)").or(`proposer_id.eq.${me.id},receiver_id.eq.${me.id}`).order("created_at",{ascending:false}),m=await db.from("managers").select("id,name").neq("id",me.id);el("content").innerHTML=`<div class="grid"><div class="card"><h2>Nuova proposta</h2><select id="tr">${(m.data||[]).map(x=>`<option value="${x.id}">${x.name}</option>`).join("")}</select><button onclick="trade()">Invia proposta</button><p class="muted">Gli scambi sono illimitati durante il campionato.</p></div><div class="card"><h2>Proposte</h2>${(r.data||[]).map(x=>`<p>${x.proposer.name} → ${x.receiver.name} · <b>${x.status}</b>${x.receiver_id===me.id&&x.status==="pending"?` <button onclick="accept('${x.id}')">Accetta</button>`:""}</p>`).join("")||"Nessuna proposta."}</div></div>`}
 async function trade(){let x=await db.from("trades").insert({proposer_id:me.id,receiver_id:el("tr").value,message:"Proposta di scambio"});if(x.error)return message(x.error.message,"err");trades()}
