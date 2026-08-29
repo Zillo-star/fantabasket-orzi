@@ -142,17 +142,10 @@ let selects=[...document.querySelectorAll("#lp select[data-p]")];
 if(selects.length!==13)
 return message("La rosa deve avere 13 giocatori.","err");
 
-let starters=[];
-let sixth=[];
-let bench=[];
-let out=[];
-
-selects.forEach(s=>{
-if(s.value==="starter")starters.push(s);
-if(s.value==="sixth")sixth.push(s);
-if(s.value==="bench")bench.push(s);
-if(s.value==="out")out.push(s);
-});
+let starters=selects.filter(s=>s.value==="starter");
+let sixth=selects.filter(s=>s.value==="sixth");
+let bench=selects.filter(s=>s.value==="bench");
+let out=selects.filter(s=>s.value==="out");
 
 if(starters.length!==5)
 return message("Devi avere esattamente 5 titolari.","err");
@@ -166,24 +159,18 @@ return message("Devi avere esattamente 4 panchinari.","err");
 if(out.length!==3)
 return message("Devi avere esattamente 3 giocatori fuori.","err");
 
-let g=0,a=0,c=0;
+let g=starters.filter(s=>s.dataset.pos==="G").length;
+let a=starters.filter(s=>s.dataset.pos==="A").length;
+let c=starters.filter(s=>s.dataset.pos==="C").length;
 
-starters.forEach(s=>{
-let pos=s.dataset.pos;
+let moduloValido=
+(g===2&&a===2&&c===1) ||
+(g===1&&a===3&&c===1) ||
+(g===1&&a===2&&c===2) ||
+(g===2&&a===1&&c===2);
 
-if(pos==="G")g++;
-if(pos==="A")a++;
-if(pos==="C")c++;
-});
-
-if(g!==2)
-return message("I titolari devono essere 2 guardie.","err");
-
-if(a!==2)
-return message("I titolari devono essere 2 ali.","err");
-
-if(c!==1)
-return message("I titolari devono essere 1 centro.","err");
+if(!moduloValido)
+return message("Modulo non valido. Usa 2G-2A-1C, 1G-3A-1C, 1G-2A-2C oppure 2G-1A-2C.","err");
 
 let captains=[...document.querySelectorAll('input[data-captain]:checked')];
 
