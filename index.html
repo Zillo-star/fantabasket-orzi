@@ -105,9 +105,11 @@ let newCredits=Number(cm.data.credits)-price;
 
 let u=await db.from("managers")
 .update({credits:newCredits})
-.eq("id",manager);
+.eq("id",manager)
+.select("id,credits")
+.single();
 
-if(u.error)return message(u.error.message,"err");
+if(u.error)return message("Errore aggiornamento crediti: "+u.error.message,"err");
 
 message("Giocatore assegnato alla rosa.","ok");
 admin();
