@@ -124,8 +124,8 @@ let rosa=await db.from("rosters")
 
 if(rosa.error)return message(rosa.error.message,"err");
 
-if((rosa.data||[]).length>=11)
-return message("La rosa è già completa (11 giocatori).","err");
+if((rosa.data||[]).length>=13)
+return message("La rosa è già completa (13 giocatori).","err");
 
 let already=await db.from("rosters")
 .select("id")
