@@ -81,7 +81,7 @@ if(check.error)return message(check.error.message,"err");
 if(check.data)return message("Questo giocatore è già assegnato.","err");
 
 let x=await db.from("rosters").insert({
-managers:manager,
+manager_id:manager,
 player_id:player,
 purchased:price,
 active:true
