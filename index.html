@@ -56,7 +56,7 @@ ${(r.data||[]).map(x=>`
 <b>${x.players.name}</b>
  · ${x.players.position}
 
-<select data-p="${x.player_id}" data-pos="${x.players.position}" onchange="checkLineup()">
+<select data-p="${x.player_id}" data-pos="${x.players.position}">
 <option value="out">Fuori</option>
 <option value="starter">Titolare · 100%</option>
 <option value="sixth">Sesto uomo · 100%</option>
