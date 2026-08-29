@@ -36,6 +36,70 @@ async function accept(id){let x=await db.from("trades").update({status:"accepted
 async function standings(){let r=await db.from("league_matches").select("*,home:home_manager_id(name),away:away_manager_id(name)"),a={};(r.data||[]).forEach(x=>{a[x.home_manager_id]??={n:x.home.name,p:0};a[x.away_manager_id]??={n:x.away.name,p:0};a[x.home_manager_id].p+=x.home_points;a[x.away_manager_id].p+=x.away_points});let rows=Object.values(a).sort((x,y)=>y.p-x.p);el("content").innerHTML=`<div class="card"><h2>Classifica</h2><table><tr><th>#</th><th>Fantallenatore</th><th>Punti</th></tr>${rows.map((x,i)=>`<tr><td>${i+1}</td><td>${x.n}</td><td>${x.p}</td></tr>`).join("")}</table><p class="muted">Spareggi: scontri diretti → punteggi nelle singole giornate → punteggi negli scontri diretti.</p></div>`}
 async function admin(){
 if(!me.is_admin)return;
+
+let m=await db.from("managers").select("id,name,credits,is_admin").order("name");
+if(m.error)return message(m.error.message,"err");
+
+let r=await db.from("rosters")
+.select("manager_id,player_id,purchase_price,active,players(name,position,is_foreign,real_teams(name))")
+.eq("active",true);
+
+if(r.error)return message(r.error.message,"err");
+
+let html=`
+<div class="card">
+<h2>Gestione rose</h2>
+
+<label>Fantallenatore</label>
+<select id="am">
+${(m.data||[]).map(x=>`<option value="${x.id}">${x.name} · ${x.credits} crediti</option>`).join("")}
+</select>
+
+<label>Giocatore</label>
+<select id="ap">
+${(await db.from("players").select("id,name,position,is_foreign,real_teams(name)").order("name")).data.map(x=>`<option value="${x.id}">${x.name} · ${x.position||""} · ${x.real_teams?.name||""}${x.is_foreign?" · STRANIERO":""}</option>`).join("")}
+</select>
+
+<label>Prezzo asta</label>
+<input id="price" type="number" min="1" placeholder="Crediti">
+
+<button onclick="addPlayerToRoster()">Assegna giocatore</button>
+</div>
+
+<div class="card">
+<h2>Rose</h2>
+`;
+
+(m.data||[]).forEach(x=>{
+let rosa=(r.data||[]).filter(y=>y.manager_id===x.id);
+
+html+=`
+<div class="card">
+<h3>${x.name} · ${x.credits} crediti · ${rosa.length}/11</h3>
+${rosa.length
+? rosa.map(y=>`
+<p>
+<b>${y.players.name}</b>
+ · ${y.players.position||""}
+ · ${y.players.real_teams?.name||""}
+ · ${y.purchase_price} crediti
+${y.players.is_foreign?" · STRANIERO":""}
+</p>`).join("")
+: `<p class="muted">Rosa vuota</p>`}
+</div>`;
+});
+
+html+=`
+</div>
+
+<div class="card">
+<h2>Regole punteggio</h2>
+<p>+1 punto · +1,25 RD · +1,50 RO · +1,50 assist · +1,50 recupero · −1,50 persa · +1,50 stoppata · −0,50 stoppata subita · −1 tiro dal campo sbagliato · −1 libero sbagliato · DD +5 · TD +10 · vittoria +3 · capitano ×1,5.</p>
+</div>`;
+
+el("content").innerHTML=html;
+}
+if(!me.is_admin)return;
 let m=await db.from("managers").select("id,name,credits").order("name");
 let p=await db.from("players").select("id,name,position,is_foreign,real_teams(name)").order("name");
 
