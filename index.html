@@ -167,9 +167,7 @@ let newCredits=credits-price;
 
 let u=await db.from("managers")
 .update({credits:newCredits})
-.eq("id",manager)
-.select("id,credits")
-.single();
+.eq("id",manager);
 
 if(u.error)return message("Errore aggiornamento crediti: "+u.error.message,"err");
 
