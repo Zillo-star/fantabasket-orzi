@@ -56,7 +56,7 @@ ${(r.data||[]).map(x=>`
 <b>${x.players.name}</b>
  · ${x.players.position}
 
-<select data-p="${x.player_id}" onchange="checkLineup()">
+<select data-p="${x.player_id}" data-pos="${x.players.position}" onchange="checkLineup()">
 <option value="out">Fuori</option>
 <option value="starter">Titolare · 100%</option>
 <option value="sixth">Sesto uomo · 100%</option>
@@ -169,12 +169,11 @@ return message("Devi avere esattamente 3 giocatori fuori.","err");
 let g=0,a=0,c=0;
 
 starters.forEach(s=>{
-let card=s.closest(".card");
-let text=card?.innerText||"";
+let pos=s.dataset.pos;
 
-if(text.includes(" G"))g++;
-if(text.includes(" A"))a++;
-if(text.includes(" C"))c++;
+if(pos==="G")g++;
+if(pos==="A")a++;
+if(pos==="C")c++;
 });
 
 if(g!==2)
