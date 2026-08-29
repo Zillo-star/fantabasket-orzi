@@ -85,6 +85,54 @@ ${(r.data||[]).map(x=>`
 </p>
 </div>`;
 }
+function checkLineup(){
+let selects=[...document.querySelectorAll("#lp select[data-p]")];
+
+let roles={G:0,A:0,C:0};
+let starters=0;
+let sixth=0;
+let bench=0;
+let out=0;
+
+selects.forEach(s=>{
+let role=s.value;
+
+if(role==="starter"){
+starters++;
+let card=s.closest(".card");
+let text=card?.innerText||"";
+
+if(text.includes(" G"))roles.G++;
+if(text.includes(" A"))roles.A++;
+if(text.includes(" C"))roles.C++;
+}
+
+if(role==="sixth")sixth++;
+if(role==="bench")bench++;
+if(role==="out")out++;
+});
+
+let status=[];
+
+if(starters!==5)status.push(`Titolari ${starters}/5`);
+if(roles.G!==2)status.push(`Guardie ${roles.G}/2`);
+if(roles.A!==2)status.push(`Ali ${roles.A}/2`);
+if(roles.C!==1)status.push(`Centri ${roles.C}/1`);
+if(sixth!==1)status.push(`Sesto uomo ${sixth}/1`);
+if(bench!==4)status.push(`Panchina ${bench}/4`);
+if(out!==3)status.push(`Fuori ${out}/3`);
+
+el("lineupStatus").textContent=
+status.length ? status.join(" · ") : "Formazione valida ✓";
+}
+
+function checkCaptain(box){
+if(!box.checked)return;
+
+document.querySelectorAll('input[data-captain]').forEach(x=>{
+if(x!==box)x.checked=false;
+});
+}
 async function saveLineup(){let day=el("day").value;if(!day)return;let old=await db.from("lineups").select("id").eq("manager_id",me.id).eq("matchday_id",day).maybeSingle(),lid=old.data?.id;if(!lid){let x=await db.from("lineups").insert({manager_id:me.id,matchday_id:day}).select("id").single();if(x.error)return message(x.error.message,"err");lid=x.data.id}await db.from("lineup_players").delete().eq("lineup_id",lid);let vals=[...document.querySelectorAll("#lp select")].map(s=>({lineup_id:lid,player_id:s.dataset.p,role:s.value,captain:false}));let x=await db.from("lineup_players").insert(vals);if(x.error)return message(x.error.message,"err");message("Formazione salvata.","ok")}
 async function trades(){let r=await db.from("trades").select("*,proposer:proposer_id(name),receiver:receiver_id(name)").or(`proposer_id.eq.${me.id},receiver_id.eq.${me.id}`).order("created_at",{ascending:false}),m=await db.from("managers").select("id,name").neq("id",me.id);el("content").innerHTML=`<div class="grid"><div class="card"><h2>Nuova proposta</h2><select id="tr">${(m.data||[]).map(x=>`<option value="${x.id}">${x.name}</option>`).join("")}</select><button onclick="trade()">Invia proposta</button><p class="muted">Gli scambi sono illimitati durante il campionato.</p></div><div class="card"><h2>Proposte</h2>${(r.data||[]).map(x=>`<p>${x.proposer.name} → ${x.receiver.name} · <b>${x.status}</b>${x.receiver_id===me.id&&x.status==="pending"?` <button onclick="accept('${x.id}')">Accetta</button>`:""}</p>`).join("")||"Nessuna proposta."}</div></div>`}
 async function trade(){let x=await db.from("trades").insert({proposer_id:me.id,receiver_id:el("tr").value,message:"Proposta di scambio"});if(x.error)return message(x.error.message,"err");trades()}
