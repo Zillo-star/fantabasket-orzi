@@ -93,10 +93,10 @@ if(x!==box)x.checked=false;
 });
 }
 async function saveLineup(){
-alert("SALVATAGGIO PARTITO");
-
 let day=el("day").value;
-if(!day)return;
+
+if(!day)
+return message("Seleziona una giornata.","err");
 
 let selects=[...document.querySelectorAll("#lp select[data-p]")];
 
@@ -109,16 +109,16 @@ let bench=selects.filter(s=>s.value==="bench");
 let out=selects.filter(s=>s.value==="out");
 
 if(starters.length!==5)
-return message("Devi avere esattamente 5 titolari.","err");
+return message("Devi avere 5 titolari.","err");
 
 if(sixth.length!==1)
-return message("Devi avere esattamente 1 sesto uomo.","err");
+return message("Devi avere 1 sesto uomo.","err");
 
 if(bench.length!==4)
-return message("Devi avere esattamente 4 panchinari.","err");
+return message("Devi avere 4 panchinari.","err");
 
 if(out.length!==3)
-return message("Devi avere esattamente 3 giocatori fuori.","err");
+return message("Devi avere 3 giocatori fuori.","err");
 
 let g=starters.filter(s=>s.dataset.pos==="G").length;
 let a=starters.filter(s=>s.dataset.pos==="A").length;
@@ -131,7 +131,10 @@ let moduloValido=
 (g===2&&a===1&&c===2);
 
 if(!moduloValido)
-return message("Modulo non valido. Usa 2G-2A-1C, 1G-3A-1C, 1G-2A-2C oppure 2G-1A-2C.","err");
+return message(
+"Modulo non valido. Moduli consentiti: 2G-2A-1C, 1G-3A-1C, 1G-2A-2C, 2G-1A-2C.",
+"err"
+);
 
 let captains=[...document.querySelectorAll('input[data-captain]:checked')];
 
@@ -157,7 +160,8 @@ matchday_id:day
 .select("id")
 .single();
 
-if(x.error)return message(x.error.message,"err");
+if(x.error)
+return message(x.error.message,"err");
 
 lid=x.data.id;
 }
@@ -166,7 +170,8 @@ let d=await db.from("lineup_players")
 .delete()
 .eq("lineup_id",lid);
 
-if(d.error)return message(d.error.message,"err");
+if(d.error)
+return message(d.error.message,"err");
 
 let vals=selects.map(s=>({
 lineup_id:lid,
@@ -177,7 +182,8 @@ captain:s.dataset.p===captainId
 
 let x=await db.from("lineup_players").insert(vals);
 
-if(x.error)return message(x.error.message,"err");
+if(x.error)
+return message(x.error.message,"err");
 
 message("Formazione salvata correttamente.","ok");
 }
