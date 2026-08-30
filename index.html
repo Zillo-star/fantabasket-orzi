@@ -23,7 +23,78 @@ async function signup(){let n=document.getElementById("managerName").value.trim(
 async function boot(){let s=await db.auth.getSession();user=s.data.session?.user;if(!user)return;let r=await db.from("managers").select("*").eq("email",user.email).maybeSingle();me=r.data;if(!me){message("Account non ancora associato al fantallenatore. Registrati con il nome assegnato.","err");return} el("who").textContent=me.name+(me.is_admin?" · ADMIN":"");el("authBtn").innerHTML='<button class="secondary" onclick="logout()">Esci</button>';el("app").classList.remove("hidden");nav();home()}
 async function logout(){await db.auth.signOut();location.reload()}
 function nav(){let a=[["home","Dashboard"],["players","Listone"],["roster","Rosa"],["lineup","Formazione"],["trades","Scambi"],["calendar","Calendario"],["standings","Classifica"]];if(me.is_admin)a.push(["admin","Admin"]);el("nav").innerHTML=a.map(x=>`<button onclick="${x[0]}()">${x[1]}</button>`).join("")}
-async function home(){let r=await db.from("fantasy_scores").select("final_score").eq("manager_id",me.id),tot=(r.data||[]).reduce((s,x)=>s+Number(x.final_score||0),0);el("content").innerHTML=`<div class="grid"><div class="card"><h2>${me.name}</h2><b>Squadra: ${me.name==="Zillo"?"Zillovic":me.name}</b><p>${me.credits} crediti</p></div><div class="card"><h2>Punti fantasy</h2><b style="font-size:28px">${tot.toFixed(1)}</b></div></div><div class="card"><h2>Benvenuto</h2><p class="muted">FantaBasket Orzi: listone, rose, formazioni, scambi, punteggi e classifica.</p></div>`}
+async function home(){
+
+let r=await db.from("fantasy_scores")
+.select("final_score")
+.eq("manager_id",me.id);
+
+if(r.error)
+return message(r.error.message,"err");
+
+let c=await db.from("fantasy_coach_scores")
+.select("final_score")
+.eq("manager_id",me.id);
+
+if(c.error)
+return message(c.error.message,"err");
+
+let playerTotal=(r.data||[])
+.reduce((s,x)=>s+Number(x.final_score||0),0);
+
+let coachTotal=(c.data||[])
+.reduce((s,x)=>s+Number(x.final_score||0),0);
+
+let tot=playerTotal+coachTotal;
+
+el("content").innerHTML=`
+
+<div class="grid">
+
+<div class="card">
+
+<h2>${me.name}</h2>
+
+<b>Squadra:
+${me.name==="Zillo"?"Zillovic":me.name}
+</b>
+
+<p>${me.credits} crediti</p>
+
+</div>
+
+<div class="card">
+
+<h2>Punti fantasy</h2>
+
+<b style="font-size:28px">
+${tot.toFixed(1)}
+</b>
+
+<p class="muted">
+Giocatori: ${playerTotal.toFixed(1)}
+<br>
+Allenatore: ${coachTotal.toFixed(1)}
+</p>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<h2>Benvenuto</h2>
+
+<p class="muted">
+FantaBasket Orzi: listone, rose, formazioni,
+scambi, punteggi e classifica.
+</p>
+
+</div>
+
+`;
+
+}
 async function players(){
 
 let r=await db.from("players")
