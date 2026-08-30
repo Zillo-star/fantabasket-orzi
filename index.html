@@ -112,7 +112,7 @@ window.lineupDeadlines=deadlineMap;
 
 updateLineupDeadline();
 }
-function updateLineupDeadline(){
+async function updateLineupDeadline(){
 
 let day=el("day");
 
@@ -121,17 +121,28 @@ if(!day)return;
 let selected=day.options[day.selectedIndex];
 let number=Number(selected.dataset.number);
 
-let deadline=window.lineupDeadlines?.[number];
+let r=await db.from("league_matches")
+.select("deadline")
+.eq("matchday_number",number)
+.order("deadline")
+.limit(1)
+.maybeSingle();
 
-if(!deadline){
+if(r.error){
+  el("deadlineText").textContent="Errore";
+  el("countdown").textContent="";
+  return;
+}
+
+if(!r.data?.deadline){
   el("deadlineText").textContent="Non disponibile";
   el("countdown").textContent="";
   return;
 }
 
-let d=new Date(deadline);
+let deadline=new Date(r.data.deadline);
 
-el("deadlineText").textContent=d.toLocaleString("it-IT",{
+el("deadlineText").textContent=deadline.toLocaleString("it-IT",{
   day:"2-digit",
   month:"2-digit",
   year:"numeric",
@@ -139,13 +150,13 @@ el("deadlineText").textContent=d.toLocaleString("it-IT",{
   minute:"2-digit"
 });
 
-updateLineupLock(d);
+updateLineupLock(deadline);
 
 if(window.lineupTimer)
 clearInterval(window.lineupTimer);
 
 window.lineupTimer=setInterval(()=>{
-  updateLineupLock(d);
+  updateLineupLock(deadline);
 },1000);
 }
 
