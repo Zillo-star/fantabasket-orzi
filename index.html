@@ -27,7 +27,57 @@ async function home(){let r=await db.from("fantasy_scores").select("final_score"
 async function players(){let r=await db.from("players").select("id,name,position,is_foreign,real_teams(name)").order("name");el("content").innerHTML=`<div class="card"><h2>Listone · ${(r.data||[]).length} giocatori</h2><input id="q" placeholder="Cerca..." oninput="filter()"><div id="pt"></div></div>`;window.pc=r.data||[];render(pc)}
 function render(a){el("pt").innerHTML=`<table><tr><th>Giocatore</th><th>Ruolo</th><th>Squadra</th><th>Str.</th></tr>${a.map(p=>`<tr><td>${p.name}</td><td>${p.position||"Da definire"}</td><td>${p.real_teams?.name||""}</td><td>${p.is_foreign?"Sì":""}</td></tr>`).join("")}</table>`}
 function filter(){let q=el("q").value.toLowerCase();render(pc.filter(p=>(p.name+" "+(p.real_teams?.name||"")).toLowerCase().includes(q)))}
-async function roster(){let r=await db.from("rosters").select("purchase_price,players(name,position,is_foreign,real_teams(name))").eq("manager_id",me.id).eq("active",true);el("content").innerHTML=`<div class="card"><h2>Rosa</h2><p>${(r.data||[]).length}/13 giocatori</p>${(r.data||[]).map(x=>`<p>${x.players.name} · ${x.players.position} · ${x.players.real_teams?.name||""}${x.players.is_foreign?" · STRANIERO":""}</p>`).join("")||"<p class='muted'>Rosa non ancora caricata.</p>"}</div>`}
+async function roster(){
+
+let r=await db.from("rosters")
+.select("purchase_price,players(name,position,is_foreign,real_teams(name))")
+.eq("manager_id",me.id)
+.eq("active",true);
+
+if(r.error)
+return message(r.error.message,"err");
+
+let c=await db.from("manager_coaches")
+.select("purchase_price,real_teams(team,coach)")
+.eq("manager_id",me.id)
+.eq("active",true)
+.maybeSingle();
+
+if(c.error)
+return message(c.error.message,"err");
+
+el("content").innerHTML=`
+
+<div class="card">
+<h2>Rosa</h2>
+
+<p><b>Allenatore</b></p>
+
+${
+c.data
+?
+`<p>👨‍🏫 ${c.data.real_teams?.coach||"—"} · ${c.data.real_teams?.team||""} · ${c.data.purchase_price} crediti</p>`
+:
+`<p class="muted">Allenatore non ancora assegnato.</p>`
+}
+
+<hr style="border:0;border-top:1px solid #293452;margin:16px 0">
+
+<p><b>Giocatori</b></p>
+
+<p>${(r.data||[]).length}/13 giocatori</p>
+
+${(r.data||[]).map(x=>`
+<p>
+${x.players.name} ·
+${x.players.position} ·
+${x.players.real_teams?.name||""}
+${x.players.is_foreign?" · STRANIERO":""}
+</p>
+`).join("")||"<p class='muted'>Rosa non ancora caricata.</p>"}
+
+</div>`;
+}
 async function lineup(){
 
 let m=await db.from("league_matches")
@@ -474,69 +524,263 @@ el("content").innerHTML=html;
 }
 async function standings(){let r=await db.from("league_matches").select("*,home:home_manager_id(name),away:away_manager_id(name)"),a={};(r.data||[]).forEach(x=>{a[x.home_manager_id]??={n:x.home.name,p:0};a[x.away_manager_id]??={n:x.away.name,p:0};a[x.home_manager_id].p+=x.home_points;a[x.away_manager_id].p+=x.away_points});let rows=Object.values(a).sort((x,y)=>y.p-x.p);el("content").innerHTML=`<div class="card"><h2>Classifica</h2><table><tr><th>#</th><th>Fantallenatore</th><th>Punti</th></tr>${rows.map((x,i)=>`<tr><td>${i+1}</td><td>${x.n}</td><td>${x.p}</td></tr>`).join("")}</table><p class="muted">Spareggi: scontri diretti → punteggi nelle singole giornate → punteggi negli scontri diretti.</p></div>`}
 async function admin(){
+
 if(!me.is_admin)return;
 
-let m=await db.from("managers").select("id,name,credits,is_admin").order("name");
-if(m.error)return message(m.error.message,"err");
+let m=await db.from("managers")
+.select("id,name,credits,is_admin")
+.order("name");
+
+if(m.error)
+return message(m.error.message,"err");
 
 let r=await db.from("rosters")
 .select("id,manager_id,player_id,purchase_price,active,players(name,position,is_foreign,real_teams(name))")
 .eq("active",true);
 
-if(r.error)return message(r.error.message,"err");
+if(r.error)
+return message(r.error.message,"err");
 
 let p=await db.from("players")
 .select("id,name,position,is_foreign,real_teams(name)")
 .order("name");
 
-if(p.error)return message(p.error.message,"err");
+if(p.error)
+return message(p.error.message,"err");
+
+let coaches=await db.from("real_teams")
+.select("id,team,coach")
+.order("team");
+
+if(coaches.error)
+return message(coaches.error.message,"err");
+
+let mc=await db.from("manager_coaches")
+.select("id,manager_id,real_team_id,purchase_price,active,real_teams(team,coach)")
+.eq("active",true);
+
+if(mc.error)
+return message(mc.error.message,"err");
 
 let html=`
+
 <div class="card">
-<h2>Gestione rose</h2>
+
+<h2>Gestione allenatori</h2>
+
 <label>Fantallenatore</label>
-<select id="am">
-${(m.data||[]).map(x=>`<option value="${x.id}">${x.name} · ${x.credits} crediti</option>`).join("")}
+
+<select id="cm">
+${(m.data||[]).map(x=>
+`<option value="${x.id}">
+${x.name} · ${x.credits} crediti
+</option>`
+).join("")}
 </select>
 
-<label>Giocatore</label>
-<select id="ap">
-${(p.data||[]).map(x=>`<option value="${x.id}">${x.name} · ${x.position||""} · ${x.real_teams?.name||""}${x.is_foreign?" · STRANIERO":""}</option>`).join("")}
+<label>Allenatore</label>
+
+<select id="cc">
+
+${(coaches.data||[]).map(x=>
+`<option value="${x.id}">
+${x.coach||"Allenatore non definito"} · ${x.team}
+</option>`
+).join("")}
+
 </select>
 
 <label>Prezzo asta</label>
-<input id="price" type="number" min="1" placeholder="Crediti">
 
-<button onclick="addPlayerToRoster()">Assegna giocatore</button>
+<input id="cprice"
+type="number"
+min="1"
+placeholder="Crediti">
+
+<button onclick="addCoachToRoster()">
+Assegna allenatore
+</button>
+
 </div>
 
 <div class="card">
-<h2>Rose</h2>
+
+<h2>Allenatori assegnati</h2>
+
 `;
 
 (m.data||[]).forEach(x=>{
-let rosa=(r.data||[]).filter(y=>y.manager_id===x.id);
+
+let coach=(mc.data||[]).find(y=>
+y.manager_id===x.id
+);
 
 html+=`
+
 <div class="card">
-<h3>${x.name} · ${x.credits} crediti · ${rosa.length}/13</h3>
-${rosa.length
-? rosa.map(y=>`
-<p><b>${y.players.name}</b> · ${y.players.position||""} · ${y.players.real_teams?.name||""} · ${y.purchase_price} crediti
-<button class="secondary" onclick="removePlayerFromRoster('${y.id}')">Rimuovi</button>${y.players.is_foreign?" · STRANIERO":""}</p>
-`).join("")
-: `<p class="muted">Rosa vuota</p>`}
-</div>`;
+
+<h3>${x.name} · ${x.credits} crediti</h3>
+
+${
+coach
+?
+`
+<p>
+<b>${coach.real_teams?.coach||"—"}</b>
+ · ${coach.real_teams?.team||""}
+ · ${coach.purchase_price} crediti
+
+<button
+class="secondary"
+onclick="removeCoachFromRoster('${coach.id}')">
+Rimuovi
+</button>
+
+</p>
+`
+:
+`<p class="muted">Allenatore non assegnato</p>`
+}
+
+</div>
+
+`;
+
 });
 
 html+=`
+
 </div>
+
 <div class="card">
+
+<h2>Gestione rose</h2>
+
+<label>Fantallenatore</label>
+
+<select id="am">
+
+${(m.data||[]).map(x=>
+`<option value="${x.id}">
+${x.name} · ${x.credits} crediti
+</option>`
+).join("")}
+
+</select>
+
+<label>Giocatore</label>
+
+<select id="ap">
+
+${(p.data||[]).map(x=>
+`<option value="${x.id}">
+${x.name} · ${x.position||""} · ${x.real_teams?.name||""}
+${x.is_foreign?" · STRANIERO":""}
+</option>`
+).join("")}
+
+</select>
+
+<label>Prezzo asta</label>
+
+<input
+id="price"
+type="number"
+min="1"
+placeholder="Crediti">
+
+<button onclick="addPlayerToRoster()">
+Assegna giocatore
+</button>
+
+</div>
+
+<div class="card">
+
+<h2>Rose</h2>
+
+`;
+
+(m.data||[]).forEach(x=>{
+
+let rosa=(r.data||[]).filter(y=>
+y.manager_id===x.id
+);
+
+html+=`
+
+<div class="card">
+
+<h3>
+${x.name} · ${x.credits} crediti · ${rosa.length}/13
+</h3>
+
+${
+rosa.length
+?
+rosa.map(y=>`
+
+<p>
+
+<b>${y.players.name}</b>
+ · ${y.players.position||""}
+ · ${y.players.real_teams?.name||""}
+ · ${y.purchase_price} crediti
+
+<button
+class="secondary"
+onclick="removePlayerFromRoster('${y.id}')">
+Rimuovi
+</button>
+
+${y.players.is_foreign?" · STRANIERO":""}
+
+</p>
+
+`).join("")
+:
+`<p class="muted">Rosa vuota</p>`
+}
+
+</div>
+
+`;
+
+});
+
+html+=`
+
+</div>
+
+<div class="card">
+
 <h2>Regole punteggio</h2>
-<p>+1 punto · +1,25 RD · +1,50 RO · +1,50 assist · +1,50 recupero · −1,50 persa · +1,50 stoppata · −0,50 stoppata subita · −1 tiro dal campo sbagliato · −1 libero sbagliato · DD +5 · TD +10 · vittoria +3 · capitano ×1,5.</p>
-</div>`;
+
+<p>
++1 punto · +1,25 RD · +1,50 RO ·
++1,50 assist · +1,50 recupero ·
+−1,50 persa · +1,50 stoppata ·
+−0,50 stoppata subita ·
+−1 tiro dal campo sbagliato ·
+−1 libero sbagliato ·
+DD +5 · TD +10 · vittoria +3 ·
+capitano ×1,5.
+</p>
+
+<p>
+<b>Allenatore:</b>
+vittoria/sconfitta in base allo scarto:
+1–5 = ±2,5 ·
+6–11 = ±5 ·
+12–17 = ±7,5 ·
+18+ = ±10.
+</p>
+
+</div>
+`;
 
 el("content").innerHTML=html;
+
 }
 async function addPlayerToRoster(){
 let manager=el("am").value;
@@ -651,6 +895,117 @@ if(x.error)return message(x.error.message,"err");
 
 message("Giocatore rimosso e crediti restituiti.","ok");
 admin();
+}
+async function addCoachToRoster(){
+
+let manager=el("cm").value;
+let realTeam=el("cc").value;
+let price=Number(el("cprice").value);
+
+if(!price||price<1)
+return message("Inserisci un prezzo valido.","err");
+
+let cm=await db.from("managers")
+.select("credits")
+.eq("id",manager)
+.single();
+
+if(cm.error)
+return message(cm.error.message,"err");
+
+let credits=Number(cm.data.credits);
+
+if(price>credits)
+return message("Crediti insufficienti.","err");
+
+let existing=await db.from("manager_coaches")
+.select("id")
+.eq("manager_id",manager)
+.eq("active",true)
+.maybeSingle();
+
+if(existing.error)
+return message(existing.error.message,"err");
+
+if(existing.data)
+return message("Questo fantallenatore ha già un allenatore.","err");
+
+let already=await db.from("manager_coaches")
+.select("id")
+.eq("real_team_id",realTeam)
+.eq("active",true)
+.maybeSingle();
+
+if(already.error)
+return message(already.error.message,"err");
+
+if(already.data)
+return message("Questo allenatore è già stato assegnato a un altro fantallenatore.","err");
+
+let x=await db.from("manager_coaches")
+.insert({
+manager_id:manager,
+real_team_id:realTeam,
+purchase_price:price,
+active:true
+});
+
+if(x.error)
+return message(x.error.message,"err");
+
+let u=await db.rpc("subtract_credits",{
+manager_id_input:manager,
+amount_input:price
+});
+
+if(u.error)
+return message(
+"Errore aggiornamento crediti: "+u.error.message,
+"err"
+);
+
+message("Allenatore assegnato alla rosa.","ok");
+
+admin();
+
+}
+
+
+async function removeCoachFromRoster(coachId){
+
+let r=await db.from("manager_coaches")
+.select("manager_id,purchase_price")
+.eq("id",coachId)
+.single();
+
+if(r.error)
+return message(r.error.message,"err");
+
+let u=await db.rpc("add_credits",{
+manager_id_input:r.data.manager_id,
+amount_input:r.data.purchase_price
+});
+
+if(u.error)
+return message(
+"Errore restituzione crediti: "+u.error.message,
+"err"
+);
+
+let x=await db.from("manager_coaches")
+.delete()
+.eq("id",coachId);
+
+if(x.error)
+return message(x.error.message,"err");
+
+message(
+"Allenatore rimosso e crediti restituiti.",
+"ok"
+);
+
+admin();
+
 }
 boot();
 </script></body></html>
