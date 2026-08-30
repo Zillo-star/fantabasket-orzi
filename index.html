@@ -210,14 +210,12 @@ ${x.players.is_foreign?" · STRANIERO":""}
 
 </div>`;
 }
-Sostituisci la tua funzione `async function lineup(){ ... }` con questa:
-
 ```javascript
 async function lineup(){
 
-let m=await db.from("league_matches")
-.select("matchday_number,deadline,home_score,away_score")
-.order("matchday_number");
+let m=await db.from("matchdays")
+.select("id,number,lineup_deadline,status")
+.order("number");
 
 let r=await db.from("rosters")
 .select("player_id,players(name,position)")
@@ -230,9 +228,23 @@ return message(m.error.message,"err");
 if(r.error)
 return message(r.error.message,"err");
 
+let days=m.data||[];
+
+/*
+  Trova la prima giornata non ancora conclusa.
+  Una giornata è conclusa solo quando tutte
+  le sue partite hanno un risultato.
+*/
+
+let matches=await db.from("league_matches")
+.select("matchday_number,home_score,away_score");
+
+if(matches.error)
+return message(matches.error.message,"err");
+
 let grouped={};
 
-(m.data||[]).forEach(x=>{
+(matches.data||[]).forEach(x=>{
 
   if(!grouped[x.matchday_number])
     grouped[x.matchday_number]=[];
@@ -241,25 +253,21 @@ let grouped={};
 
 });
 
-let sortedNumbers=Object.keys(grouped)
-.map(Number)
-.sort((a,b)=>a-b);
-
-
-/* Trova la prima giornata non ancora conclusa */
-
 let currentDay=null;
 
-for(let number of sortedNumbers){
+for(let day of days){
 
-  let matches=grouped[number];
+  let number=day.number;
+  let dayMatches=grouped[number]||[];
 
-  let completed=matches.every(x=>
-    x.home_score!==null &&
-    x.home_score!==undefined &&
-    x.away_score!==null &&
-    x.away_score!==undefined
-  );
+  let completed=
+    dayMatches.length>0 &&
+    dayMatches.every(x=>
+      x.home_score!==null &&
+      x.home_score!==undefined &&
+      x.away_score!==null &&
+      x.away_score!==undefined
+    );
 
   if(!completed){
 
@@ -270,56 +278,25 @@ for(let number of sortedNumbers){
 
 }
 
+if(currentDay===null && days.length){
 
-/* Se tutte concluse, mostra l'ultima */
-
-if(currentDay===null){
-
-  currentDay=
-    sortedNumbers[sortedNumbers.length-1];
+  currentDay=days[days.length-1].number;
 
 }
 
 
-/* Giornate disponibili */
-
-let currentIndex=
-  sortedNumbers.indexOf(currentDay);
-
-let availableDays=
-  sortedNumbers.slice(0,currentIndex+1);
-
-
 /*
-  Per ogni giornata prendiamo la deadline
-  più anticipata tra le sue partite.
+  Mostriamo solo la giornata attuale
+  e quelle precedenti.
 */
 
-let daysForSelect=availableDays.map(number=>{
+let currentIndex=
+  days.findIndex(x=>x.number===currentDay);
 
-  let matches=grouped[number];
-
-  let deadlines=matches
-    .map(x=>x.deadline)
-    .filter(x=>x);
-
-  let deadline=null;
-
-  if(deadlines.length){
-
-    deadline=deadlines
-      .map(x=>new Date(x))
-      .sort((a,b)=>a-b)[0]
-      .toISOString();
-
-  }
-
-  return {
-    matchday_number:number,
-    deadline:deadline
-  };
-
-});
+let availableDays=
+  currentIndex>=0
+  ? days.slice(0,currentIndex+1)
+  : days;
 
 
 el("content").innerHTML=`
@@ -331,15 +308,15 @@ el("content").innerHTML=`
 <select id="day"
         onchange="updateLineupDeadline()">
 
-${daysForSelect.map(x=>`
+${availableDays.map(x=>`
 
 <option
-value="${x.matchday_number}"
-${x.matchday_number===currentDay?"selected":""}
->
+value="${x.id}"
+data-number="${x.number}"
+${x.number===currentDay?"selected":""}>
 
-Giornata ${x.matchday_number}
-${x.matchday_number===currentDay?" · ATTUALE":""}
+Giornata ${x.number}
+${x.number===currentDay?" · ATTUALE":""}
 
 </option>
 
@@ -441,73 +418,114 @@ Salva formazione
 `;
 
 
-/* Costruisce la mappa delle deadline */
+/*
+  La deadline viene presa direttamente
+  da matchdays.
+*/
 
 window.lineupDeadlines={};
 
-daysForSelect.forEach(x=>{
+availableDays.forEach(x=>{
 
-  window.lineupDeadlines[
-    x.matchday_number
-  ]=x.deadline;
+  window.lineupDeadlines[x.number]=
+    x.lineup_deadline;
 
 });
 
-
-/* Aggiorna subito deadline e countdown */
 
 updateLineupDeadline();
 
 }
-async function updateLineupDeadline(){
+function updateLineupDeadline(){
 
-let day=el("day");
+  let select=el("day");
 
-if(!day)return;
+  if(!select)
+    return;
 
-let selected=day.options[day.selectedIndex];
-let number=Number(selected.dataset.number);
+  let selected=select.options[select.selectedIndex];
 
-let r=await db.from("league_matches")
-.select("deadline")
-.eq("matchday_number",number)
-.order("deadline")
-.limit(1)
-.maybeSingle();
+  if(!selected)
+    return;
 
-if(r.error){
-  el("deadlineText").textContent="Errore";
-  el("countdown").textContent="";
-  return;
-}
+  let matchdayNumber=Number(selected.dataset.number);
 
-if(!r.data?.deadline){
-  el("deadlineText").textContent="Non disponibile";
-  el("countdown").textContent="";
-  return;
-}
+  let deadlineString=
+    window.lineupDeadlines?.[matchdayNumber];
 
-let deadline=new Date(r.data.deadline);
+  let deadlineText=el("deadlineText");
 
-el("deadlineText").textContent=deadline.toLocaleString("it-IT",{
-  day:"2-digit",
-  month:"2-digit",
-  year:"numeric",
-  hour:"2-digit",
-  minute:"2-digit"
-});
+  if(!deadlineString){
 
-updateLineupLock(deadline);
+    if(deadlineText)
+      deadlineText.textContent="—";
 
-if(window.lineupTimer)
-clearInterval(window.lineupTimer);
+    let countdown=el("countdown");
 
-window.lineupTimer=setInterval(()=>{
+    if(countdown)
+      countdown.textContent="";
+
+    return;
+  }
+
+  let deadline=new Date(deadlineString);
+
+  if(isNaN(deadline.getTime())){
+
+    if(deadlineText)
+      deadlineText.textContent="Deadline non valida";
+
+    return;
+  }
+
+  if(deadlineText){
+
+    deadlineText.textContent=
+      deadline.toLocaleString("it-IT",{
+        day:"2-digit",
+        month:"2-digit",
+        year:"numeric",
+        hour:"2-digit",
+        minute:"2-digit"
+      });
+
+  }
+
   updateLineupLock(deadline);
-},1000);
+
+  if(window.lineupCountdownInterval)
+    clearInterval(window.lineupCountdownInterval);
+
+  window.lineupCountdownInterval=
+    setInterval(()=>{
+
+      let currentSelect=el("day");
+
+      if(!currentSelect)
+        return;
+
+      let currentOption=
+        currentSelect.options[currentSelect.selectedIndex];
+
+      if(!currentOption)
+        return;
+
+      let currentNumber=
+        Number(currentOption.dataset.number);
+
+      let currentDeadline=
+        window.lineupDeadlines?.[currentNumber];
+
+      if(!currentDeadline)
+        return;
+
+      updateLineupLock(
+        new Date(currentDeadline)
+      );
+
+    },1000);
+
 }
-
-
 function updateLineupLock(deadline){
 
 let now=new Date();
