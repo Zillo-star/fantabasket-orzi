@@ -29,6 +29,7 @@ function render(a){el("pt").innerHTML=`<table><tr><th>Giocatore</th><th>Ruolo</t
 function filter(){let q=el("q").value.toLowerCase();render(pc.filter(p=>(p.name+" "+(p.real_teams?.name||"")).toLowerCase().includes(q)))}
 async function roster(){let r=await db.from("rosters").select("purchase_price,players(name,position,is_foreign,real_teams(name))").eq("manager_id",me.id).eq("active",true);el("content").innerHTML=`<div class="card"><h2>Rosa</h2><p>${(r.data||[]).length}/13 giocatori</p>${(r.data||[]).map(x=>`<p>${x.players.name} · ${x.players.position} · ${x.players.real_teams?.name||""}${x.players.is_foreign?" · STRANIERO":""}</p>`).join("")||"<p class='muted'>Rosa non ancora caricata.</p>"}</div>`}
 async function lineup(){
+
 let m=await db.from("matchdays")
 .select("*")
 .order("number");
@@ -40,15 +41,37 @@ let r=await db.from("rosters")
 
 if(r.error)return message(r.error.message,"err");
 
+let deadlines=await db.from("league_matches")
+.select("matchday_number,deadline")
+.order("matchday_number");
+
+if(deadlines.error)return message(deadlines.error.message,"err");
+
+let deadlineMap={};
+
+(deadlines.data||[]).forEach(x=>{
+  if(deadlineMap[x.matchday_number]===undefined){
+    deadlineMap[x.matchday_number]=x.deadline;
+  }
+});
+
 el("content").innerHTML=`
 <div class="card">
 <h2>Formazione</h2>
 
-<select id="day">
+<select id="day" onchange="updateLineupDeadline()">
 ${(m.data||[]).map(x=>`
-<option value="${x.id}">Giornata ${x.number}</option>
+<option value="${x.id}" data-number="${x.number}">
+Giornata ${x.number}
+</option>
 `).join("")}
 </select>
+
+<div id="deadlineBox" class="card">
+  <b>Deadline formazione:</b>
+  <span id="deadlineText">—</span>
+  <div id="countdown" style="font-size:22px;margin-top:8px"></div>
+</div>
 
 <div id="lp">
 ${(r.data||[]).map(x=>`
@@ -74,7 +97,7 @@ ${(r.data||[]).map(x=>`
 
 <div id="lineupStatus" class="muted"></div>
 
-<button onclick="saveLineup()">Salva formazione</button>
+<button id="saveLineupBtn" onclick="saveLineup()">Salva formazione</button>
 
 <p class="muted">
 5 titolari: 2G + 2A + 1C ·
@@ -84,6 +107,114 @@ ${(r.data||[]).map(x=>`
 1 capitano.
 </p>
 </div>`;
+
+window.lineupDeadlines=deadlineMap;
+
+updateLineupDeadline();
+}
+function updateLineupDeadline(){
+
+let day=el("day");
+
+if(!day)return;
+
+let selected=day.options[day.selectedIndex];
+let number=Number(selected.dataset.number);
+
+let deadline=window.lineupDeadlines?.[number];
+
+if(!deadline){
+  el("deadlineText").textContent="Non disponibile";
+  el("countdown").textContent="";
+  return;
+}
+
+let d=new Date(deadline);
+
+el("deadlineText").textContent=d.toLocaleString("it-IT",{
+  day:"2-digit",
+  month:"2-digit",
+  year:"numeric",
+  hour:"2-digit",
+  minute:"2-digit"
+});
+
+updateLineupLock(d);
+
+if(window.lineupTimer)
+clearInterval(window.lineupTimer);
+
+window.lineupTimer=setInterval(()=>{
+  updateLineupLock(d);
+},1000);
+}
+
+
+function updateLineupLock(deadline){
+
+let now=new Date();
+let locked=now>=deadline;
+
+let countdown=el("countdown");
+let button=el("saveLineupBtn");
+
+if(locked){
+
+countdown.textContent="🔒 Formazione chiusa";
+
+document.querySelectorAll("#lp select").forEach(x=>{
+  x.disabled=true;
+});
+
+document.querySelectorAll("#lp input[data-captain]").forEach(x=>{
+  x.disabled=true;
+});
+
+if(button){
+  button.disabled=true;
+  button.textContent="Formazione chiusa";
+}
+
+let status=el("lineupStatus");
+
+if(status)
+status.textContent="La deadline è scaduta. Non puoi più modificare la formazione.";
+
+return;
+}
+
+let diff=deadline-now;
+
+let totalSeconds=Math.floor(diff/1000);
+let days=Math.floor(totalSeconds/86400);
+let hours=Math.floor((totalSeconds%86400)/3600);
+let minutes=Math.floor((totalSeconds%3600)/60);
+let seconds=totalSeconds%60;
+
+countdown.textContent=
+"⏱️ Mancano "+
+(days?days+"g ":"")+
+String(hours).padStart(2,"0")+":"+
+String(minutes).padStart(2,"0")+":"+
+String(seconds).padStart(2,"0");
+
+document.querySelectorAll("#lp select").forEach(x=>{
+  x.disabled=false;
+});
+
+document.querySelectorAll("#lp input[data-captain]").forEach(x=>{
+  x.disabled=false;
+});
+
+if(button){
+  button.disabled=false;
+  button.textContent="Salva formazione";
+}
+
+let status=el("lineupStatus");
+
+if(status)
+status.textContent="Formazione modificabile.";
 }
 function checkCaptain(box){
 if(!box.checked)return;
@@ -102,6 +233,16 @@ let selects=[...document.querySelectorAll("#lp select[data-p]")];
 
 if(selects.length!==13)
 return message("La rosa deve avere 13 giocatori.","err");
+let selected=el("day").options[el("day").selectedIndex];
+let matchdayNumber=Number(selected.dataset.number);
+
+let deadline=window.lineupDeadlines?.[matchdayNumber];
+
+if(!deadline)
+return message("Deadline non disponibile per questa giornata.","err");
+
+if(new Date()>=new Date(deadline))
+return message("La deadline per questa giornata è scaduta. La formazione non può più essere modificata.","err");
 
 let starters=selects.filter(s=>s.value==="starter");
 let sixth=selects.filter(s=>s.value==="sixth");
