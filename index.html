@@ -22,7 +22,7 @@ async function login(){let r=await db.auth.signInWithPassword({email:el("email")
 async function signup(){let n=document.getElementById("managerName").value.trim(),e=document.getElementById("email").value.trim(),p=document.getElementById("password").value;if(!n||!e||p.length<6)return message("Inserisci nome, email e password (minimo 6 caratteri).","err");let r=await db.auth.signUp({email:e,password:p,options:{data:{manager_name:n}}});if(r.error)return message(r.error.message,"err");message("Registrazione effettuata. Ora puoi accedere.","ok")}
 async function boot(){let s=await db.auth.getSession();user=s.data.session?.user;if(!user)return;let r=await db.from("managers").select("*").eq("email",user.email).maybeSingle();me=r.data;if(!me){message("Account non ancora associato al fantallenatore. Registrati con il nome assegnato.","err");return} el("who").textContent=me.name+(me.is_admin?" · ADMIN":"");el("authBtn").innerHTML='<button class="secondary" onclick="logout()">Esci</button>';el("app").classList.remove("hidden");nav();home()}
 async function logout(){await db.auth.signOut();location.reload()}
-function nav(){let a=[["home","Dashboard"],["players","Listone"],["roster","Rosa"],["lineup","Formazione"],["trades","Scambi"],["standings","Classifica"]];if(me.is_admin)a.push(["admin","Admin"]);el("nav").innerHTML=a.map(x=>`<button onclick="${x[0]}()">${x[1]}</button>`).join("")}
+function nav(){let a=[["home","Dashboard"],["players","Listone"],["roster","Rosa"],["lineup","Formazione"],["trades","Scambi"],["calendar","Calendario"],["standings","Classifica"]];if(me.is_admin)a.push(["admin","Admin"]);el("nav").innerHTML=a.map(x=>`<button onclick="${x[0]}()">${x[1]}</button>`).join("")}
 async function home(){let r=await db.from("fantasy_scores").select("final_score").eq("manager_id",me.id),tot=(r.data||[]).reduce((s,x)=>s+Number(x.final_score||0),0);el("content").innerHTML=`<div class="grid"><div class="card"><h2>${me.name}</h2><b>Squadra: ${me.name==="Zillo"?"Zillovic":me.name}</b><p>${me.credits} crediti</p></div><div class="card"><h2>Punti fantasy</h2><b style="font-size:28px">${tot.toFixed(1)}</b></div></div><div class="card"><h2>Benvenuto</h2><p class="muted">FantaBasket Orzi: listone, rose, formazioni, scambi, punteggi e classifica.</p></div>`}
 async function players(){let r=await db.from("players").select("id,name,position,is_foreign,real_teams(name)").order("name");el("content").innerHTML=`<div class="card"><h2>Listone · ${(r.data||[]).length} giocatori</h2><input id="q" placeholder="Cerca..." oninput="filter()"><div id="pt"></div></div>`;window.pc=r.data||[];render(pc)}
 function render(a){el("pt").innerHTML=`<table><tr><th>Giocatore</th><th>Ruolo</th><th>Squadra</th><th>Str.</th></tr>${a.map(p=>`<tr><td>${p.name}</td><td>${p.position||"Da definire"}</td><td>${p.real_teams?.name||""}</td><td>${p.is_foreign?"Sì":""}</td></tr>`).join("")}</table>`}
@@ -190,6 +190,78 @@ message("Formazione salvata correttamente.","ok");
 async function trades(){let r=await db.from("trades").select("*,proposer:proposer_id(name),receiver:receiver_id(name)").or(`proposer_id.eq.${me.id},receiver_id.eq.${me.id}`).order("created_at",{ascending:false}),m=await db.from("managers").select("id,name").neq("id",me.id);el("content").innerHTML=`<div class="grid"><div class="card"><h2>Nuova proposta</h2><select id="tr">${(m.data||[]).map(x=>`<option value="${x.id}">${x.name}</option>`).join("")}</select><button onclick="trade()">Invia proposta</button><p class="muted">Gli scambi sono illimitati durante il campionato.</p></div><div class="card"><h2>Proposte</h2>${(r.data||[]).map(x=>`<p>${x.proposer.name} → ${x.receiver.name} · <b>${x.status}</b>${x.receiver_id===me.id&&x.status==="pending"?` <button onclick="accept('${x.id}')">Accetta</button>`:""}</p>`).join("")||"Nessuna proposta."}</div></div>`}
 async function trade(){let x=await db.from("trades").insert({proposer_id:me.id,receiver_id:el("tr").value,message:"Proposta di scambio"});if(x.error)return message(x.error.message,"err");trades()}
 async function accept(id){let x=await db.from("trades").update({status:"accepted",responded_at:new Date().toISOString()}).eq("id",id);if(x.error)return message(x.error.message,"err");trades()}
+async function calendar(){
+
+let r=await db.from("league_matches")
+.select("id,matchday_number,home_manager_id,away_manager_id,home_score,away_score,home:home_manager_id(name),away:away_manager_id(name)")
+.order("matchday_number")
+.order("id");
+
+if(r.error)
+return message(r.error.message,"err");
+
+let matches=r.data||[];
+
+let days={};
+
+matches.forEach(x=>{
+  if(!days[x.matchday_number])
+    days[x.matchday_number]=[];
+
+  days[x.matchday_number].push(x);
+});
+
+let html=`
+<div class="card">
+<h2>Calendario</h2>
+<p class="muted">Calendario completo del campionato</p>
+</div>
+`;
+
+Object.keys(days).sort((a,b)=>Number(a)-Number(b)).forEach(day=>{
+
+html+=`
+<div class="card">
+<h2>Giornata ${day}</h2>
+<table>
+<tr>
+<th>Casa</th>
+<th></th>
+<th>Trasferta</th>
+</tr>
+`;
+
+days[day].forEach(x=>{
+
+let score="";
+
+if(x.home_score!==null && x.home_score!==undefined &&
+   x.away_score!==null && x.away_score!==undefined){
+
+score=`<b>${x.home_score} - ${x.away_score}</b>`;
+
+}
+
+html+=`
+<tr>
+<td>${x.home?.name||"—"}</td>
+<td>${score||"vs"}</td>
+<td>${x.away?.name||"—"}</td>
+</tr>
+`;
+
+});
+
+html+=`
+</table>
+</div>
+`;
+
+});
+
+el("content").innerHTML=html;
+
+}
 async function standings(){let r=await db.from("league_matches").select("*,home:home_manager_id(name),away:away_manager_id(name)"),a={};(r.data||[]).forEach(x=>{a[x.home_manager_id]??={n:x.home.name,p:0};a[x.away_manager_id]??={n:x.away.name,p:0};a[x.home_manager_id].p+=x.home_points;a[x.away_manager_id].p+=x.away_points});let rows=Object.values(a).sort((x,y)=>y.p-x.p);el("content").innerHTML=`<div class="card"><h2>Classifica</h2><table><tr><th>#</th><th>Fantallenatore</th><th>Punti</th></tr>${rows.map((x,i)=>`<tr><td>${i+1}</td><td>${x.n}</td><td>${x.p}</td></tr>`).join("")}</table><p class="muted">Spareggi: scontri diretti → punteggi nelle singole giornate → punteggi negli scontri diretti.</p></div>`}
 async function admin(){
 if(!me.is_admin)return;
