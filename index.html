@@ -24,7 +24,68 @@ async function boot(){let s=await db.auth.getSession();user=s.data.session?.user
 async function logout(){await db.auth.signOut();location.reload()}
 function nav(){let a=[["home","Dashboard"],["players","Listone"],["roster","Rosa"],["lineup","Formazione"],["trades","Scambi"],["calendar","Calendario"],["standings","Classifica"]];if(me.is_admin)a.push(["admin","Admin"]);el("nav").innerHTML=a.map(x=>`<button onclick="${x[0]}()">${x[1]}</button>`).join("")}
 async function home(){let r=await db.from("fantasy_scores").select("final_score").eq("manager_id",me.id),tot=(r.data||[]).reduce((s,x)=>s+Number(x.final_score||0),0);el("content").innerHTML=`<div class="grid"><div class="card"><h2>${me.name}</h2><b>Squadra: ${me.name==="Zillo"?"Zillovic":me.name}</b><p>${me.credits} crediti</p></div><div class="card"><h2>Punti fantasy</h2><b style="font-size:28px">${tot.toFixed(1)}</b></div></div><div class="card"><h2>Benvenuto</h2><p class="muted">FantaBasket Orzi: listone, rose, formazioni, scambi, punteggi e classifica.</p></div>`}
-async function players(){let r=await db.from("players").select("id,name,position,is_foreign,real_teams(name)").order("name");el("content").innerHTML=`<div class="card"><h2>Listone · ${(r.data||[]).length} giocatori</h2><input id="q" placeholder="Cerca..." oninput="filter()"><div id="pt"></div></div>`;window.pc=r.data||[];render(pc)}
+async function players(){
+
+let r=await db.from("players")
+.select("id,name,position,is_foreign,real_teams(name)")
+.order("name");
+
+if(r.error)
+return message(r.error.message,"err");
+
+let c=await db.from("real_teams")
+.select("id,name,coach")
+.order("name");
+
+if(c.error)
+return message(c.error.message,"err");
+
+el("content").innerHTML=`
+
+<div class="card">
+
+<h2>Listone · ${(r.data||[]).length} giocatori</h2>
+
+<input
+id="q"
+placeholder="Cerca giocatore o squadra..."
+oninput="filter()">
+
+<div id="pt"></div>
+
+</div>
+
+<div class="card">
+
+<h2>🧑‍🏫 Allenatori</h2>
+
+<table>
+
+<tr>
+<th>Allenatore</th>
+<th>Squadra</th>
+</tr>
+
+${(c.data||[]).map(x=>`
+
+<tr>
+<td>${x.coach||"Da definire"}</td>
+<td>${x.name||""}</td>
+</tr>
+
+`).join("")}
+
+</table>
+
+</div>
+
+`;
+
+window.pc=r.data||[];
+
+render(pc);
+
+}
 function render(a){el("pt").innerHTML=`<table><tr><th>Giocatore</th><th>Ruolo</th><th>Squadra</th><th>Str.</th></tr>${a.map(p=>`<tr><td>${p.name}</td><td>${p.position||"Da definire"}</td><td>${p.real_teams?.name||""}</td><td>${p.is_foreign?"Sì":""}</td></tr>`).join("")}</table>`}
 function filter(){let q=el("q").value.toLowerCase();render(pc.filter(p=>(p.name+" "+(p.real_teams?.name||"")).toLowerCase().includes(q)))}
 async function roster(){
