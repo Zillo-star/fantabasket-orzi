@@ -38,7 +38,7 @@ if(r.error)
 return message(r.error.message,"err");
 
 let c=await db.from("manager_coaches")
-.select("purchase_price,real_teams(team,coach)")
+.select("purchase_price,real_teams(name,coach)")
 .eq("manager_id",me.id)
 .eq("active",true)
 .maybeSingle();
@@ -549,14 +549,14 @@ if(p.error)
 return message(p.error.message,"err");
 
 let coaches=await db.from("real_teams")
-.select("id,team,coach")
+.select("id,name,coach")
 .order("team");
 
 if(coaches.error)
 return message(coaches.error.message,"err");
 
 let mc=await db.from("manager_coaches")
-.select("id,manager_id,real_team_id,purchase_price,active,real_teams(team,coach)")
+.select("id,manager_id,real_team_id,purchase_price,active,real_teams(name,coach)")
 .eq("active",true);
 
 if(mc.error)
