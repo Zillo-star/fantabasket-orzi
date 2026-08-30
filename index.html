@@ -210,6 +210,9 @@ ${x.players.is_foreign?" · STRANIERO":""}
 
 </div>`;
 }
+Sostituisci la tua funzione `async function lineup(){ ... }` con questa:
+
+```javascript
 async function lineup(){
 
 let m=await db.from("league_matches")
@@ -221,29 +224,30 @@ let r=await db.from("rosters")
 .eq("manager_id",me.id)
 .eq("active",true);
 
-if(m.error)return message(m.error.message,"err");
-if(r.error)return message(r.error.message,"err");
+if(m.error)
+return message(m.error.message,"err");
 
-let days=[];
+if(r.error)
+return message(r.error.message,"err");
+
 let grouped={};
 
 (m.data||[]).forEach(x=>{
+
   if(!grouped[x.matchday_number])
     grouped[x.matchday_number]=[];
 
   grouped[x.matchday_number].push(x);
+
 });
 
 let sortedNumbers=Object.keys(grouped)
-  .map(Number)
-  .sort((a,b)=>a-b);
+.map(Number)
+.sort((a,b)=>a-b);
 
-/*
-  Troviamo la prima giornata non ancora conclusa.
 
-  Una giornata è conclusa solo quando
-  tutte le sue partite hanno un risultato.
-*/
+/* Trova la prima giornata non ancora conclusa */
+
 let currentDay=null;
 
 for(let number of sortedNumbers){
@@ -258,99 +262,202 @@ for(let number of sortedNumbers){
   );
 
   if(!completed){
+
     currentDay=number;
     break;
+
   }
+
 }
 
-/*
-  Se tutte le giornate fossero concluse,
-  non c'è più nessuna giornata da compilare.
-*/
+
+/* Se tutte concluse, mostra l'ultima */
+
 if(currentDay===null){
-  currentDay=sortedNumbers[sortedNumbers.length-1];
+
+  currentDay=
+    sortedNumbers[sortedNumbers.length-1];
+
 }
 
-let currentIndex=sortedNumbers.indexOf(currentDay);
 
-let availableDays=sortedNumbers.slice(0,currentIndex+1);
+/* Giornate disponibili */
+
+let currentIndex=
+  sortedNumbers.indexOf(currentDay);
+
+let availableDays=
+  sortedNumbers.slice(0,currentIndex+1);
+
 
 /*
-  Mostriamo la giornata attuale e quelle già concluse.
-  Le giornate future non vengono rese selezionabili.
+  Per ogni giornata prendiamo la deadline
+  più anticipata tra le sue partite.
 */
-let daysForSelect=availableDays.map(number=>({
-  matchday_number:number,
-  deadline:grouped[number][0]?.deadline
-}));
+
+let daysForSelect=availableDays.map(number=>{
+
+  let matches=grouped[number];
+
+  let deadlines=matches
+    .map(x=>x.deadline)
+    .filter(x=>x);
+
+  let deadline=null;
+
+  if(deadlines.length){
+
+    deadline=deadlines
+      .map(x=>new Date(x))
+      .sort((a,b)=>a-b)[0]
+      .toISOString();
+
+  }
+
+  return {
+    matchday_number:number,
+    deadline:deadline
+  };
+
+});
+
 
 el("content").innerHTML=`
+
 <div class="card">
+
 <h2>Formazione</h2>
 
-<select id="day" onchange="updateLineupDeadline()">
+<select id="day"
+        onchange="updateLineupDeadline()">
+
 ${daysForSelect.map(x=>`
-<option value="${x.matchday_number}"
-${x.matchday_number===currentDay?"selected":""}>
+
+<option
+value="${x.matchday_number}"
+${x.matchday_number===currentDay?"selected":""}
+>
+
 Giornata ${x.matchday_number}
 ${x.matchday_number===currentDay?" · ATTUALE":""}
+
 </option>
+
 `).join("")}
+
 </select>
 
+
 <div id="deadlineBox" class="card">
-  <b>Deadline formazione:</b>
-  <span id="deadlineText">—</span>
-  <div id="countdown" style="font-size:22px;margin-top:8px"></div>
+
+<b>Deadline formazione:</b>
+
+<span id="deadlineText">—</span>
+
+<div
+id="countdown"
+style="font-size:22px;margin-top:8px">
 </div>
 
+</div>
+
+
 <div id="lp">
+
 ${(r.data||[]).map(x=>`
+
 <div class="card">
+
 <b>${x.players.name}</b>
  · ${x.players.position}
 
-<select data-p="${x.player_id}" data-pos="${x.players.position}">
-<option value="out">Fuori</option>
-<option value="starter">Titolare · 100%</option>
-<option value="sixth">Sesto uomo · 100%</option>
-<option value="bench">Panchina · 50%</option>
+<select
+data-p="${x.player_id}"
+data-pos="${x.players.position}">
+
+<option value="out">
+Fuori
+</option>
+
+<option value="starter">
+Titolare · 100%
+</option>
+
+<option value="sixth">
+Sesto uomo · 100%
+</option>
+
+<option value="bench">
+Panchina · 50%
+</option>
+
 </select>
 
+
 <label>
-<input type="checkbox"
-       data-captain="${x.player_id}"
-       onchange="checkCaptain(this)">
+
+<input
+type="checkbox"
+data-captain="${x.player_id}"
+onchange="checkCaptain(this)">
+
  Capitano
+
 </label>
 
 </div>
+
 `).join("")}
+
 </div>
 
-<div id="lineupStatus" class="muted"></div>
 
-<button id="saveLineupBtn" onclick="saveLineup()">
+<div id="lineupStatus"
+class="muted">
+</div>
+
+
+<button
+id="saveLineupBtn"
+onclick="saveLineup()">
+
 Salva formazione
+
 </button>
 
+
 <p class="muted">
+
 5 titolari: 2G + 2A + 1C ·
 1 sesto uomo ·
 4 panchinari 50% ·
 3 fuori ·
 1 capitano.
+
 </p>
+
 </div>
+
 `;
+
+
+/* Costruisce la mappa delle deadline */
 
 window.lineupDeadlines={};
 
 daysForSelect.forEach(x=>{
-  window.lineupDeadlines[x.matchday_number]=x.deadline;
+
+  window.lineupDeadlines[
+    x.matchday_number
+  ]=x.deadline;
+
 });
 
+
+/* Aggiorna subito deadline e countdown */
+
 updateLineupDeadline();
+
 }
 async function updateLineupDeadline(){
 
