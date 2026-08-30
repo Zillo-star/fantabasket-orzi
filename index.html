@@ -30,28 +30,25 @@ function filter(){let q=el("q").value.toLowerCase();render(pc.filter(p=>(p.name+
 async function roster(){let r=await db.from("rosters").select("purchase_price,players(name,position,is_foreign,real_teams(name))").eq("manager_id",me.id).eq("active",true);el("content").innerHTML=`<div class="card"><h2>Rosa</h2><p>${(r.data||[]).length}/13 giocatori</p>${(r.data||[]).map(x=>`<p>${x.players.name} · ${x.players.position} · ${x.players.real_teams?.name||""}${x.players.is_foreign?" · STRANIERO":""}</p>`).join("")||"<p class='muted'>Rosa non ancora caricata.</p>"}</div>`}
 async function lineup(){
 
-let m=await db.from("matchdays")
-.select("*")
-.order("number");
+let m=await db.from("league_matches")
+.select("matchday_number,deadline")
+.order("matchday_number");
 
 let r=await db.from("rosters")
 .select("player_id,players(name,position)")
 .eq("manager_id",me.id)
 .eq("active",true);
 
+if(m.error)return message(m.error.message,"err");
 if(r.error)return message(r.error.message,"err");
 
-let deadlines=await db.from("league_matches")
-.select("matchday_number,deadline")
-.order("matchday_number");
+let days=[];
+let seen={};
 
-if(deadlines.error)return message(deadlines.error.message,"err");
-
-let deadlineMap={};
-
-(deadlines.data||[]).forEach(x=>{
-  if(deadlineMap[x.matchday_number]===undefined){
-    deadlineMap[x.matchday_number]=x.deadline;
+(m.data||[]).forEach(x=>{
+  if(!seen[x.matchday_number]){
+    seen[x.matchday_number]=true;
+    days.push(x);
   }
 });
 
@@ -60,9 +57,9 @@ el("content").innerHTML=`
 <h2>Formazione</h2>
 
 <select id="day" onchange="updateLineupDeadline()">
-${(m.data||[]).map(x=>`
-<option value="${x.id}" data-number="${x.number}">
-Giornata ${x.number}
+${days.map(x=>`
+<option value="${x.matchday_number}" data-number="${x.matchday_number}">
+Giornata ${x.matchday_number}
 </option>
 `).join("")}
 </select>
@@ -108,7 +105,11 @@ ${(r.data||[]).map(x=>`
 </p>
 </div>`;
 
-window.lineupDeadlines=deadlineMap;
+window.lineupDeadlines={};
+
+days.forEach(x=>{
+  window.lineupDeadlines[x.matchday_number]=x.deadline;
+});
 
 updateLineupDeadline();
 }
