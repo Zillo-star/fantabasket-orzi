@@ -550,7 +550,7 @@ return message(p.error.message,"err");
 
 let coaches=await db.from("real_teams")
 .select("id,name,coach")
-.order("team");
+.order("name");
 
 if(coaches.error)
 return message(coaches.error.message,"err");
@@ -571,11 +571,13 @@ let html=`
 <label>Fantallenatore</label>
 
 <select id="cm">
+
 ${(m.data||[]).map(x=>
 `<option value="${x.id}">
 ${x.name} · ${x.credits} crediti
 </option>`
 ).join("")}
+
 </select>
 
 <label>Allenatore</label>
@@ -584,7 +586,7 @@ ${x.name} · ${x.credits} crediti
 
 ${(coaches.data||[]).map(x=>
 `<option value="${x.id}">
-${x.coach||"Allenatore non definito"} · ${x.team}
+${x.coach||"Allenatore non definito"} · ${x.name}
 </option>`
 ).join("")}
 
@@ -592,7 +594,8 @@ ${x.coach||"Allenatore non definito"} · ${x.team}
 
 <label>Prezzo asta</label>
 
-<input id="cprice"
+<input
+id="cprice"
 type="number"
 min="1"
 placeholder="Crediti">
