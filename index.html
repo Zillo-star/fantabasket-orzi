@@ -56,7 +56,7 @@ el("content").innerHTML=`
 ${
 c.data
 ?
-`<p>👨‍🏫 ${c.data.real_teams?.coach||"—"} · ${c.data.real_teams?.team||""} · ${c.data.purchase_price} crediti</p>`
+`<p>👨‍🏫 ${c.data.real_teams?.coach||"—"} · ${c.data.real_teams?.name||""} · ${c.data.purchase_price} crediti</p>`
 :
 `<p class="muted">Allenatore non ancora assegnato.</p>`
 }
@@ -627,7 +627,7 @@ coach
 `
 <p>
 <b>${coach.real_teams?.coach||"—"}</b>
- · ${coach.real_teams?.team||""}
+ · ${coach.real_teams?.name||""}
  · ${coach.purchase_price} crediti
 
 <button
