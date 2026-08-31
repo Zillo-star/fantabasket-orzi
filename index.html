@@ -304,7 +304,7 @@ async function players(){
 
       <label>Ruolo</label>
 
-      <select id="roleFilter" onchange="filterPlayers()">
+      <select id="roleFilter" onchange="filterPlayers()" onclick="event.stopPropagation()">
         <option value="">Tutti i ruoli</option>
         <option value="G">Guardie</option>
         <option value="A">Ali</option>
@@ -327,7 +327,7 @@ async function players(){
 
       <label>Straniero</label>
 
-      <select id="foreignFilter" onchange="filterPlayers()">
+    <select id="foreignFilter" onchange="filterPlayers()" onclick="event.stopPropagation()">
         <option value="">Tutti</option>
         <option value="yes">Stranieri</option>
         <option value="no">Italiani</option>
