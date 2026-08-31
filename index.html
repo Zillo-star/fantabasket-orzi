@@ -313,7 +313,7 @@ async function players(){
 
       <label>Squadra</label>
 
-      <select id="teamFilter" onchange="filterPlayers()">
+    <select id="teamFilter" onchange="filterPlayers()" onclick="event.stopPropagation()">
 
         <option value="">Tutte le squadre</option>
 
