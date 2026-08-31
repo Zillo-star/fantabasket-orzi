@@ -289,7 +289,6 @@ function filterPlayers(){
   renderPlayers(filtered);
 
 }
-function filter(){let q=el("q").value.toLowerCase();render(pc.filter(p=>(p.name+" "+(p.real_teams?.name||"")).toLowerCase().includes(q)))}
 async function roster(){
 
 let r=await db.from("rosters")
