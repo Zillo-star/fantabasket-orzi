@@ -97,67 +97,188 @@ scambi, punteggi e classifica.
 }
 async function players(){
 
-let r=await db.from("players")
-.select("id,name,position,is_foreign,real_teams(name)")
-.order("name");
+  let r=await db.from("players")
+    .select("id,name,position,is_foreign,real_teams(id,name,coach)")
+    .order("name");
 
-if(r.error)
-return message(r.error.message,"err");
+  if(r.error)
+    return message(r.error.message,"err");
 
-let c=await db.from("real_teams")
-.select("id,name,coach")
-.order("name");
+  let c=await db.from("real_teams")
+    .select("id,name,coach")
+    .not("coach","is",null)
+    .order("name");
 
-if(c.error)
-return message(c.error.message,"err");
+  if(c.error)
+    return message(c.error.message,"err");
 
-el("content").innerHTML=`
+  window.pc=r.data||[];
+  window.realTeams=c.data||[];
 
-<div class="card">
+  el("content").innerHTML=`
 
-<h2>Listone · ${(r.data||[]).length} giocatori</h2>
+    <div class="card">
 
-<input
-id="q"
-placeholder="Cerca giocatore o squadra..."
-oninput="filter()">
+      <h2>Listone · ${window.pc.length} giocatori</h2>
 
-<div id="pt"></div>
+      <label>Cerca giocatore</label>
 
-</div>
+      <input
+        id="q"
+        placeholder="Nome giocatore..."
+        oninput="filterPlayers()">
 
-<div class="card">
+      <label>Ruolo</label>
 
-<h2>🧑‍🏫 Allenatori</h2>
+      <select id="roleFilter" onchange="filterPlayers()">
+        <option value="">Tutti i ruoli</option>
+        <option value="G">Guardie</option>
+        <option value="A">Ali</option>
+        <option value="C">Centri</option>
+      </select>
 
-<table>
+      <label>Squadra</label>
 
-<tr>
-<th>Allenatore</th>
-<th>Squadra</th>
-</tr>
+      <select id="teamFilter" onchange="filterPlayers()">
 
-${(c.data||[]).map(x=>`
+        <option value="">Tutte le squadre</option>
 
-<tr>
-<td>${x.coach||"Da definire"}</td>
-<td>${x.name||""}</td>
-</tr>
+        ${window.realTeams.map(t=>`
+          <option value="${t.id}">
+            ${t.name}
+          </option>
+        `).join("")}
 
-`).join("")}
+      </select>
 
-</table>
+      <label>Straniero</label>
 
-</div>
+      <select id="foreignFilter" onchange="filterPlayers()">
+        <option value="">Tutti</option>
+        <option value="yes">Stranieri</option>
+        <option value="no">Italiani</option>
+      </select>
 
-`;
+      <div id="pt"></div>
 
-window.pc=r.data||[];
+    </div>
 
-render(pc);
+
+    <div class="card">
+
+      <h2>🧑‍🏫 Allenatori</h2>
+
+      <table>
+
+        <tr>
+          <th>Allenatore</th>
+          <th>Squadra</th>
+        </tr>
+
+        ${window.realTeams.map(x=>`
+
+          <tr>
+            <td>${x.coach||"Da definire"}</td>
+            <td>${x.name||""}</td>
+          </tr>
+
+        `).join("")}
+
+      </table>
+
+    </div>
+
+  `;
+
+  renderPlayers(window.pc);
 
 }
-function render(a){el("pt").innerHTML=`<table><tr><th>Giocatore</th><th>Ruolo</th><th>Squadra</th><th>Str.</th></tr>${a.map(p=>`<tr><td>${p.name}</td><td>${p.position||"Da definire"}</td><td>${p.real_teams?.name||""}</td><td>${p.is_foreign?"Sì":""}</td></tr>`).join("")}</table>`}
+
+
+function renderPlayers(a){
+
+  el("pt").innerHTML=`
+
+    <p class="muted">
+      ${a.length} giocatori trovati
+    </p>
+
+    <table>
+
+      <tr>
+        <th>Giocatore</th>
+        <th>Ruolo</th>
+        <th>Squadra</th>
+        <th>Str.</th>
+      </tr>
+
+      ${a.map(p=>`
+
+        <tr>
+
+          <td>${p.name}</td>
+
+          <td>
+            ${p.position||"Da definire"}
+          </td>
+
+          <td>
+            ${p.real_teams?.name||"Da definire"}
+          </td>
+
+          <td>
+            ${p.is_foreign?"Sì":""}
+          </td>
+
+        </tr>
+
+      `).join("")}
+
+    </table>
+
+  `;
+
+}
+
+
+function filterPlayers(){
+
+  let q=(el("q")?.value||"").toLowerCase().trim();
+
+  let role=el("roleFilter")?.value||"";
+
+  let team=el("teamFilter")?.value||"";
+
+  let foreign=el("foreignFilter")?.value||"";
+
+  let filtered=window.pc.filter(p=>{
+
+    let name=(p.name||"").toLowerCase();
+
+    let teamName=(p.real_teams?.name||"").toLowerCase();
+
+    if(q && !name.includes(q) && !teamName.includes(q))
+      return false;
+
+    if(role && p.position!==role)
+      return false;
+
+    if(team && String(p.real_teams?.id)!==String(team))
+      return false;
+
+    if(foreign==="yes" && !p.is_foreign)
+      return false;
+
+    if(foreign==="no" && p.is_foreign)
+      return false;
+
+    return true;
+
+  });
+
+  renderPlayers(filtered);
+
+}
 function filter(){let q=el("q").value.toLowerCase();render(pc.filter(p=>(p.name+" "+(p.real_teams?.name||"")).toLowerCase().includes(q)))}
 async function roster(){
 
