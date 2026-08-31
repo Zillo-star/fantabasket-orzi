@@ -304,7 +304,7 @@ async function players(){
 
       <label>Ruolo</label>
 
-      <select id="roleFilter" onchange="filterPlayers()" onclick="event.stopPropagation()">
+      <select id="roleFilter" onclick="event.stopPropagation()">
         <option value="">Tutti i ruoli</option>
         <option value="G">Guardie</option>
         <option value="A">Ali</option>
@@ -313,7 +313,7 @@ async function players(){
 
       <label>Squadra</label>
 
-    <select id="teamFilter" onchange="filterPlayers()" onclick="event.stopPropagation()">
+    <select id="teamFilter" onclick="event.stopPropagation()">
 
         <option value="">Tutte le squadre</option>
 
@@ -327,7 +327,7 @@ async function players(){
 
       <label>Straniero</label>
 
-    <select id="foreignFilter" onchange="filterPlayers()" onclick="event.stopPropagation()">
+    <select id="foreignFilter" onclick="event.stopPropagation()">
         <option value="">Tutti</option>
         <option value="yes">Stranieri</option>
         <option value="no">Italiani</option>
@@ -364,7 +364,12 @@ async function players(){
 
   `;
 
-  renderPlayers(window.pc);
+renderPlayers(window.pc);
+
+el("q").addEventListener("input", filterPlayers);
+el("roleFilter").addEventListener("change", filterPlayers);
+el("teamFilter").addEventListener("change", filterPlayers);
+el("foreignFilter").addEventListener("change", filterPlayers);
 
 }
 
