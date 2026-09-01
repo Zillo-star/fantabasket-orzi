@@ -630,9 +630,9 @@ return message(r.error.message,"err");
 let days=m.data||[];
 
 /*
-  Trova la prima giornata non ancora conclusa.
-  Una giornata è conclusa solo quando tutte
-  le sue partite hanno un risultato.
+Trova la prima giornata non ancora conclusa.
+Una giornata è conclusa solo quando tutte
+le sue partite hanno un risultato.
 */
 
 let matches=await db.from("league_matches")
@@ -645,10 +645,12 @@ let grouped={};
 
 (matches.data||[]).forEach(x=>{
 
-  if(!grouped[x.matchday_number])
-    grouped[x.matchday_number]=[];
+```
+if(!grouped[x.matchday_number])
+  grouped[x.matchday_number]=[];
 
-  grouped[x.matchday_number].push(x);
+grouped[x.matchday_number].push(x);
+```
 
 });
 
@@ -656,183 +658,339 @@ let currentDay=null;
 
 for(let day of days){
 
-  let number=day.number;
-  let dayMatches=grouped[number]||[];
+```
+let number=day.number;
+let dayMatches=grouped[number]||[];
 
-  let completed=
-    dayMatches.length>0 &&
-    dayMatches.every(x=>
-      x.home_score!==null &&
-      x.home_score!==undefined &&
-      x.away_score!==null &&
-      x.away_score!==undefined
-    );
+let completed=
+  dayMatches.length>0 &&
+  dayMatches.every(x=>
+    x.home_score!==null &&
+    x.home_score!==undefined &&
+    x.away_score!==null &&
+    x.away_score!==undefined
+  );
 
-  if(!completed){
+if(!completed){
 
-    currentDay=number;
-    break;
+  currentDay=number;
+  break;
 
-  }
+}
+```
 
 }
 
 if(currentDay===null && days.length){
 
-  currentDay=days[days.length-1].number;
+```
+currentDay=days[days.length-1].number;
+```
 
 }
 
-
 /*
-  Mostriamo solo la giornata attuale
-  e quelle precedenti.
+Mostriamo solo la giornata attuale
+e quelle precedenti.
 */
 
 let currentIndex=
-  days.findIndex(x=>x.number===currentDay);
+days.findIndex(x=>x.number===currentDay);
 
 let availableDays=
-  currentIndex>=0
-  ? days.slice(0,currentIndex+1)
-  : days;
-
-
-el("content").innerHTML=`
-
-<div class="card">
-
-<h2>Formazione</h2>
-
-<select id="day"
-        onchange="updateLineupDeadline()">
-
-${availableDays.map(x=>`
-
-<option
-value="${x.id}"
-data-number="${x.number}"
-${x.number===currentDay?"selected":""}>
-
-Giornata ${x.number}
-${x.number===currentDay?" · ATTUALE":""}
-
-</option>
-
-`).join("")}
-
-</select>
-
-
-<div id="deadlineBox" class="card">
-
-<b>Deadline formazione:</b>
-
-<span id="deadlineText">—</span>
-
-<div
-id="countdown"
-style="font-size:22px;margin-top:8px">
-</div>
-
-</div>
-
-
-<div id="lp">
-
-${(r.data||[]).map(x=>`
-
-<div class="card">
-
-<b>${x.players.name}</b>
- · ${x.players.position}
-
-<select
-data-p="${x.player_id}"
-data-pos="${x.players.position}">
-
-<option value="out">
-Fuori
-</option>
-
-<option value="starter">
-Titolare · 100%
-</option>
-
-<option value="sixth">
-Sesto uomo · 100%
-</option>
-
-<option value="bench">
-Panchina · 50%
-</option>
-
-</select>
-
-
-<label>
-
-<input
-type="checkbox"
-data-captain="${x.player_id}"
-onchange="checkCaptain(this)">
-
- Capitano
-
-</label>
-
-</div>
-
-`).join("")}
-
-</div>
-
-
-<div id="lineupStatus"
-class="muted">
-</div>
-
-
-<button
-id="saveLineupBtn"
-onclick="saveLineup()">
-
-Salva formazione
-
-</button>
-
-
-<p class="muted">
-
-5 titolari: 2G + 2A + 1C ·
-1 sesto uomo ·
-4 panchinari 50% ·
-3 fuori ·
-1 capitano.
-
-</p>
-
-</div>
-
-`;
-
+currentIndex>=0
+? days.slice(0,currentIndex+1)
+: days;
 
 /*
-  La deadline viene presa direttamente
-  da matchdays.
+Deadline disponibili globalmente.
 */
 
 window.lineupDeadlines={};
 
 availableDays.forEach(x=>{
 
-  window.lineupDeadlines[x.number]=
-    x.lineup_deadline;
+```
+window.lineupDeadlines[x.number]=
+  x.lineup_deadline;
+```
 
 });
 
+/*
+Costruisce la pagina.
+*/
+
+el("content").innerHTML=`
+
+  <div class="card">
+
+```
+<h2>Formazione</h2>
+
+<select id="day"
+        onchange="loadSavedLineup()">
+
+  ${availableDays.map(x=>`
+
+    <option
+      value="${x.id}"
+      data-number="${x.number}"
+      ${x.number===currentDay?"selected":""}>
+
+      Giornata ${x.number}
+      ${x.number===currentDay?" · ATTUALE":""}
+
+    </option>
+
+  `).join("")}
+
+</select>
+
+
+<div id="deadlineBox" class="card">
+
+  <b>Deadline formazione:</b>
+
+  <span id="deadlineText">—</span>
+
+  <div
+    id="countdown"
+    style="font-size:22px;margin-top:8px">
+  </div>
+
+</div>
+
+
+<div id="lp">
+
+  ${(r.data||[]).map(x=>`
+
+    <div class="card">
+
+      <b>${x.players.name}</b>
+      · ${x.players.position}
+
+      <select
+        data-p="${x.player_id}"
+        data-pos="${x.players.position}">
+
+        <option value="out">
+          Fuori
+        </option>
+
+        <option value="starter">
+          Titolare · 100%
+        </option>
+
+        <option value="sixth">
+          Sesto uomo · 100%
+        </option>
+
+        <option value="bench">
+          Panchina · 50%
+        </option>
+
+      </select>
+
+
+      <label>
+
+        <input
+          type="checkbox"
+          data-captain="${x.player_id}"
+          onchange="checkCaptain(this)">
+
+        Capitano
+
+      </label>
+
+    </div>
+
+  `).join("")}
+
+</div>
+
+
+<div id="lineupStatus"
+     class="muted">
+</div>
+
+
+<button
+  id="saveLineupBtn"
+  onclick="saveLineup()">
+
+  Salva formazione
+
+</button>
+
+
+<p class="muted">
+
+  5 titolari: 2G + 2A + 1C ·
+  1 sesto uomo ·
+  4 panchinari 50% ·
+  3 fuori ·
+  1 capitano.
+
+</p>
+```
+
+  </div>
+
+`;
+
+/*
+Carica subito la formazione della giornata attuale.
+*/
+
+await loadSavedLineup();
+
+}
+
+/*
+Carica la formazione già salvata
+per la giornata selezionata.
+*/
+
+async function loadSavedLineup(){
+
+let selected=el("day").options[el("day").selectedIndex];
+
+if(!selected)
+return;
+
+let matchdayId=selected.value;
+let matchdayNumber=Number(selected.dataset.number);
+
+/*
+Aggiorna deadline e countdown.
+*/
 
 updateLineupDeadline();
+
+/*
+Cerca la formazione del fantallenatore
+per questa specifica giornata.
+*/
+
+let x=await db.from("lineups")
+.select("id")
+.eq("manager_id",me.id)
+.eq("matchday_id",matchdayId)
+.maybeSingle();
+
+if(x.error)
+return message(x.error.message,"err");
+
+/*
+Prima azzeriamo tutto.
+*/
+
+document.querySelectorAll("#lp select[data-p]")
+.forEach(s=>s.value="out");
+
+document.querySelectorAll("#lp input[data-captain]")
+.forEach(c=>c.checked=false);
+
+/*
+Se non esiste ancora una formazione,
+lasciamo tutto su Fuori e nessun capitano.
+*/
+
+if(!x.data){
+
+```
+let status=el("lineupStatus");
+
+if(status)
+  status.textContent="Nessuna formazione salvata per questa giornata.";
+
+updateLineupEditability();
+
+return;
+```
+
+}
+
+/*
+Carica i giocatori della formazione.
+*/
+
+let lp=await db.from("lineup_players")
+.select("player_id,role,captain")
+.eq("lineup_id",x.data.id);
+
+if(lp.error)
+return message(lp.error.message,"err");
+
+/*
+Applica ruolo e capitano alla UI.
+*/
+
+(lp.data||[]).forEach(p=>{
+
+```
+let select=document.querySelector(
+  `#lp select[data-p="${p.player_id}"]`
+);
+
+if(select)
+  select.value=p.role;
+
+let captain=document.querySelector(
+  `#lp input[data-captain="${p.player_id}"]`
+);
+
+if(captain)
+  captain.checked=!!p.captain;
+```
+
+});
+
+let status=el("lineupStatus");
+
+if(status)
+status.textContent="Formazione salvata.";
+
+updateLineupEditability();
+
+}
+
+/*
+Blocca/sblocca la modifica in base alla deadline.
+*/
+
+function updateLineupEditability(){
+
+let selected=el("day")?.options[el("day")?.selectedIndex];
+
+if(!selected)
+return;
+
+let matchdayNumber=Number(selected.dataset.number);
+let deadline=window.lineupDeadlines?.[matchdayNumber];
+
+if(!deadline)
+return;
+
+let locked=new Date()>=new Date(deadline);
+
+document.querySelectorAll("#lp select, #lp input")
+.forEach(x=>{
+x.disabled=locked;
+});
+
+let save=el("saveLineupBtn");
+
+if(save)
+save.disabled=locked;
+
+let status=el("lineupStatus");
+
+if(status && locked)
+status.textContent="🔒 Formazione chiusa";
 
 }
 function updateLineupDeadline(){
