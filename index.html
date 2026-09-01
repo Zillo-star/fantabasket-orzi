@@ -2591,7 +2591,137 @@ let awayManagerSmall=
   el("content").innerHTML=html;
 
 }
-async function standings(){let r=await db.from("league_matches").select("*,home:home_manager_id(name),away:away_manager_id(name)"),a={};(r.data||[]).forEach(x=>{a[x.home_manager_id]??={n:x.home.name,p:0};a[x.away_manager_id]??={n:x.away.name,p:0};a[x.home_manager_id].p+=x.home_points;a[x.away_manager_id].p+=x.away_points});let rows=Object.values(a).sort((x,y)=>y.p-x.p);el("content").innerHTML=`<div class="card"><h2>Classifica</h2><table><tr><th>#</th><th>Fantallenatore</th><th>Punti</th></tr>${rows.map((x,i)=>`<tr><td>${i+1}</td><td>${x.n}</td><td>${x.p}</td></tr>`).join("")}</table><p class="muted">Spareggi: scontri diretti → punteggi nelle singole giornate → punteggi negli scontri diretti.</p></div>`}
+async function standings(){
+
+  let r=await db
+    .from("league_matches")
+    .select(`
+      *,
+      home:home_manager_id(
+        id,
+        name,
+        team_name
+      ),
+      away:away_manager_id(
+        id,
+        name,
+        team_name
+      )
+    `);
+
+  if(r.error)
+    return message(
+      r.error.message,
+      "err"
+    );
+
+  let a={};
+
+  (r.data||[]).forEach(x=>{
+
+    if(!a[x.home_manager_id]){
+
+      a[x.home_manager_id]={
+        teamName:
+          x.home?.team_name ||
+          x.home?.name ||
+          "—",
+
+        managerName:
+          x.home?.name ||
+          "—",
+
+        p:0
+      };
+
+    }
+
+    if(!a[x.away_manager_id]){
+
+      a[x.away_manager_id]={
+        teamName:
+          x.away?.team_name ||
+          x.away?.name ||
+          "—",
+
+        managerName:
+          x.away?.name ||
+          "—",
+
+        p:0
+      };
+
+    }
+
+    a[x.home_manager_id].p+=
+      Number(x.home_points||0);
+
+    a[x.away_manager_id].p+=
+      Number(x.away_points||0);
+
+  });
+
+  let rows=
+    Object.values(a)
+      .sort((x,y)=>y.p-x.p);
+
+  el("content").innerHTML=`
+
+    <div class="card">
+
+      <h2>Classifica</h2>
+
+      <table>
+
+        <tr>
+          <th>#</th>
+          <th>Squadra</th>
+          <th>Punti</th>
+        </tr>
+
+        ${rows.map((x,i)=>`
+
+          <tr>
+
+            <td>
+              ${i+1}
+            </td>
+
+            <td>
+
+              <b>
+                ${x.teamName}
+              </b>
+
+              <br>
+
+              <small class="muted">
+                ${x.managerName}
+              </small>
+
+            </td>
+
+            <td>
+              <b>
+                ${x.p}
+              </b>
+            </td>
+
+          </tr>
+
+        `).join("")}
+
+      </table>
+
+      <p class="muted">
+        Spareggi: scontri diretti → punteggi nelle singole giornate → punteggi negli scontri diretti.
+      </p>
+
+    </div>
+
+  `;
+
+}
 async function admin(){
 if(!me.is_admin)return;
 
