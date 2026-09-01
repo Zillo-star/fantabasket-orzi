@@ -1532,6 +1532,202 @@ if(!matchdayId)
   await loadSavedLineup();
 
 }
+async function trades(){
+
+  // Recupera le proposte
+  let r=await db
+    .from("trades")
+    .select(`
+      *,
+      proposer:proposer_id(name),
+      receiver:receiver_id(name),
+      offered_player:offered_player_id(name),
+      requested_player:requested_player_id(name)
+    `)
+    .or(`proposer_id.eq.${me.id},receiver_id.eq.${me.id}`)
+    .order("created_at",{ascending:false});
+
+  // Recupera gli altri fantallenatori
+  let m=await db
+    .from("managers")
+    .select("id,name")
+    .neq("id",me.id)
+    .order("name");
+
+  if(r.error)
+    return message(r.error.message,"err");
+
+  if(m.error)
+    return message(m.error.message,"err");
+
+
+  el("content").innerHTML=`
+
+    <div class="grid">
+
+      <!-- NUOVA PROPOSTA -->
+
+      <div class="card">
+
+        <h2>Nuova proposta</h2>
+
+        <label>Fantallenatore</label>
+
+        <select id="tradeReceiver"
+                onchange="loadTradePlayers()">
+
+          <option value="">
+            Seleziona fantallenatore
+          </option>
+
+          ${(m.data||[]).map(x=>`
+
+            <option value="${x.id}">
+              ${x.name}
+            </option>
+
+          `).join("")}
+
+        </select>
+
+
+        <br><br>
+
+
+        <label>Il tuo giocatore</label>
+
+        <select id="tradeOffered">
+
+          <option value="">
+            Seleziona il giocatore che offri
+          </option>
+
+        </select>
+
+
+        <br><br>
+
+
+        <label>Giocatore che vuoi ricevere</label>
+
+        <select id="tradeRequested">
+
+          <option value="">
+            Seleziona prima il fantallenatore
+          </option>
+
+        </select>
+
+
+        <br><br>
+
+
+        <button onclick="trade()">
+          Invia proposta
+        </button>
+
+        <p class="muted">
+          Gli scambi sono illimitati durante il campionato.
+        </p>
+
+      </div>
+
+
+      <!-- PROPOSTE -->
+
+      <div class="card">
+
+        <h2>Proposte</h2>
+
+        ${
+          (r.data||[]).map(x=>{
+
+            let isReceiver=
+              x.receiver_id===me.id;
+
+            let isProposer=
+              x.proposer_id===me.id;
+
+            return `
+
+              <div class="card">
+
+                <b>
+                  ${x.proposer?.name||"?"}
+                  →
+                  ${x.receiver?.name||"?"}
+                </b>
+
+                <br><br>
+
+                ${
+                  x.offered_player
+                    ? `Cede:
+                       <b>${x.offered_player.name}</b>`
+                    : ""
+                }
+
+                ${
+                  x.requested_player
+                    ? `<br>
+                       Riceve:
+                       <b>${x.requested_player.name}</b>`
+                    : ""
+                }
+
+                <br><br>
+
+                <b>Stato:</b>
+                ${x.status}
+
+                ${
+                  isReceiver &&
+                  x.status==="pending"
+
+                  ? `
+
+                    <br><br>
+
+                    <button
+                      onclick="accept('${x.id}')">
+
+                      ✅ Accetta
+
+                    </button>
+
+                    <button
+                      onclick="reject('${x.id}')">
+
+                      ❌ Rifiuta
+
+                    </button>
+
+                  `
+
+                  : ""
+                }
+
+              </div>
+
+            `;
+
+          }).join("")
+
+          || "Nessuna proposta."
+
+        }
+
+      </div>
+
+    </div>
+
+  `;
+
+
+  // Carica subito i giocatori del fantallenatore corrente
+  await loadTradePlayers();
+
+}
 async function loadTradePlayers(){
 
   let receiverId=
