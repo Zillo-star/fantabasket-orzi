@@ -630,55 +630,23 @@ async function lineup(){
   let days=m.data||[];
 
   /*
-    Recupera tutte le partite.
-  */
-
-  let matches=await db.from("league_matches")
-    .select("matchday_number,home_score,away_score");
-
-  if(matches.error)
-    return message(matches.error.message,"err");
-
-  let grouped={};
-
-  (matches.data||[]).forEach(x=>{
-
-    if(!grouped[x.matchday_number])
-      grouped[x.matchday_number]=[];
-
-    grouped[x.matchday_number].push(x);
-
-  });
-
-  /*
-    Trova la PRIMA giornata che non è completamente conclusa.
+    Trova la prima giornata non ancora conclusa.
 
     IMPORTANTE:
-    una giornata viene considerata conclusa solo se:
-    - esistono le sue partite
-    - tutte le partite hanno entrambi i punteggi
+    NON usiamo i punteggi di league_matches,
+    perché nel database sono già presenti.
+
+    Lo stato della giornata viene determinato
+    dal campo "status" di matchdays.
   */
 
   let currentDay=null;
 
   for(let day of days){
 
-    let number=day.number;
-    let dayMatches=grouped[number]||[];
+    if(day.status!=="completed"){
 
-    if(dayMatches.length===0)
-      continue;
-
-    let completed=dayMatches.every(x=>
-      x.home_score!==null &&
-      x.home_score!==undefined &&
-      x.away_score!==null &&
-      x.away_score!==undefined
-    );
-
-    if(!completed){
-
-      currentDay=number;
+      currentDay=day.number;
       break;
 
     }
@@ -686,32 +654,21 @@ async function lineup(){
   }
 
   /*
-    Se non troviamo una giornata aperta,
-    NON vogliamo automaticamente considerare la 34ª
-    come giornata corrente.
-    
-    In questo caso mostriamo l'ultima giornata realmente
-    presente nel calendario.
+    Se tutte le giornate sono concluse,
+    non esiste una giornata corrente.
   */
 
   if(currentDay===null){
 
-    let daysWithMatches=days.filter(day=>
-      (grouped[day.number]||[]).length>0
-    );
-
-    if(daysWithMatches.length){
-
-      currentDay=
-        daysWithMatches[daysWithMatches.length-1].number;
-
-    }
+    currentDay=null;
 
   }
 
   /*
-    Mostra SOLO le giornate precedenti + quella corrente.
-    Le giornate future NON vengono rese selezionabili.
+    Mostra solamente le giornate precedenti
+    e quella corrente.
+
+    Le giornate future NON vengono mostrate.
   */
 
   let currentIndex=
@@ -736,9 +693,7 @@ async function lineup(){
   });
 
   /*
-    Salva anche quale è la giornata corrente.
-    Questo ci servirà per impedire qualsiasi modifica
-    alle giornate future.
+    Salva la giornata corrente.
   */
 
   window.currentLineupDay=currentDay;
