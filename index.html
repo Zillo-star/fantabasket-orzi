@@ -1439,157 +1439,518 @@ async function trade(){let x=await db.from("trades").insert({proposer_id:me.id,r
 async function accept(id){let x=await db.from("trades").update({status:"accepted",responded_at:new Date().toISOString()}).eq("id",id);if(x.error)return message(x.error.message,"err");trades()}
 async function calendar(){
 
-let r=await db.from("league_matches")
-.select(`
-  id,
-  matchday_number,
-  home_manager_id,
-  away_manager_id,
-  home_score,
-  away_score
-`)
-.order("matchday_number")
-.order("id");
+  let r=await db.from("league_matches")
+    .select(`
+      id,
+      matchday_number,
+      home_manager_id,
+      away_manager_id,
+      home_score,
+      away_score
+    `)
+    .order("matchday_number")
+    .order("id");
 
-if(r.error)
-return message(r.error.message,"err");
+  if(r.error)
+    return message(r.error.message,"err");
 
-let matches=r.data||[];
+  let matches=r.data||[];
 
-let managerIds=[
-  ...new Set(
-    matches.flatMap(x=>[
-      x.home_manager_id,
-      x.away_manager_id
-    ])
-  )
-];
+  let managerIds=[
+    ...new Set(
+      matches.flatMap(x=>[
+        x.home_manager_id,
+        x.away_manager_id
+      ])
+    )
+  ];
 
-let managers={};
+  let managers={};
 
-if(managerIds.length){
+  if(managerIds.length){
 
-let m=await db.from("managers")
-.select("id,name,team_name")
-.in("id",managerIds);
+    let m=await db.from("managers")
+      .select("id,name,team_name")
+      .in("id",managerIds);
 
-if(m.error)
-return message(m.error.message,"err");
+    if(m.error)
+      return message(m.error.message,"err");
 
-(m.data||[]).forEach(x=>{
-  managers[x.id]=x;
-});
+    (m.data||[]).forEach(x=>{
+      managers[x.id]=x;
+    });
 
-}
+  }
 
-let days={};
+  /*
+    Recuperiamo gli ID delle giornate.
+    Sono UUID e NON i numeri 1, 2, 3...
+  */
 
-matches.forEach(x=>{
+  let matchdayNumbers=[
+    ...new Set(matches.map(x=>x.matchday_number))
+  ];
 
-  if(!days[x.matchday_number])
-    days[x.matchday_number]=[];
+  let md=await db.from("matchdays")
+    .select("id,number")
+    .in("number",matchdayNumbers);
 
-  days[x.matchday_number].push(x);
+  if(md.error)
+    return message(md.error.message,"err");
 
-});
+  let matchdays={};
+  let matchdayIds=[];
 
-let html=`
+  (md.data||[]).forEach(x=>{
+    matchdays[x.number]=x.id;
+    matchdayIds.push(x.id);
+  });
 
-<div class="card">
+  /*
+    Recuperiamo tutte le formazioni delle giornate presenti
+    nel calendario.
+  */
 
-<h2>Calendario</h2>
+  let lineups=[];
 
-<p class="muted">
-Calendario completo del campionato
-</p>
+  if(managerIds.length && matchdayIds.length){
 
-</div>
+    let l=await db.from("lineups")
+      .select("id,manager_id,matchday_id")
+      .in("manager_id",managerIds)
+      .in("matchday_id",matchdayIds);
 
-`;
+    if(l.error)
+      return message(l.error.message,"err");
 
-Object.keys(days)
-.sort((a,b)=>Number(a)-Number(b))
-.forEach(day=>{
+    lineups=l.data||[];
 
-html+=`
+  }
 
-<div class="card">
+  /*
+    Mappa:
+    manager + giornata -> lineup
+  */
 
-<h2>Giornata ${day}</h2>
+  let lineupMap={};
 
-<table>
+  lineups.forEach(l=>{
+    lineupMap[
+      l.manager_id+"_"+l.matchday_id
+    ]=l;
+  });
 
-<tr>
-<th>Casa</th>
-<th></th>
-<th>Trasferta</th>
-</tr>
+  /*
+    Recuperiamo i giocatori presenti nelle formazioni.
+  */
 
-`;
+  let lineupIds=lineups.map(x=>x.id);
 
-days[day].forEach(x=>{
+  let lineupPlayers=[];
 
-let homeManager=managers[x.home_manager_id];
-let awayManager=managers[x.away_manager_id];
+  if(lineupIds.length){
 
-let homeName=
-homeManager?.team_name ||
-(homeManager?.name==="Zillo" ? "Zillovic" : homeManager?.name) ||
-"—";
+    let lp=await db.from("lineup_players")
+      .select(`
+        lineup_id,
+        player_id,
+        role,
+        captain
+      `)
+      .in("lineup_id",lineupIds);
 
-let awayName=
-awayManager?.team_name ||
-(awayManager?.name==="Zillo" ? "Zillovic" : awayManager?.name) ||
-"—";
+    if(lp.error)
+      return message(lp.error.message,"err");
 
-let score="";
+    lineupPlayers=lp.data||[];
 
-if(
-  x.home_score!==null &&
-  x.home_score!==undefined &&
-  x.away_score!==null &&
-  x.away_score!==undefined
-){
+  }
 
-score=`
-<b>${x.home_score} - ${x.away_score}</b>
-`;
+  /*
+    Recuperiamo i dati dei giocatori.
+  */
 
-}
+  let playerIds=[
+    ...new Set(lineupPlayers.map(x=>x.player_id))
+  ];
 
-html+=`
+  let players={};
 
-<tr>
+  if(playerIds.length){
 
-<td>
-<b>${homeName}</b>
-</td>
+    let p=await db.from("players")
+      .select("id,name,position")
+      .in("id",playerIds);
 
-<td>
-${score||"vs"}
-</td>
+    if(p.error)
+      return message(p.error.message,"err");
 
-<td>
-<b>${awayName}</b>
-</td>
+    (p.data||[]).forEach(x=>{
+      players[x.id]=x;
+    });
 
-</tr>
+  }
 
-`;
+  /*
+    Recuperiamo anche i punteggi fantasy, quando disponibili.
+  */
 
-});
+  let fantasyScores=[];
 
-html+=`
+  if(managerIds.length && matchdayIds.length){
 
-</table>
+    let fs=await db.from("fantasy_scores")
+      .select(`
+        manager_id,
+        matchday_id,
+        player_id,
+        final_score
+      `)
+      .in("manager_id",managerIds)
+      .in("matchday_id",matchdayIds);
 
-</div>
+    if(fs.error)
+      return message(fs.error.message,"err");
 
-`;
+    fantasyScores=fs.data||[];
 
-});
+  }
 
-el("content").innerHTML=html;
+  let scoreMap={};
+
+  fantasyScores.forEach(x=>{
+
+    scoreMap[
+      x.manager_id+"_"+x.matchday_id+"_"+x.player_id
+    ]=x.final_score;
+
+  });
+
+  /*
+    Funzione che costruisce la formazione di un fantallenatore.
+  */
+
+  function renderLineup(managerId,dayNumber){
+
+    let matchdayId=matchdays[dayNumber];
+
+    if(!matchdayId)
+      return `<p class="muted">Giornata non trovata.</p>`;
+
+    let lineup=
+      lineupMap[managerId+"_"+matchdayId];
+
+    if(!lineup){
+
+      return `
+        <div class="muted">
+          Nessuna formazione salvata.
+        </div>
+      `;
+
+    }
+
+    let lp=lineupPlayers
+      .filter(x=>x.lineup_id===lineup.id);
+
+    if(!lp.length){
+
+      return `
+        <div class="muted">
+          Formazione vuota.
+        </div>
+      `;
+
+    }
+
+    let starters=[];
+    let sixth=[];
+    let bench=[];
+    let out=[];
+
+    lp.forEach(x=>{
+
+      let player=players[x.player_id];
+
+      if(!player)
+        return;
+
+      let item={
+        ...x,
+        player
+      };
+
+      if(x.role==="starter")
+        starters.push(item);
+      else if(x.role==="sixth")
+        sixth.push(item);
+      else if(x.role==="bench")
+        bench.push(item);
+      else
+        out.push(item);
+
+    });
+
+    function playerRow(x){
+
+      let score=
+        scoreMap[
+          managerId+"_"+matchdayId+"_"+x.player_id
+        ];
+
+      let captain=
+        x.captain
+          ? ` 👑`
+          : "";
+
+      let scoreText=
+        score!==undefined && score!==null
+          ? `<span class="muted">${score}</span>`
+          : "";
+
+      return `
+        <div style="
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          padding:6px 0;
+          border-bottom:1px solid rgba(255,255,255,.08);
+        ">
+          <span>
+            <b>${x.player.name}</b>
+            ${captain}
+            <small class="muted">
+              ${x.player.position||""}
+            </small>
+          </span>
+          <span>
+            ${scoreText}
+          </span>
+        </div>
+      `;
+
+    }
+
+    let html="";
+
+    if(starters.length){
+
+      html+=`
+        <div style="margin-top:10px;">
+          <b>🏀 Titolari</b>
+          ${starters.map(playerRow).join("")}
+        </div>
+      `;
+
+    }
+
+    if(sixth.length){
+
+      html+=`
+        <div style="margin-top:12px;">
+          <b>6️⃣ Sesto uomo</b>
+          ${sixth.map(playerRow).join("")}
+        </div>
+      `;
+
+    }
+
+    if(bench.length){
+
+      html+=`
+        <div style="margin-top:12px;">
+          <b>🪑 Panchina</b>
+          ${bench.map(playerRow).join("")}
+        </div>
+      `;
+
+    }
+
+    if(out.length){
+
+      html+=`
+        <div style="margin-top:12px;">
+          <b>❌ Fuori</b>
+          ${out.map(playerRow).join("")}
+        </div>
+      `;
+
+    }
+
+    return html;
+
+  }
+
+  let days={};
+
+  matches.forEach(x=>{
+
+    if(!days[x.matchday_number])
+      days[x.matchday_number]=[];
+
+    days[x.matchday_number].push(x);
+
+  });
+
+  let html=`
+
+    <div class="card">
+
+      <h2>Calendario</h2>
+
+      <p class="muted">
+        Calendario completo del campionato
+      </p>
+
+    </div>
+
+  `;
+
+  Object.keys(days)
+    .sort((a,b)=>Number(a)-Number(b))
+    .forEach(day=>{
+
+      html+=`
+
+        <div class="card">
+
+          <h2>Giornata ${day}</h2>
+
+          <table>
+
+            <tr>
+              <th>Casa</th>
+              <th></th>
+              <th>Trasferta</th>
+            </tr>
+
+      `;
+
+      days[day].forEach(x=>{
+
+        let homeManager=
+          managers[x.home_manager_id];
+
+        let awayManager=
+          managers[x.away_manager_id];
+
+        let homeName=
+          homeManager?.team_name ||
+          (homeManager?.name==="Zillo"
+            ? "Zillovic"
+            : homeManager?.name) ||
+          "—";
+
+        let awayName=
+          awayManager?.team_name ||
+          (awayManager?.name==="Zillo"
+            ? "Zillovic"
+            : awayManager?.name) ||
+          "—";
+
+        let score="";
+
+        if(
+          x.home_score!==null &&
+          x.home_score!==undefined &&
+          x.away_score!==null &&
+          x.away_score!==undefined
+        ){
+
+          score=`
+            <b>${x.home_score} - ${x.away_score}</b>
+          `;
+
+        }
+
+        html+=`
+
+          <tr>
+
+            <td>
+              <b>${homeName}</b>
+            </td>
+
+            <td>
+              ${score||"vs"}
+            </td>
+
+            <td>
+              <b>${awayName}</b>
+            </td>
+
+          </tr>
+
+          <tr>
+
+            <td colspan="3">
+
+              <details>
+
+                <summary style="
+                  cursor:pointer;
+                  padding:8px 0;
+                  font-weight:bold;
+                ">
+                  👀 Vedi formazioni
+                </summary>
+
+                <div style="
+                  display:grid;
+                  grid-template-columns:1fr 1fr;
+                  gap:20px;
+                  margin-top:15px;
+                ">
+
+                  <div>
+
+                    <h3>
+                      ${homeName}
+                    </h3>
+
+                    ${renderLineup(
+                      x.home_manager_id,
+                      x.matchday_number
+                    )}
+
+                  </div>
+
+                  <div>
+
+                    <h3>
+                      ${awayName}
+                    </h3>
+
+                    ${renderLineup(
+                      x.away_manager_id,
+                      x.matchday_number
+                    )}
+
+                  </div>
+
+                </div>
+
+              </details>
+
+            </td>
+
+          </tr>
+
+        `;
+
+      });
+
+      html+=`
+
+          </table>
+
+        </div>
+
+      `;
+
+    });
+
+  el("content").innerHTML=html;
 
 }
 async function standings(){let r=await db.from("league_matches").select("*,home:home_manager_id(name),away:away_manager_id(name)"),a={};(r.data||[]).forEach(x=>{a[x.home_manager_id]??={n:x.home.name,p:0};a[x.away_manager_id]??={n:x.away.name,p:0};a[x.home_manager_id].p+=x.home_points;a[x.away_manager_id].p+=x.away_points});let rows=Object.values(a).sort((x,y)=>y.p-x.p);el("content").innerHTML=`<div class="card"><h2>Classifica</h2><table><tr><th>#</th><th>Fantallenatore</th><th>Punti</th></tr>${rows.map((x,i)=>`<tr><td>${i+1}</td><td>${x.n}</td><td>${x.p}</td></tr>`).join("")}</table><p class="muted">Spareggi: scontri diretti → punteggi nelle singole giornate → punteggi negli scontri diretti.</p></div>`}
