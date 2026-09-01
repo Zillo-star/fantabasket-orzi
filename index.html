@@ -999,17 +999,21 @@ if(x!==box)x.checked=false;
 });
 }
 async function saveLineup(){
-let day=el("day").value;
 
-if(!day)
+let selected=el("day").options[el("day").selectedIndex];
+
+if(!selected)
 return message("Seleziona una giornata.","err");
 
-let selects=[...document.querySelectorAll("#lp select[data-p]")];
-
-if(selects.length!==13)
-return message("La rosa deve avere 13 giocatori.","err");
-let selected=el("day").options[el("day").selectedIndex];
+let matchdayId=selected.value;
 let matchdayNumber=Number(selected.dataset.number);
+
+/*
+Controllo fondamentale:
+matchday_id deve essere un UUID.
+*/
+if(!matchdayId || matchdayId==="1")
+return message("ID giornata non valido.","err");
 
 let deadline=window.lineupDeadlines?.[matchdayNumber];
 
@@ -1017,7 +1021,15 @@ if(!deadline)
 return message("Deadline non disponibile per questa giornata.","err");
 
 if(new Date()>=new Date(deadline))
-return message("La deadline per questa giornata è scaduta. La formazione non può più essere modificata.","err");
+return message(
+"La deadline per questa giornata è scaduta. La formazione non può più essere modificata.",
+"err"
+);
+
+let selects=[...document.querySelectorAll("#lp select[data-p]")];
+
+if(selects.length!==13)
+return message("La rosa deve avere 13 giocatori.","err");
 
 let starters=selects.filter(s=>s.value==="starter");
 let sixth=selects.filter(s=>s.value==="sixth");
@@ -1052,36 +1064,55 @@ return message(
 "err"
 );
 
-let captains=[...document.querySelectorAll('input[data-captain]:checked')];
+let captains=[
+...document.querySelectorAll('input[data-captain]:checked')
+];
 
 if(captains.length!==1)
 return message("Devi scegliere un capitano.","err");
 
 let captainId=captains[0].dataset.captain;
 
+/*
+Cerca la formazione esistente usando l'UUID
+della giornata.
+*/
 let old=await db.from("lineups")
 .select("id")
 .eq("manager_id",me.id)
-.eq("matchday_id",day)
+.eq("matchday_id",matchdayId)
 .maybeSingle();
+
+if(old.error)
+return message(old.error.message,"err");
 
 let lid=old.data?.id;
 
+/*
+Se non esiste, la crea.
+*/
 if(!lid){
+
+```
 let x=await db.from("lineups")
-.insert({
-manager_id:me.id,
-matchday_id:day
-})
-.select("id")
-.single();
+  .insert({
+    manager_id:me.id,
+    matchday_id:matchdayId
+  })
+  .select("id")
+  .single();
 
 if(x.error)
-return message(x.error.message,"err");
+  return message(x.error.message,"err");
 
 lid=x.data.id;
+```
+
 }
 
+/*
+Elimina i giocatori precedenti.
+*/
 let d=await db.from("lineup_players")
 .delete()
 .eq("lineup_id",lid);
@@ -1089,6 +1120,9 @@ let d=await db.from("lineup_players")
 if(d.error)
 return message(d.error.message,"err");
 
+/*
+Inserisce la nuova formazione.
+*/
 let vals=selects.map(s=>({
 lineup_id:lid,
 player_id:s.dataset.p,
@@ -1096,7 +1130,8 @@ role:s.value,
 captain:s.dataset.p===captainId
 }));
 
-let x=await db.from("lineup_players").insert(vals);
+let x=await db.from("lineup_players")
+.insert(vals);
 
 if(x.error)
 return message(x.error.message,"err");
