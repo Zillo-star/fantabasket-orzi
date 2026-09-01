@@ -1532,9 +1532,241 @@ if(!matchdayId)
   await loadSavedLineup();
 
 }
-async function trades(){let r=await db.from("trades").select("*,proposer:proposer_id(name),receiver:receiver_id(name)").or(`proposer_id.eq.${me.id},receiver_id.eq.${me.id}`).order("created_at",{ascending:false}),m=await db.from("managers").select("id,name").neq("id",me.id);el("content").innerHTML=`<div class="grid"><div class="card"><h2>Nuova proposta</h2><select id="tr">${(m.data||[]).map(x=>`<option value="${x.id}">${x.name}</option>`).join("")}</select><button onclick="trade()">Invia proposta</button><p class="muted">Gli scambi sono illimitati durante il campionato.</p></div><div class="card"><h2>Proposte</h2>${(r.data||[]).map(x=>`<p>${x.proposer.name} → ${x.receiver.name} · <b>${x.status}</b>${x.receiver_id===me.id&&x.status==="pending"?` <button onclick="accept('${x.id}')">Accetta</button>`:""}</p>`).join("")||"Nessuna proposta."}</div></div>`}
-async function trade(){let x=await db.from("trades").insert({proposer_id:me.id,receiver_id:el("tr").value,message:"Proposta di scambio"});if(x.error)return message(x.error.message,"err");trades()}
-async function accept(id){let x=await db.from("trades").update({status:"accepted",responded_at:new Date().toISOString()}).eq("id",id);if(x.error)return message(x.error.message,"err");trades()}
+async function loadTradePlayers(){
+
+  let receiverId=
+    el("tradeReceiver")?.value;
+
+  let offeredSelect=
+    el("tradeOffered");
+
+  let requestedSelect=
+    el("tradeRequested");
+
+  if(!offeredSelect || !requestedSelect)
+    return;
+
+
+  // Azzera i menu
+
+  offeredSelect.innerHTML=`
+    <option value="">
+      Seleziona il giocatore che offri
+    </option>
+  `;
+
+  requestedSelect.innerHTML=`
+    <option value="">
+      Seleziona il giocatore che vuoi ricevere
+    </option>
+  `;
+
+
+  // Carica i miei giocatori
+
+  let mine=await db
+    .from("rosters")
+    .select(`
+      player_id,
+      players(
+        name,
+        position
+      )
+    `)
+    .eq("manager_id",me.id)
+    .eq("active",true);
+
+
+  if(mine.error)
+    return message(mine.error.message,"err");
+
+
+  (mine.data||[]).forEach(x=>{
+
+    if(!x.players)
+      return;
+
+    let option=
+      document.createElement("option");
+
+    option.value=x.player_id;
+
+    option.textContent=
+      `${x.players.name} · ${x.players.position}`;
+
+    offeredSelect.appendChild(option);
+
+  });
+
+
+  // Se non è ancora stato scelto il destinatario,
+  // non possiamo caricare i suoi giocatori.
+
+  if(!receiverId)
+    return;
+
+
+  // Carica i giocatori dell'altro fantallenatore
+
+  let theirs=await db
+    .from("rosters")
+    .select(`
+      player_id,
+      players(
+        name,
+        position
+      )
+    `)
+    .eq("manager_id",receiverId)
+    .eq("active",true);
+
+
+  if(theirs.error)
+    return message(theirs.error.message,"err");
+
+
+  (theirs.data||[]).forEach(x=>{
+
+    if(!x.players)
+      return;
+
+    let option=
+      document.createElement("option");
+
+    option.value=x.player_id;
+
+    option.textContent=
+      `${x.players.name} · ${x.players.position}`;
+
+    requestedSelect.appendChild(option);
+
+  });
+
+}
+async function trade(){
+
+  let receiverId=
+    el("tradeReceiver")?.value;
+
+  let offeredPlayerId=
+    el("tradeOffered")?.value;
+
+  let requestedPlayerId=
+    el("tradeRequested")?.value;
+
+
+  if(!receiverId)
+    return message(
+      "Seleziona il fantallenatore.",
+      "err"
+    );
+
+
+  if(!offeredPlayerId)
+    return message(
+      "Seleziona il giocatore che vuoi offrire.",
+      "err"
+    );
+
+
+  if(!requestedPlayerId)
+    return message(
+      "Seleziona il giocatore che vuoi ricevere.",
+      "err"
+    );
+
+
+  if(offeredPlayerId===requestedPlayerId)
+    return message(
+      "Non puoi scambiare un giocatore con sé stesso.",
+      "err"
+    );
+
+
+  let x=await db
+    .from("trades")
+    .insert({
+
+      proposer_id:me.id,
+
+      receiver_id:receiverId,
+
+      offered_player_id:offeredPlayerId,
+
+      requested_player_id:requestedPlayerId,
+
+      message:"Proposta di scambio",
+
+      status:"pending"
+
+    });
+
+
+  if(x.error)
+    return message(
+      x.error.message,
+      "err"
+    );
+
+
+  message(
+    "✅ Proposta di scambio inviata!"
+  );
+
+
+  trades();
+
+}
+async function accept(id){
+
+  let x=await db.rpc(
+    "accept_trade",
+    {
+      p_trade_id:id
+    }
+  );
+
+
+  if(x.error)
+    return message(
+      x.error.message,
+      "err"
+    );
+
+
+  message(
+    "✅ Scambio accettato! Le rose sono state aggiornate."
+  );
+
+
+  trades();
+
+}
+async function reject(id){
+
+  let x=await db.rpc(
+    "reject_trade",
+    {
+      p_trade_id:id
+    }
+  );
+
+
+  if(x.error)
+    return message(
+      x.error.message,
+      "err"
+    );
+
+
+  message(
+    "❌ Proposta rifiutata."
+  );
+
+
+  trades();
+
+}
 async function calendar(){
 
   let r=await db.from("league_matches")
