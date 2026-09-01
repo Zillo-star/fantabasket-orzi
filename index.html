@@ -1320,25 +1320,42 @@ async function saveLineup(){
       "err"
     );
 
-  let matchdayId=selected.value;
-  let matchdayNumber=
-    Number(selected.dataset.number);
+let matchdayId=selected.value;
 
-  console.log("SAVE MATCHDAY ID:",matchdayId);
-  console.log(
-    "SAVE MATCHDAY NUMBER:",
-    matchdayNumber
+let matchdayNumber=
+  Number(selected.dataset.number);
+
+console.log("SAVE MATCHDAY ID:",matchdayId);
+console.log(
+  "SAVE MATCHDAY NUMBER:",
+  matchdayNumber
+);
+
+/*
+  Le giornate future non possono mai essere modificate.
+*/
+
+if(
+  window.currentLineupDay!==undefined &&
+  matchdayNumber>Number(window.currentLineupDay)
+){
+
+  return message(
+    "Questa giornata non è ancora disponibile. Devi aspettare la conclusione della giornata attuale.",
+    "err"
   );
 
-  /*
-    La giornata deve avere l'UUID.
-  */
+}
 
-  if(!matchdayId)
-    return message(
-      "ID giornata non valido.",
-      "err"
-    );
+/*
+  La giornata deve avere l'UUID.
+*/
+
+if(!matchdayId)
+  return message(
+    "ID giornata non valido.",
+    "err"
+  );
 
   let deadline=
     window.lineupDeadlines?.[matchdayNumber];
