@@ -271,7 +271,7 @@ el("content").innerHTML=`
 
 <b>Nome squadra:</b>
 
-<div class="team-name-box">
+<form onsubmit="event.preventDefault(); saveTeamName();">
 
 <input
 id="teamNameInput"
@@ -280,21 +280,20 @@ value="${teamName}"
 maxlength="30"
 placeholder="Nome della squadra"
 autocomplete="off"
-inputmode="text"
 >
 
 <button
-type="button"
-onclick="saveTeamName()">
+type="submit"
+style="width:100%;margin:5px 0 0;min-height:46px">
 
 Salva nome squadra
 
 </button>
 
-</div>
+</form>
 
 <p class="muted">
-Questo è il nome che vedranno gli altri fantallenatori.
+Il nome squadra è quello che comparirà nel calendario.
 </p>
 
 <p>${me.credits} crediti</p>
@@ -335,7 +334,12 @@ scambi, punteggi e classifica.
 }
 async function saveTeamName(){
 
-let name=el("teamNameInput").value.trim();
+let input=el("teamNameInput");
+
+if(!input)
+return message("Campo nome squadra non trovato.","err");
+
+let name=input.value.trim();
 
 if(!name)
 return message("Inserisci un nome per la squadra.","err");
@@ -345,17 +349,26 @@ return message("Il nome può avere massimo 30 caratteri.","err");
 
 let r=await db
 .from("managers")
-.update({team_name:name})
+.update({
+  team_name:name
+})
 .eq("id",me.id);
 
-if(r.error)
-return message(r.error.message,"err");
+if(r.error){
+  console.error("Errore salvataggio nome squadra:",r.error);
+  return message(
+    "Errore nel salvataggio: "+r.error.message,
+    "err"
+  );
+}
 
 me.team_name=name;
 
 message("Nome squadra aggiornato!","ok");
 
-home();
+setTimeout(()=>{
+  home();
+},500);
 
 }
 async function players(){
