@@ -1118,13 +1118,83 @@ function updateLineupDeadline(){
 function updateLineupLock(deadline){
 
   let now=new Date();
-  let locked=now>=deadline;
+
+  let isFutureDay=
+    window.currentLineupDay!==undefined &&
+    Number(
+      el("day")?.options[
+        el("day")?.selectedIndex
+      ]?.dataset.number
+    )>Number(window.currentLineupDay);
+
+  let locked=
+    isFutureDay ||
+    !deadline ||
+    now>=deadline;
 
   let countdown=el("countdown");
   let button=el("saveLineupBtn");
 
   if(!countdown)
     return;
+
+  if(isFutureDay){
+
+    countdown.textContent="🔒 Giornata non ancora disponibile";
+
+    document.querySelectorAll("#lp select")
+      .forEach(x=>{
+        x.disabled=true;
+      });
+
+    document.querySelectorAll(
+      "#lp input[data-captain]"
+    ).forEach(x=>{
+      x.disabled=true;
+    });
+
+    if(button){
+
+      button.disabled=true;
+      button.textContent="Giornata bloccata";
+
+    }
+
+    let status=el("lineupStatus");
+
+    if(status)
+      status.textContent=
+        "Puoi impostare la formazione solo per la giornata attuale.";
+
+    return;
+
+  }
+
+  if(!deadline){
+
+    countdown.textContent="🔒 Formazione chiusa";
+
+    document.querySelectorAll("#lp select")
+      .forEach(x=>{
+        x.disabled=true;
+      });
+
+    document.querySelectorAll(
+      "#lp input[data-captain]"
+    ).forEach(x=>{
+      x.disabled=true;
+    });
+
+    if(button){
+
+      button.disabled=true;
+      button.textContent="Formazione chiusa";
+
+    }
+
+    return;
+
+  }
 
   if(locked){
 
@@ -1210,12 +1280,6 @@ function updateLineupLock(deadline){
     status.textContent="Formazione modificabile.";
 
 }
-
-
-/*
-  Un solo capitano.
-*/
-
 function checkCaptain(box){
 
   if(!box.checked)
