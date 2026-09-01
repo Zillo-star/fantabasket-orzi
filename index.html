@@ -1156,9 +1156,9 @@ score=`<b>${x.home_score} - ${x.away_score}</b>`;
 
 html+=`
 <tr>
-<td>${x.home?.name||"—"}</td>
+<td><b>${x.home?.team_name || x.home?.name || "—"}</b></td>
 <td>${score||"vs"}</td>
-<td>${x.away?.name||"—"}</td>
+<td><b>${x.away?.team_name || x.away?.name || "—"}</b></td>
 </tr>
 `;
 
