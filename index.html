@@ -1616,10 +1616,10 @@ async function trades(){
 
   // Recupera gli altri fantallenatori
   let m=await db
-    .from("managers")
-    .select("id,name")
-    .neq("id",me.id)
-    .order("name");
+  .from("managers")
+  .select("id,name,team_name")
+  .neq("id",me.id)
+  .order("name");
 
   if(r.error)
     return message(r.error.message,"err");
