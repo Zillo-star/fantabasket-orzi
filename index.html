@@ -1096,7 +1096,16 @@ async function accept(id){let x=await db.from("trades").update({status:"accepted
 async function calendar(){
 
 let r=await db.from("league_matches")
-.select("id,matchday_number,home_manager_id,away_manager_id,home_score,away_score,home:home_manager_id(name),away:away_manager_id(name)")
+.select(`
+  id,
+  matchday_number,
+  home_manager_id,
+  away_manager_id,
+  home_score,
+  away_score,
+  home:home_manager_id(name,team_name),
+  away:away_manager_id(name,team_name)
+`)
 .order("matchday_number")
 .order("id");
 
