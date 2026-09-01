@@ -271,17 +271,31 @@ el("content").innerHTML=`
 
 <b>Nome squadra:</b>
 
+<div class="team-name-box">
+
 <input
 id="teamNameInput"
 type="text"
 value="${teamName}"
 maxlength="30"
 placeholder="Nome della squadra"
+autocomplete="off"
+inputmode="text"
 >
 
-<button onclick="saveTeamName()">
+<button
+type="button"
+onclick="saveTeamName()">
+
 Salva nome squadra
+
 </button>
+
+</div>
+
+<p class="muted">
+Questo è il nome che vedranno gli altri fantallenatori.
+</p>
 
 <p>${me.credits} crediti</p>
 
