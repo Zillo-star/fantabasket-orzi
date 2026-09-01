@@ -259,7 +259,7 @@ let coachTotal=(c.data||[])
 
 let tot=playerTotal+coachTotal;
 
-let teamName=me.team_name || (me.name==="Zillo" ? "Zillovic" : me.name);
+let teamName=me.team_name || "Nome squadra non impostato";
 
 el("content").innerHTML=`
 
@@ -267,7 +267,11 @@ el("content").innerHTML=`
 
 <div class="card">
 
-<h2>${me.name}</h2>
+<h2>${teamName}</h2>
+
+<p class="muted" style="margin-top:-10px">
+Fantallenatore: ${me.name}
+</p>
 
 <b>Nome squadra:</b>
 
@@ -276,7 +280,7 @@ el("content").innerHTML=`
 <input
 id="teamNameInput"
 type="text"
-value="${teamName}"
+value="${teamName==="Nome squadra non impostato" ? "" : teamName}"
 maxlength="30"
 placeholder="Nome della squadra"
 autocomplete="off"
@@ -293,7 +297,7 @@ Salva nome squadra
 </form>
 
 <p class="muted">
-Il nome squadra è quello che comparirà nel calendario.
+Il nome squadra comparirà nel calendario, nella classifica e negli scambi.
 </p>
 
 <p>${me.credits} crediti</p>
@@ -330,6 +334,69 @@ scambi, punteggi e classifica.
 </div>
 
 `;
+
+}
+
+
+async function saveTeamName(){
+
+let input=el("teamNameInput");
+
+if(!input)
+return message(
+  "Campo nome squadra non trovato.",
+  "err"
+);
+
+let name=input.value.trim();
+
+if(!name)
+return message(
+  "Inserisci un nome per la squadra.",
+  "err"
+);
+
+if(name.length>30)
+return message(
+  "Il nome può avere massimo 30 caratteri.",
+  "err"
+);
+
+
+let r=await db.rpc(
+  "update_team_name",
+  {
+    p_team_name:name
+  }
+);
+
+
+if(r.error){
+
+console.error(
+  "Errore salvataggio nome squadra:",
+  r.error
+);
+
+return message(
+  "Errore nel salvataggio: "+r.error.message,
+  "err"
+);
+
+}
+
+
+me.team_name=name;
+
+message(
+  "Nome squadra aggiornato!",
+  "ok"
+);
+
+
+setTimeout(()=>{
+  home();
+},500);
 
 }
 async function saveTeamName(){
