@@ -1635,8 +1635,8 @@ async function trades(){
     .from("trades")
     .select(`
       *,
-      proposer:proposer_id(name),
-      receiver:receiver_id(name),
+      proposer:proposer_id(name,team_name),
+      receiver:receiver_id(name,team_name),
       offered_player:offered_player_id(name),
       requested_player:requested_player_id(name)
     `)
