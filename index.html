@@ -1115,9 +1115,7 @@ let r=await db.from("league_matches")
   home_manager_id,
   away_manager_id,
   home_score,
-  away_score,
-  home:home_manager_id(name,team_name),
-  away:away_manager_id(name,team_name)
+  away_score
 `)
 .order("matchday_number")
 .order("id");
@@ -1127,59 +1125,135 @@ return message(r.error.message,"err");
 
 let matches=r.data||[];
 
+let managerIds=[
+  ...new Set(
+    matches.flatMap(x=>[
+      x.home_manager_id,
+      x.away_manager_id
+    ])
+  )
+];
+
+let managers={};
+
+if(managerIds.length){
+
+let m=await db.from("managers")
+.select("id,name,team_name")
+.in("id",managerIds);
+
+if(m.error)
+return message(m.error.message,"err");
+
+(m.data||[]).forEach(x=>{
+  managers[x.id]=x;
+});
+
+}
+
 let days={};
 
 matches.forEach(x=>{
+
   if(!days[x.matchday_number])
     days[x.matchday_number]=[];
 
   days[x.matchday_number].push(x);
+
 });
 
 let html=`
+
 <div class="card">
+
 <h2>Calendario</h2>
-<p class="muted">Calendario completo del campionato</p>
+
+<p class="muted">
+Calendario completo del campionato
+</p>
+
 </div>
+
 `;
 
-Object.keys(days).sort((a,b)=>Number(a)-Number(b)).forEach(day=>{
+Object.keys(days)
+.sort((a,b)=>Number(a)-Number(b))
+.forEach(day=>{
 
 html+=`
+
 <div class="card">
+
 <h2>Giornata ${day}</h2>
+
 <table>
+
 <tr>
 <th>Casa</th>
 <th></th>
 <th>Trasferta</th>
 </tr>
+
 `;
 
 days[day].forEach(x=>{
 
+let homeManager=managers[x.home_manager_id];
+let awayManager=managers[x.away_manager_id];
+
+let homeName=
+homeManager?.team_name ||
+(homeManager?.name==="Zillo" ? "Zillovic" : homeManager?.name) ||
+"—";
+
+let awayName=
+awayManager?.team_name ||
+(awayManager?.name==="Zillo" ? "Zillovic" : awayManager?.name) ||
+"—";
+
 let score="";
 
-if(x.home_score!==null && x.home_score!==undefined &&
-   x.away_score!==null && x.away_score!==undefined){
+if(
+  x.home_score!==null &&
+  x.home_score!==undefined &&
+  x.away_score!==null &&
+  x.away_score!==undefined
+){
 
-score=`<b>${x.home_score} - ${x.away_score}</b>`;
+score=`
+<b>${x.home_score} - ${x.away_score}</b>
+`;
 
 }
 
 html+=`
+
 <tr>
-<td><b>${x.home?.team_name || x.home?.name || "—"}</b></td>
-<td>${score||"vs"}</td>
-<td><b>${x.away?.team_name || x.away?.name || "—"}</b></td>
+
+<td>
+<b>${homeName}</b>
+</td>
+
+<td>
+${score||"vs"}
+</td>
+
+<td>
+<b>${awayName}</b>
+</td>
+
 </tr>
+
 `;
 
 });
 
 html+=`
+
 </table>
+
 </div>
+
 `;
 
 });
