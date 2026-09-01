@@ -907,7 +907,12 @@ let status=el("lineupStatus");
 if(status)
   status.textContent="Nessuna formazione salvata per questa giornata.";
 
-updateLineupEditability();
+let selected=el("day").options[el("day").selectedIndex];
+let matchdayNumber=Number(selected.dataset.number);
+let deadline=window.lineupDeadlines?.[matchdayNumber];
+
+if(deadline)
+  updateLineupLock(new Date(deadline));
 
 return;
 ```
