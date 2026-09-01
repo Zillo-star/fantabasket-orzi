@@ -903,7 +903,15 @@ async function loadSavedLineup(){
     Aggiorna deadline e countdown.
   */
 
+ if(isCurrentDay){
+
   updateLineupDeadline();
+
+}else{
+
+  updateLineupLock(null);
+
+}
 
   /*
     Cerca la formazione già salvata.
