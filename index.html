@@ -221,6 +221,8 @@ let coachTotal=(c.data||[])
 
 let tot=playerTotal+coachTotal;
 
+let teamName=me.team_name || (me.name==="Zillo" ? "Zillovic" : me.name);
+
 el("content").innerHTML=`
 
 <div class="grid">
@@ -229,9 +231,19 @@ el("content").innerHTML=`
 
 <h2>${me.name}</h2>
 
-<b>Squadra:
-${me.name==="Zillo"?"Zillovic":me.name}
-</b>
+<b>Nome squadra:</b>
+
+<input
+id="teamNameInput"
+type="text"
+value="${teamName}"
+maxlength="30"
+placeholder="Nome della squadra"
+>
+
+<button onclick="saveTeamName()">
+Salva nome squadra
+</button>
 
 <p>${me.credits} crediti</p>
 
@@ -267,6 +279,31 @@ scambi, punteggi e classifica.
 </div>
 
 `;
+
+}
+async function saveTeamName(){
+
+let name=el("teamNameInput").value.trim();
+
+if(!name)
+return message("Inserisci un nome per la squadra.","err");
+
+if(name.length>30)
+return message("Il nome può avere massimo 30 caratteri.","err");
+
+let r=await db
+.from("managers")
+.update({team_name:name})
+.eq("id",me.id);
+
+if(r.error)
+return message(r.error.message,"err");
+
+me.team_name=name;
+
+message("Nome squadra aggiornato!","ok");
+
+home();
 
 }
 async function players(){
