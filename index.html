@@ -2456,19 +2456,21 @@ async function calendar(){
         let awayManager=
           managers[x.away_manager_id];
 
-        let homeName=
-          homeManager?.team_name ||
-          (homeManager?.name==="Zillo"
-            ? "Zillovic"
-            : homeManager?.name) ||
-          "—";
+       let homeName=
+  homeManager?.team_name ||
+  homeManager?.name ||
+  "—";
 
-        let awayName=
-          awayManager?.team_name ||
-          (awayManager?.name==="Zillo"
-            ? "Zillovic"
-            : awayManager?.name) ||
-          "—";
+let awayName=
+  awayManager?.team_name ||
+  awayManager?.name ||
+  "—";
+
+let homeManagerSmall=
+  homeManager?.name || "";
+
+let awayManagerSmall=
+  awayManager?.name || "";
 
         let score="";
 
