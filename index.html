@@ -340,102 +340,78 @@ scambi, punteggi e classifica.
 
 async function saveTeamName(){
 
-let input=el("teamNameInput");
+  let input=el("teamNameInput");
 
-if(!input)
-return message(
-  "Campo nome squadra non trovato.",
-  "err"
-);
+  if(!input)
+    return message(
+      "Campo nome squadra non trovato.",
+      "err"
+    );
 
-let name=input.value.trim();
+  let name=input.value.trim();
 
-if(!name)
-return message(
-  "Inserisci un nome per la squadra.",
-  "err"
-);
+  if(!name)
+    return message(
+      "Inserisci un nome per la squadra.",
+      "err"
+    );
 
-if(name.length>30)
-return message(
-  "Il nome può avere massimo 30 caratteri.",
-  "err"
-);
+  if(name.length>30)
+    return message(
+      "Il nome può avere massimo 30 caratteri.",
+      "err"
+    );
 
+  let r=await db
+    .from("managers")
+    .update({
+      team_name:name
+    })
+    .eq("id",me.id);
 
-let r=await db.rpc(
-  "update_team_name",
-  {
-    p_team_name:name
+  if(r.error){
+
+    console.error(
+      "Errore salvataggio nome squadra:",
+      r.error
+    );
+
+    return message(
+      "Errore nel salvataggio: "+r.error.message,
+      "err"
+    );
+
   }
-);
 
+  /*
+    Ricarichiamo il profilo dal database.
+    Così siamo sicuri che il nome sia realmente
+    quello salvato.
+  */
 
-if(r.error){
+  let fresh=await db
+    .from("managers")
+    .select("*")
+    .eq("id",me.id)
+    .maybeSingle();
 
-console.error(
-  "Errore salvataggio nome squadra:",
-  r.error
-);
+  if(fresh.error)
+    return message(
+      fresh.error.message,
+      "err"
+    );
 
-return message(
-  "Errore nel salvataggio: "+r.error.message,
-  "err"
-);
+  if(fresh.data)
+    me=fresh.data;
 
-}
-
-
-me.team_name=name;
-
-message(
-  "Nome squadra aggiornato!",
-  "ok"
-);
-
-
-setTimeout(()=>{
-  home();
-},500);
-
-}
-async function saveTeamName(){
-
-let input=el("teamNameInput");
-
-if(!input)
-return message("Campo nome squadra non trovato.","err");
-
-let name=input.value.trim();
-
-if(!name)
-return message("Inserisci un nome per la squadra.","err");
-
-if(name.length>30)
-return message("Il nome può avere massimo 30 caratteri.","err");
-
-let r=await db
-.from("managers")
-.update({
-  team_name:name
-})
-.eq("id",me.id);
-
-if(r.error){
-  console.error("Errore salvataggio nome squadra:",r.error);
-  return message(
-    "Errore nel salvataggio: "+r.error.message,
-    "err"
+  message(
+    "Nome squadra aggiornato!",
+    "ok"
   );
-}
 
-me.team_name=name;
-
-message("Nome squadra aggiornato!","ok");
-
-setTimeout(()=>{
-  home();
-},500);
+  setTimeout(()=>{
+    home();
+  },500);
 
 }
 async function players(){
