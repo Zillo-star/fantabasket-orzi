@@ -612,395 +612,362 @@ ${x.players.is_foreign?" · STRANIERO":""}
 }
 async function lineup(){
 
-let m=await db.from("matchdays")
-.select("id,number,lineup_deadline,status")
-.order("number");
+  let m=await db.from("matchdays")
+    .select("id,number,lineup_deadline,status")
+    .order("number");
 
-let r=await db.from("rosters")
-.select("player_id,players(name,position)")
-.eq("manager_id",me.id)
-.eq("active",true);
+  let r=await db.from("rosters")
+    .select("player_id,players(name,position)")
+    .eq("manager_id",me.id)
+    .eq("active",true);
 
-if(m.error)
-return message(m.error.message,"err");
+  if(m.error)
+    return message(m.error.message,"err");
 
-if(r.error)
-return message(r.error.message,"err");
+  if(r.error)
+    return message(r.error.message,"err");
 
-let days=m.data||[];
+  let days=m.data||[];
 
-/*
-Trova la prima giornata non ancora conclusa.
-Una giornata è conclusa solo quando tutte
-le sue partite hanno un risultato.
-*/
+  /*
+    Trova la prima giornata non ancora conclusa.
+  */
 
-let matches=await db.from("league_matches")
-.select("matchday_number,home_score,away_score");
+  let matches=await db.from("league_matches")
+    .select("matchday_number,home_score,away_score");
 
-if(matches.error)
-return message(matches.error.message,"err");
+  if(matches.error)
+    return message(matches.error.message,"err");
 
-let grouped={};
+  let grouped={};
 
-(matches.data||[]).forEach(x=>{
+  (matches.data||[]).forEach(x=>{
 
-```
-if(!grouped[x.matchday_number])
-  grouped[x.matchday_number]=[];
+    if(!grouped[x.matchday_number])
+      grouped[x.matchday_number]=[];
 
-grouped[x.matchday_number].push(x);
-```
+    grouped[x.matchday_number].push(x);
 
-});
+  });
 
-let currentDay=null;
+  let currentDay=null;
 
-for(let day of days){
+  for(let day of days){
 
-```
-let number=day.number;
-let dayMatches=grouped[number]||[];
+    let number=day.number;
+    let dayMatches=grouped[number]||[];
 
-let completed=
-  dayMatches.length>0 &&
-  dayMatches.every(x=>
-    x.home_score!==null &&
-    x.home_score!==undefined &&
-    x.away_score!==null &&
-    x.away_score!==undefined
-  );
+    let completed=
+      dayMatches.length>0 &&
+      dayMatches.every(x=>
+        x.home_score!==null &&
+        x.home_score!==undefined &&
+        x.away_score!==null &&
+        x.away_score!==undefined
+      );
 
-if(!completed){
+    if(!completed){
 
-  currentDay=number;
-  break;
+      currentDay=number;
+      break;
 
-}
-```
+    }
 
-}
+  }
 
-if(currentDay===null && days.length){
+  if(currentDay===null && days.length){
 
-```
-currentDay=days[days.length-1].number;
-```
+    currentDay=days[days.length-1].number;
 
-}
+  }
 
-/*
-Mostriamo solo la giornata attuale
-e quelle precedenti.
-*/
+  /*
+    Mostra la giornata attuale e quelle precedenti.
+  */
 
-let currentIndex=
-days.findIndex(x=>x.number===currentDay);
+  let currentIndex=
+    days.findIndex(x=>x.number===currentDay);
 
-let availableDays=
-currentIndex>=0
-? days.slice(0,currentIndex+1)
-: days;
+  let availableDays=
+    currentIndex>=0
+    ? days.slice(0,currentIndex+1)
+    : days;
 
-/*
-Deadline disponibili globalmente.
-*/
+  /*
+    Salva le deadline disponibili.
+  */
 
-window.lineupDeadlines={};
+  window.lineupDeadlines={};
 
-availableDays.forEach(x=>{
+  availableDays.forEach(x=>{
 
-```
-window.lineupDeadlines[x.number]=
-  x.lineup_deadline;
-```
+    window.lineupDeadlines[x.number]=
+      x.lineup_deadline;
 
-});
+  });
 
-/*
-Costruisce la pagina.
-*/
+  /*
+    Costruisce la schermata.
+  */
 
-el("content").innerHTML=`
-
-  <div class="card">
-
-```
-<h2>Formazione</h2>
-
-<select id="day"
-        onchange="loadSavedLineup()">
-
-  ${availableDays.map(x=>`
-
-    <option
-      value="${x.id}"
-      data-number="${x.number}"
-      ${x.number===currentDay?"selected":""}>
-
-      Giornata ${x.number}
-      ${x.number===currentDay?" · ATTUALE":""}
-
-    </option>
-
-  `).join("")}
-
-</select>
-
-
-<div id="deadlineBox" class="card">
-
-  <b>Deadline formazione:</b>
-
-  <span id="deadlineText">—</span>
-
-  <div
-    id="countdown"
-    style="font-size:22px;margin-top:8px">
-  </div>
-
-</div>
-
-
-<div id="lp">
-
-  ${(r.data||[]).map(x=>`
+  el("content").innerHTML=`
 
     <div class="card">
 
-      <b>${x.players.name}</b>
-      · ${x.players.position}
+      <h2>Formazione</h2>
 
-      <select
-        data-p="${x.player_id}"
-        data-pos="${x.players.position}">
+      <select id="day"
+              onchange="loadSavedLineup()">
 
-        <option value="out">
-          Fuori
-        </option>
+        ${availableDays.map(x=>`
 
-        <option value="starter">
-          Titolare · 100%
-        </option>
+          <option
+            value="${x.id}"
+            data-number="${x.number}"
+            ${x.number===currentDay?"selected":""}>
 
-        <option value="sixth">
-          Sesto uomo · 100%
-        </option>
+            Giornata ${x.number}
+            ${x.number===currentDay?" · ATTUALE":""}
 
-        <option value="bench">
-          Panchina · 50%
-        </option>
+          </option>
+
+        `).join("")}
 
       </select>
 
 
-      <label>
+      <div id="deadlineBox" class="card">
 
-        <input
-          type="checkbox"
-          data-captain="${x.player_id}"
-          onchange="checkCaptain(this)">
+        <b>Deadline formazione:</b>
 
-        Capitano
+        <span id="deadlineText">—</span>
 
-      </label>
+        <div
+          id="countdown"
+          style="font-size:22px;margin-top:8px">
+        </div>
+
+      </div>
+
+
+      <div id="lp">
+
+        ${(r.data||[]).map(x=>`
+
+          <div class="card">
+
+            <b>${x.players.name}</b>
+            · ${x.players.position}
+
+            <select
+              data-p="${x.player_id}"
+              data-pos="${x.players.position}">
+
+              <option value="out">
+                Fuori
+              </option>
+
+              <option value="starter">
+                Titolare · 100%
+              </option>
+
+              <option value="sixth">
+                Sesto uomo · 100%
+              </option>
+
+              <option value="bench">
+                Panchina · 50%
+              </option>
+
+            </select>
+
+
+            <label>
+
+              <input
+                type="checkbox"
+                data-captain="${x.player_id}"
+                onchange="checkCaptain(this)">
+
+              Capitano
+
+            </label>
+
+          </div>
+
+        `).join("")}
+
+      </div>
+
+
+      <div id="lineupStatus"
+           class="muted">
+      </div>
+
+
+      <button
+        id="saveLineupBtn"
+        onclick="saveLineup()">
+
+        Salva formazione
+
+      </button>
+
+
+      <p class="muted">
+
+        5 titolari: 2G + 2A + 1C ·
+        1 sesto uomo ·
+        4 panchinari 50% ·
+        3 fuori ·
+        1 capitano.
+
+      </p>
 
     </div>
 
-  `).join("")}
+  `;
 
-</div>
+  /*
+    Carica subito la formazione della giornata attuale.
+  */
 
-
-<div id="lineupStatus"
-     class="muted">
-</div>
-
-
-<button
-  id="saveLineupBtn"
-  onclick="saveLineup()">
-
-  Salva formazione
-
-</button>
-
-
-<p class="muted">
-
-  5 titolari: 2G + 2A + 1C ·
-  1 sesto uomo ·
-  4 panchinari 50% ·
-  3 fuori ·
-  1 capitano.
-
-</p>
-```
-
-  </div>
-
-`;
-
-/*
-Carica subito la formazione della giornata attuale.
-*/
-
-await loadSavedLineup();
+  await loadSavedLineup();
 
 }
 
+
 /*
-Carica la formazione già salvata
-per la giornata selezionata.
+  Carica la formazione già salvata
+  per la giornata selezionata.
 */
 
 async function loadSavedLineup(){
 
-let selected=el("day").options[el("day").selectedIndex];
+  let select=el("day");
 
-if(!selected)
-return;
+  if(!select)
+    return;
 
-let matchdayId=selected.value;
-let matchdayNumber=Number(selected.dataset.number);
+  let selected=select.options[select.selectedIndex];
 
-console.log("MATCHDAY ID:", matchdayId);
-console.log("MATCHDAY NUMBER:", matchdayNumber);
+  if(!selected)
+    return;
 
-/*
-Aggiorna deadline e countdown.
-*/
+  let matchdayId=selected.value;
+  let matchdayNumber=Number(selected.dataset.number);
 
-updateLineupDeadline();
+  console.log("MATCHDAY ID:",matchdayId);
+  console.log("MATCHDAY NUMBER:",matchdayNumber);
 
-/*
-Cerca la formazione del fantallenatore
-per questa specifica giornata.
-*/
+  /*
+    Aggiorna deadline e countdown.
+  */
 
-let x=await db.from("lineups")
-.select("id")
-.eq("manager_id",me.id)
-.eq("matchday_id",matchdayId)
-.maybeSingle();
+  updateLineupDeadline();
 
-if(x.error)
-return message(x.error.message,"err");
+  /*
+    Cerca la formazione già salvata.
+  */
 
-/*
-Prima azzeriamo tutto.
-*/
+  let x=await db.from("lineups")
+    .select("id")
+    .eq("manager_id",me.id)
+    .eq("matchday_id",matchdayId)
+    .maybeSingle();
 
-document.querySelectorAll("#lp select[data-p]")
-.forEach(s=>s.value="out");
+  if(x.error)
+    return message(x.error.message,"err");
 
-document.querySelectorAll("#lp input[data-captain]")
-.forEach(c=>c.checked=false);
+  /*
+    Azzera la schermata prima di caricare
+    la formazione della giornata scelta.
+  */
 
-/*
-Se non esiste ancora una formazione,
-lasciamo tutto su Fuori e nessun capitano.
-*/
+  document.querySelectorAll("#lp select[data-p]")
+    .forEach(s=>s.value="out");
 
-if(!x.data){
+  document.querySelectorAll("#lp input[data-captain]")
+    .forEach(c=>c.checked=false);
 
-```
-let status=el("lineupStatus");
+  /*
+    Nessuna formazione ancora salvata.
+  */
 
-if(status)
-  status.textContent="Nessuna formazione salvata per questa giornata.";
+  if(!x.data){
 
-let selected=el("day").options[el("day").selectedIndex];
-let matchdayNumber=Number(selected.dataset.number);
-let deadline=window.lineupDeadlines?.[matchdayNumber];
+    let status=el("lineupStatus");
 
-if(deadline)
-  updateLineupLock(new Date(deadline));
+    if(status)
+      status.textContent=
+        "Nessuna formazione salvata per questa giornata.";
 
-return;
-```
+    let deadline=
+      window.lineupDeadlines?.[matchdayNumber];
 
-}
+    if(deadline)
+      updateLineupLock(new Date(deadline));
 
-/*
-Carica i giocatori della formazione.
-*/
+    return;
 
-let lp=await db.from("lineup_players")
-.select("player_id,role,captain")
-.eq("lineup_id",x.data.id);
+  }
 
-if(lp.error)
-return message(lp.error.message,"err");
+  /*
+    Carica i giocatori della formazione.
+  */
 
-/*
-Applica ruolo e capitano alla UI.
-*/
+  let lp=await db.from("lineup_players")
+    .select("player_id,role,captain")
+    .eq("lineup_id",x.data.id);
 
-(lp.data||[]).forEach(p=>{
+  if(lp.error)
+    return message(lp.error.message,"err");
 
-```
-let select=document.querySelector(
-  `#lp select[data-p="${p.player_id}"]`
-);
+  /*
+    Applica ruoli e capitano.
+  */
 
-if(select)
-  select.value=p.role;
+  (lp.data||[]).forEach(p=>{
 
-let captain=document.querySelector(
-  `#lp input[data-captain="${p.player_id}"]`
-);
+    let playerSelect=document.querySelector(
+      `#lp select[data-p="${p.player_id}"]`
+    );
 
-if(captain)
-  captain.checked=!!p.captain;
-```
+    if(playerSelect)
+      playerSelect.value=p.role;
 
-});
+    let captain=document.querySelector(
+      `#lp input[data-captain="${p.player_id}"]`
+    );
 
-let status=el("lineupStatus");
+    if(captain)
+      captain.checked=!!p.captain;
 
-if(status)
-status.textContent="Formazione salvata.";
+  });
 
-updateLineupEditability();
+  let status=el("lineupStatus");
 
-}
+  if(status)
+    status.textContent="Formazione salvata.";
 
-/*
-Blocca/sblocca la modifica in base alla deadline.
-*/
+  /*
+    Applica nuovamente il blocco corretto
+    in base alla deadline.
+  */
 
-function updateLineupEditability(){
+  let deadline=
+    window.lineupDeadlines?.[matchdayNumber];
 
-let selected=el("day")?.options[el("day")?.selectedIndex];
-
-if(!selected)
-return;
-
-let matchdayNumber=Number(selected.dataset.number);
-let deadline=window.lineupDeadlines?.[matchdayNumber];
-
-if(!deadline)
-return;
-
-let locked=new Date()>=new Date(deadline);
-
-document.querySelectorAll("#lp select, #lp input")
-.forEach(x=>{
-x.disabled=locked;
-});
-
-let save=el("saveLineupBtn");
-
-if(save)
-save.disabled=locked;
-
-let status=el("lineupStatus");
-
-if(status && locked)
-status.textContent="🔒 Formazione chiusa";
+  if(deadline)
+    updateLineupLock(new Date(deadline));
 
 }
+
+
+/*
+  Aggiorna deadline e countdown.
+*/
+
 function updateLineupDeadline(){
 
   let select=el("day");
@@ -1013,12 +980,14 @@ function updateLineupDeadline(){
   if(!selected)
     return;
 
-  let matchdayNumber=Number(selected.dataset.number);
+  let matchdayNumber=
+    Number(selected.dataset.number);
 
   let deadlineString=
     window.lineupDeadlines?.[matchdayNumber];
 
-  let deadlineText=el("deadlineText");
+  let deadlineText=
+    el("deadlineText");
 
   if(!deadlineString){
 
@@ -1031,6 +1000,7 @@ function updateLineupDeadline(){
       countdown.textContent="";
 
     return;
+
   }
 
   let deadline=new Date(deadlineString);
@@ -1041,6 +1011,7 @@ function updateLineupDeadline(){
       deadlineText.textContent="Deadline non valida";
 
     return;
+
   }
 
   if(deadlineText){
@@ -1091,218 +1062,377 @@ function updateLineupDeadline(){
     },1000);
 
 }
+
+
+/*
+  Blocca/sblocca la formazione.
+*/
+
 function updateLineupLock(deadline){
 
-let now=new Date();
-let locked=now>=deadline;
+  let now=new Date();
+  let locked=now>=deadline;
 
-let countdown=el("countdown");
-let button=el("saveLineupBtn");
+  let countdown=el("countdown");
+  let button=el("saveLineupBtn");
 
-if(locked){
+  if(!countdown)
+    return;
 
-countdown.textContent="🔒 Formazione chiusa";
+  if(locked){
 
-document.querySelectorAll("#lp select").forEach(x=>{
-  x.disabled=true;
-});
+    countdown.textContent="🔒 Formazione chiusa";
 
-document.querySelectorAll("#lp input[data-captain]").forEach(x=>{
-  x.disabled=true;
-});
+    document.querySelectorAll("#lp select")
+      .forEach(x=>{
+        x.disabled=true;
+      });
 
-if(button){
-  button.disabled=true;
-  button.textContent="Formazione chiusa";
+    document.querySelectorAll(
+      "#lp input[data-captain]"
+    ).forEach(x=>{
+      x.disabled=true;
+    });
+
+    if(button){
+
+      button.disabled=true;
+      button.textContent="Formazione chiusa";
+
+    }
+
+    let status=el("lineupStatus");
+
+    if(status)
+      status.textContent=
+        "La deadline è scaduta. Non puoi più modificare la formazione.";
+
+    return;
+
+  }
+
+  let diff=deadline-now;
+
+  let totalSeconds=
+    Math.floor(diff/1000);
+
+  let days=
+    Math.floor(totalSeconds/86400);
+
+  let hours=
+    Math.floor(
+      (totalSeconds%86400)/3600
+    );
+
+  let minutes=
+    Math.floor(
+      (totalSeconds%3600)/60
+    );
+
+  let seconds=
+    totalSeconds%60;
+
+  countdown.textContent=
+    "⏱️ Mancano "+
+    (days?days+"g ":"")+
+    String(hours).padStart(2,"0")+":"+
+    String(minutes).padStart(2,"0")+":"+
+    String(seconds).padStart(2,"0");
+
+  document.querySelectorAll("#lp select")
+    .forEach(x=>{
+      x.disabled=false;
+    });
+
+  document.querySelectorAll(
+    "#lp input[data-captain]"
+  ).forEach(x=>{
+    x.disabled=false;
+  });
+
+  if(button){
+
+    button.disabled=false;
+    button.textContent="Salva formazione";
+
+  }
+
+  let status=el("lineupStatus");
+
+  if(status)
+    status.textContent="Formazione modificabile.";
+
 }
 
-let status=el("lineupStatus");
 
-if(status)
-status.textContent="La deadline è scaduta. Non puoi più modificare la formazione.";
+/*
+  Un solo capitano.
+*/
 
-return;
-}
-
-let diff=deadline-now;
-
-let totalSeconds=Math.floor(diff/1000);
-let days=Math.floor(totalSeconds/86400);
-let hours=Math.floor((totalSeconds%86400)/3600);
-let minutes=Math.floor((totalSeconds%3600)/60);
-let seconds=totalSeconds%60;
-
-countdown.textContent=
-"⏱️ Mancano "+
-(days?days+"g ":"")+
-String(hours).padStart(2,"0")+":"+
-String(minutes).padStart(2,"0")+":"+
-String(seconds).padStart(2,"0");
-
-document.querySelectorAll("#lp select").forEach(x=>{
-  x.disabled=false;
-});
-
-document.querySelectorAll("#lp input[data-captain]").forEach(x=>{
-  x.disabled=false;
-});
-
-if(button){
-  button.disabled=false;
-  button.textContent="Salva formazione";
-}
-
-let status=el("lineupStatus");
-
-if(status)
-status.textContent="Formazione modificabile.";
-}
 function checkCaptain(box){
-if(!box.checked)return;
 
-document.querySelectorAll('input[data-captain]').forEach(x=>{
-if(x!==box)x.checked=false;
-});
+  if(!box.checked)
+    return;
+
+  document.querySelectorAll(
+    'input[data-captain]'
+  ).forEach(x=>{
+
+    if(x!==box)
+      x.checked=false;
+
+  });
+
 }
+
+
+/*
+  Salva o aggiorna la formazione.
+*/
+
 async function saveLineup(){
 
-let selected=el("day").options[el("day").selectedIndex];
+  let select=el("day");
 
-if(!selected)
-return message("Seleziona una giornata.","err");
+  if(!select)
+    return message(
+      "Seleziona una giornata.",
+      "err"
+    );
 
-let matchdayId=selected.value;
-let matchdayNumber=Number(selected.dataset.number);
+  let selected=
+    select.options[select.selectedIndex];
 
-/*
-Controllo fondamentale:
-matchday_id deve essere un UUID.
-*/
-if(!matchdayId || matchdayId==="1")
-return message("ID giornata non valido.","err");
+  if(!selected)
+    return message(
+      "Seleziona una giornata.",
+      "err"
+    );
 
-let deadline=window.lineupDeadlines?.[matchdayNumber];
+  let matchdayId=selected.value;
+  let matchdayNumber=
+    Number(selected.dataset.number);
 
-if(!deadline)
-return message("Deadline non disponibile per questa giornata.","err");
+  console.log("SAVE MATCHDAY ID:",matchdayId);
+  console.log(
+    "SAVE MATCHDAY NUMBER:",
+    matchdayNumber
+  );
 
-if(new Date()>=new Date(deadline))
-return message(
-"La deadline per questa giornata è scaduta. La formazione non può più essere modificata.",
-"err"
-);
+  /*
+    La giornata deve avere l'UUID.
+  */
 
-let selects=[...document.querySelectorAll("#lp select[data-p]")];
+  if(!matchdayId)
+    return message(
+      "ID giornata non valido.",
+      "err"
+    );
 
-if(selects.length!==13)
-return message("La rosa deve avere 13 giocatori.","err");
+  let deadline=
+    window.lineupDeadlines?.[matchdayNumber];
 
-let starters=selects.filter(s=>s.value==="starter");
-let sixth=selects.filter(s=>s.value==="sixth");
-let bench=selects.filter(s=>s.value==="bench");
-let out=selects.filter(s=>s.value==="out");
+  if(!deadline)
+    return message(
+      "Deadline non disponibile per questa giornata.",
+      "err"
+    );
 
-if(starters.length!==5)
-return message("Devi avere 5 titolari.","err");
+  if(new Date()>=new Date(deadline))
+    return message(
+      "La deadline per questa giornata è scaduta. La formazione non può più essere modificata.",
+      "err"
+    );
 
-if(sixth.length!==1)
-return message("Devi avere 1 sesto uomo.","err");
+  let selects=[
+    ...document.querySelectorAll(
+      "#lp select[data-p]"
+    )
+  ];
 
-if(bench.length!==4)
-return message("Devi avere 4 panchinari.","err");
+  if(selects.length!==13)
+    return message(
+      "La rosa deve avere 13 giocatori.",
+      "err"
+    );
 
-if(out.length!==3)
-return message("Devi avere 3 giocatori fuori.","err");
+  let starters=
+    selects.filter(
+      s=>s.value==="starter"
+    );
 
-let g=starters.filter(s=>s.dataset.pos==="G").length;
-let a=starters.filter(s=>s.dataset.pos==="A").length;
-let c=starters.filter(s=>s.dataset.pos==="C").length;
+  let sixth=
+    selects.filter(
+      s=>s.value==="sixth"
+    );
 
-let moduloValido=
-(g===2&&a===2&&c===1) ||
-(g===1&&a===3&&c===1) ||
-(g===1&&a===2&&c===2) ||
-(g===2&&a===1&&c===2);
+  let bench=
+    selects.filter(
+      s=>s.value==="bench"
+    );
 
-if(!moduloValido)
-return message(
-"Modulo non valido. Moduli consentiti: 2G-2A-1C, 1G-3A-1C, 1G-2A-2C, 2G-1A-2C.",
-"err"
-);
+  let out=
+    selects.filter(
+      s=>s.value==="out"
+    );
 
-let captains=[
-...document.querySelectorAll('input[data-captain]:checked')
-];
+  if(starters.length!==5)
+    return message(
+      "Devi avere 5 titolari.",
+      "err"
+    );
 
-if(captains.length!==1)
-return message("Devi scegliere un capitano.","err");
+  if(sixth.length!==1)
+    return message(
+      "Devi avere 1 sesto uomo.",
+      "err"
+    );
 
-let captainId=captains[0].dataset.captain;
+  if(bench.length!==4)
+    return message(
+      "Devi avere 4 panchinari.",
+      "err"
+    );
 
-/*
-Cerca la formazione esistente usando l'UUID
-della giornata.
-*/
-let old=await db.from("lineups")
-.select("id")
-.eq("manager_id",me.id)
-.eq("matchday_id",matchdayId)
-.maybeSingle();
+  if(out.length!==3)
+    return message(
+      "Devi avere 3 giocatori fuori.",
+      "err"
+    );
 
-if(old.error)
-return message(old.error.message,"err");
+  let g=
+    starters.filter(
+      s=>s.dataset.pos==="G"
+    ).length;
 
-let lid=old.data?.id;
+  let a=
+    starters.filter(
+      s=>s.dataset.pos==="A"
+    ).length;
 
-/*
-Se non esiste, la crea.
-*/
-if(!lid){
+  let c=
+    starters.filter(
+      s=>s.dataset.pos==="C"
+    ).length;
 
-```
-let x=await db.from("lineups")
-  .insert({
-    manager_id:me.id,
-    matchday_id:matchdayId
-  })
-  .select("id")
-  .single();
+  let moduloValido=
+    (g===2&&a===2&&c===1) ||
+    (g===1&&a===3&&c===1) ||
+    (g===1&&a===2&&c===2) ||
+    (g===2&&a===1&&c===2);
 
-if(x.error)
-  return message(x.error.message,"err");
+  if(!moduloValido)
+    return message(
+      "Modulo non valido. Moduli consentiti: 2G-2A-1C, 1G-3A-1C, 1G-2A-2C, 2G-1A-2C.",
+      "err"
+    );
 
-lid=x.data.id;
-```
+  let captains=[
+    ...document.querySelectorAll(
+      'input[data-captain]:checked'
+    )
+  ];
 
-}
+  if(captains.length!==1)
+    return message(
+      "Devi scegliere un capitano.",
+      "err"
+    );
 
-/*
-Elimina i giocatori precedenti.
-*/
-let d=await db.from("lineup_players")
-.delete()
-.eq("lineup_id",lid);
+  let captainId=
+    captains[0].dataset.captain;
 
-if(d.error)
-return message(d.error.message,"err");
+  /*
+    Cerca la formazione esistente.
+  */
 
-/*
-Inserisce la nuova formazione.
-*/
-let vals=selects.map(s=>({
-lineup_id:lid,
-player_id:s.dataset.p,
-role:s.value,
-captain:s.dataset.p===captainId
-}));
+  let old=await db.from("lineups")
+    .select("id")
+    .eq("manager_id",me.id)
+    .eq("matchday_id",matchdayId)
+    .maybeSingle();
 
-let x=await db.from("lineup_players")
-.insert(vals);
+  if(old.error)
+    return message(
+      old.error.message,
+      "err"
+    );
 
-if(x.error)
-return message(x.error.message,"err");
+  let lid=old.data?.id;
 
-message("Formazione salvata correttamente.","ok");
+  /*
+    Se non esiste, la crea.
+  */
+
+  if(!lid){
+
+    let x=await db.from("lineups")
+      .insert({
+        manager_id:me.id,
+        matchday_id:matchdayId
+      })
+      .select("id")
+      .single();
+
+    if(x.error)
+      return message(
+        x.error.message,
+        "err"
+      );
+
+    lid=x.data.id;
+
+  }
+
+  /*
+    Cancella i giocatori precedenti.
+  */
+
+  let d=await db.from("lineup_players")
+    .delete()
+    .eq("lineup_id",lid);
+
+  if(d.error)
+    return message(
+      d.error.message,
+      "err"
+    );
+
+  /*
+    Inserisce la formazione aggiornata.
+  */
+
+  let vals=selects.map(s=>({
+
+    lineup_id:lid,
+    player_id:s.dataset.p,
+    role:s.value,
+    captain:s.dataset.p===captainId
+
+  }));
+
+  let x=await db.from("lineup_players")
+    .insert(vals);
+
+  if(x.error)
+    return message(
+      x.error.message,
+      "err"
+    );
+
+  message(
+    "Formazione salvata correttamente.",
+    "ok"
+  );
+
+  /*
+    Ricarica la formazione dal database,
+    così la schermata rappresenta
+    esattamente ciò che è stato salvato.
+  */
+
+  await loadSavedLineup();
+
 }
 async function trades(){let r=await db.from("trades").select("*,proposer:proposer_id(name),receiver:receiver_id(name)").or(`proposer_id.eq.${me.id},receiver_id.eq.${me.id}`).order("created_at",{ascending:false}),m=await db.from("managers").select("id,name").neq("id",me.id);el("content").innerHTML=`<div class="grid"><div class="card"><h2>Nuova proposta</h2><select id="tr">${(m.data||[]).map(x=>`<option value="${x.id}">${x.name}</option>`).join("")}</select><button onclick="trade()">Invia proposta</button><p class="muted">Gli scambi sono illimitati durante il campionato.</p></div><div class="card"><h2>Proposte</h2>${(r.data||[]).map(x=>`<p>${x.proposer.name} → ${x.receiver.name} · <b>${x.status}</b>${x.receiver_id===me.id&&x.status==="pending"?` <button onclick="accept('${x.id}')">Accetta</button>`:""}</p>`).join("")||"Nessuna proposta."}</div></div>`}
 async function trade(){let x=await db.from("trades").insert({proposer_id:me.id,receiver_id:el("tr").value,message:"Proposta di scambio"});if(x.error)return message(x.error.message,"err");trades()}
