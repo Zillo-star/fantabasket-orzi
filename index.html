@@ -629,40 +629,55 @@ async function lineup(){
 
   let days=m.data||[];
 
+/*
+  Trova automaticamente la giornata corrente.
+
+  Una giornata è conclusa SOLO quando
+  tutte le sue partite hanno completed = true.
+*/
+
+let matches=await db.from("league_matches")
+  .select("matchday_number,completed");
+
+if(matches.error)
+  return message(matches.error.message,"err");
+
+let grouped={};
+
+(matches.data||[]).forEach(x=>{
+
+  if(!grouped[x.matchday_number])
+    grouped[x.matchday_number]=[];
+
+  grouped[x.matchday_number].push(x);
+
+});
+
+let currentDay=null;
+
+for(let day of days){
+
+  let number=day.number;
+  let dayMatches=grouped[number]||[];
+
   /*
-    Trova la prima giornata non ancora conclusa.
-
-    IMPORTANTE:
-    NON usiamo i punteggi di league_matches,
-    perché nel database sono già presenti.
-
-    Lo stato della giornata viene determinato
-    dal campo "status" di matchdays.
+    La giornata è conclusa quando:
+    - ci sono tutte le 4 partite
+    - tutte hanno completed = true
   */
 
-  let currentDay=null;
+  let completed=
+    dayMatches.length===4 &&
+    dayMatches.every(x=>x.completed===true);
 
-  for(let day of days){
+  if(!completed){
 
-    if(day.status!=="completed"){
-
-      currentDay=day.number;
-      break;
-
-    }
+    currentDay=number;
+    break;
 
   }
 
-  /*
-    Se tutte le giornate sono concluse,
-    non esiste una giornata corrente.
-  */
-
-  if(currentDay===null){
-
-    currentDay=null;
-
-  }
+}
 
   /*
     Mostra solamente le giornate precedenti
