@@ -893,6 +893,9 @@ async function loadSavedLineup(){
   let matchdayId=selected.value;
   let matchdayNumber=Number(selected.dataset.number);
 
+  let isCurrentDay=
+  matchdayNumber===window.currentLineupDay;
+
   console.log("MATCHDAY ID:",matchdayId);
   console.log("MATCHDAY NUMBER:",matchdayNumber);
 
