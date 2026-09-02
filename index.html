@@ -992,12 +992,18 @@ console.log("LOAD PLAYER GAMES PARTITA!");
   if(!select)
     return;
 
-  let selected=select.options[select.selectedIndex];
+console.log("SELECT DAY:", select);
+console.log("NUMERO OPZIONI:", select.options.length);
+console.log("INDICE SELEZIONATO:", select.selectedIndex);
 
-  if(!selected)
-    return;
+let selected=select.options[select.selectedIndex];
 
-  let matchdayId=selected.value;
+console.log("OPZIONE SELEZIONATA:", selected);
+
+if(!selected)
+  return;
+
+let matchdayId=selected.value;
 
 console.log("MATCHDAY ID:", matchdayId);
   
