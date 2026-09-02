@@ -953,9 +953,10 @@ let r=await db.from("rosters")
 </div>
 
 
-            <select
-              data-p="${x.player_id}"
-              data-pos="${x.players.position}">
+<select
+  data-p="${x.player_id}"
+  data-pos="${x.players.position}"
+  onchange="updateLineupSummary()">
 
               <option value="out">
                 Fuori
