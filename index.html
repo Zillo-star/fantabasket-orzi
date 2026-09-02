@@ -899,19 +899,9 @@ onchange="loadSavedLineup(); loadPlayerGames()"
   style="margin-top:4px;font-size:13px"
   data-game-player="${x.player_id}">
 
-  Caricamento partita...
+  Caricamento avversaria...
 
 </div>
-
-            <div
-              class="player-game"
-              data-player="${x.player_id}"
-              data-team="${x.players.real_team_id}"
-              style="margin-top:4px;font-size:13px">
-
-              Caricamento partita...
-
-            </div>
 
 
             <select
@@ -1009,7 +999,6 @@ async function loadPlayerGames(){
   if(!matchdayId)
     return;
 
-
   let games=await db
     .from("real_games")
     .select(`
@@ -1023,35 +1012,30 @@ async function loadPlayerGames(){
     `)
     .eq("matchday_id",matchdayId);
 
-
   if(games.error)
     return message(games.error.message,"err");
 
-
   let gamesByTeam={};
-
 
   (games.data||[]).forEach(game=>{
 
     gamesByTeam[game.home_team_id]={
-      home:game.home?.name || "—",
-      away:game.away?.name || "—",
+      opponent:game.away?.name || "—",
+      home:true,
       scheduled_at:game.scheduled_at,
       postponed:game.postponed,
       cancelled:game.cancelled
     };
 
-
     gamesByTeam[game.away_team_id]={
-      home:game.home?.name || "—",
-      away:game.away?.name || "—",
+      opponent:game.home?.name || "—",
+      home:false,
       scheduled_at:game.scheduled_at,
       postponed:game.postponed,
       cancelled:game.cancelled
     };
 
   });
-
 
   document
     .querySelectorAll("[data-game-player]")
@@ -1067,12 +1051,6 @@ async function loadPlayerGames(){
       if(!playerCard)
         return;
 
-
-      /*
-        Recupera il real_team_id
-        dal blocco del giocatore.
-      */
-
       let teamElement=
         playerCard.querySelector(
           "[data-real-team]"
@@ -1081,11 +1059,11 @@ async function loadPlayerGames(){
       if(!teamElement)
         return;
 
+      let teamId=
+        teamElement.dataset.realTeam;
 
-      let teamId=teamElement.dataset.realTeam;
-
-      let game=gamesByTeam[teamId];
-
+      let game=
+        gamesByTeam[teamId];
 
       if(!game){
 
@@ -1097,7 +1075,6 @@ async function loadPlayerGames(){
 
       }
 
-
       if(game.cancelled){
 
         box.innerHTML=`
@@ -1108,7 +1085,6 @@ async function loadPlayerGames(){
 
       }
 
-
       if(game.postponed){
 
         box.innerHTML=`
@@ -1118,7 +1094,6 @@ async function loadPlayerGames(){
         return;
 
       }
-
 
       let dateText="";
 
@@ -1139,10 +1114,9 @@ async function loadPlayerGames(){
 
       }
 
-
       box.innerHTML=`
 
-        🏀 <b>${game.home} vs ${game.away}</b>
+        🆚 <b>Avversaria: ${game.opponent}</b>
 
         ${
           dateText
