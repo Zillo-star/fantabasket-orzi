@@ -1295,12 +1295,19 @@ async function loadSavedLineup(){
     in base alla deadline.
   */
 
-  let deadline=
-    window.lineupDeadlines?.[matchdayNumber];
+  if(isCurrentDay){
 
-  if(deadline)
-    updateLineupLock(new Date(deadline));
+    let deadline=
+      window.lineupDeadlines?.[matchdayNumber];
 
+    if(deadline)
+      updateLineupLock(new Date(deadline));
+
+  }else{
+
+    updateLineupLock(null);
+
+  }
 }
 
 
