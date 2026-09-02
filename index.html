@@ -1030,6 +1030,8 @@ onchange="checkCaptain(this); updateLineupSummary()">
 
 await loadSavedLineup();
 
+updateLineupSummary();
+
 setTimeout(()=>{
   loadPlayerGames();
 },100);
