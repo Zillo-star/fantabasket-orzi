@@ -875,7 +875,6 @@ onchange="loadSavedLineup(); loadPlayerGames()"
 
       </div>
 
-
       <div id="lp">
 
         ${(r.data||[]).map(x=>`
@@ -894,6 +893,14 @@ onchange="loadSavedLineup(); loadPlayerGames()"
 
             </div>
 
+<div
+  class="muted"
+  style="margin-top:4px;font-size:13px"
+  data-game-player="${x.player_id}">
+
+  Caricamento partita...
+
+</div>
 
             <div
               class="player-game"
