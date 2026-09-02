@@ -712,10 +712,20 @@ async function lineup(){
     .select("id,number,lineup_deadline,status")
     .order("number");
 
-  let r=await db.from("rosters")
-    .select("player_id,players(name,position)")
-    .eq("manager_id",me.id)
-    .eq("active",true);
+let r=await db.from("rosters")
+  .select(`
+    player_id,
+    players(
+      name,
+      position,
+      real_team_id,
+      real_teams(
+        name
+      )
+    )
+  `)
+  .eq("manager_id",me.id)
+  .eq("active",true);
 
   if(m.error)
     return message(m.error.message,"err");
@@ -724,6 +734,19 @@ async function lineup(){
     return message(r.error.message,"err");
 
   let days=m.data||[];
+
+  let leagueMatches=await db
+  .from("league_matches")
+  .select(`
+    matchday_number,
+    home_team_id,
+    away_team_id,
+    home:home_team_id(name),
+    away:away_team_id(name)
+  `);
+
+if(leagueMatches.error)
+  return message(leagueMatches.error.message,"err");
 
 /*
   Trova automaticamente la giornata corrente.
