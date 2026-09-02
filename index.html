@@ -979,8 +979,11 @@ onchange="loadSavedLineup(); loadPlayerGames()"
      CARICA FORMAZIONE
   ========================= */
 
-  await loadSavedLineup();
-  await loadPlayerGames();
+await loadSavedLineup();
+
+setTimeout(()=>{
+  loadPlayerGames();
+},100);
 
 }
 async function loadPlayerGames(){
