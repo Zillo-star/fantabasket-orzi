@@ -990,6 +990,169 @@ onchange="loadSavedLineup(); loadPlayerGames()"
   await loadSavedLineup();
 
 }
+async function loadPlayerGames(){
+
+  let select=el("day");
+
+  if(!select)
+    return;
+
+  let selected=select.options[select.selectedIndex];
+
+  if(!selected)
+    return;
+
+  let matchdayId=selected.value;
+
+  if(!matchdayId)
+    return;
+
+
+  let games=await db
+    .from("real_games")
+    .select(`
+      home_team_id,
+      away_team_id,
+      scheduled_at,
+      postponed,
+      cancelled,
+      home:home_team_id(name),
+      away:away_team_id(name)
+    `)
+    .eq("matchday_id",matchdayId);
+
+
+  if(games.error)
+    return message(games.error.message,"err");
+
+
+  let gamesByTeam={};
+
+
+  (games.data||[]).forEach(game=>{
+
+    gamesByTeam[game.home_team_id]={
+      home:game.home?.name || "—",
+      away:game.away?.name || "—",
+      scheduled_at:game.scheduled_at,
+      postponed:game.postponed,
+      cancelled:game.cancelled
+    };
+
+
+    gamesByTeam[game.away_team_id]={
+      home:game.home?.name || "—",
+      away:game.away?.name || "—",
+      scheduled_at:game.scheduled_at,
+      postponed:game.postponed,
+      cancelled:game.cancelled
+    };
+
+  });
+
+
+  document
+    .querySelectorAll("[data-game-player]")
+    .forEach(box=>{
+
+      let playerId=box.dataset.gamePlayer;
+
+      let playerCard=
+        document.querySelector(
+          `select[data-p="${playerId}"]`
+        )?.closest(".card");
+
+      if(!playerCard)
+        return;
+
+
+      /*
+        Recupera il real_team_id
+        dal blocco del giocatore.
+      */
+
+      let teamElement=
+        playerCard.querySelector(
+          "[data-real-team]"
+        );
+
+      if(!teamElement)
+        return;
+
+
+      let teamId=teamElement.dataset.realTeam;
+
+      let game=gamesByTeam[teamId];
+
+
+      if(!game){
+
+        box.innerHTML=`
+          💤 <b>Riposo</b>
+        `;
+
+        return;
+
+      }
+
+
+      if(game.cancelled){
+
+        box.innerHTML=`
+          ❌ <b>Partita annullata</b>
+        `;
+
+        return;
+
+      }
+
+
+      if(game.postponed){
+
+        box.innerHTML=`
+          ⏸️ <b>Partita rinviata</b>
+        `;
+
+        return;
+
+      }
+
+
+      let dateText="";
+
+      if(game.scheduled_at){
+
+        let d=new Date(game.scheduled_at);
+
+        dateText=
+          d.toLocaleDateString("it-IT",{
+            day:"2-digit",
+            month:"2-digit"
+          })
+          +" · "+
+          d.toLocaleTimeString("it-IT",{
+            hour:"2-digit",
+            minute:"2-digit"
+          });
+
+      }
+
+
+      box.innerHTML=`
+
+        🏀 <b>${game.home} vs ${game.away}</b>
+
+        ${
+          dateText
+          ? `<div class="muted">${dateText}</div>`
+          : ""
+        }
+
+      `;
+
+    });
+
+}
 async function loadSavedLineup(){
 
   let select=el("day");
