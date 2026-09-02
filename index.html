@@ -1657,6 +1657,21 @@ function checkCaptain(box){
   });
 
 }
+function handleLineupRoleChange(select){
+
+  if(select.value!=="out")
+    return;
+
+  let captain=document.querySelector(
+    `input[data-captain="${select.dataset.p}"]`
+  );
+
+  if(captain)
+    captain.checked=false;
+
+  updateLineupSummary();
+
+}
 function updateLineupSummary(){
 
   let box=el("lineupSummary");
