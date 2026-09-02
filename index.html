@@ -1621,6 +1621,23 @@ function checkCaptain(box){
   if(!box.checked)
     return;
 
+  let playerId=box.dataset.captain;
+
+  let playerSelect=document.querySelector(
+    `select[data-p="${playerId}"]`
+  );
+
+  if(playerSelect && playerSelect.value==="out"){
+
+    box.checked=false;
+
+    return message(
+      "Il capitano non può essere fuori.",
+      "err"
+    );
+
+  }
+
   document.querySelectorAll(
     'input[data-captain]'
   ).forEach(x=>{
@@ -1631,11 +1648,6 @@ function checkCaptain(box){
   });
 
 }
-
-
-/*
-  Salva o aggiorna la formazione.
-*/
 function updateLineupSummary(){
 
   let box=el("lineupSummary");
