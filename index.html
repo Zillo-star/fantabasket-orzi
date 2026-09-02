@@ -209,7 +209,37 @@ td,th{
 </style></head><body>
 <header><div><b>🏀 FantaBasket Orzi</b><div id="who" class="muted">Non autenticato</div></div><div id="authBtn"><button onclick="showAuth()">Accedi</button></div></header>
 <main><div id="msg"></div>
-<section id="auth" class="card hidden"><h2>Accedi</h2><label>Email</label><input id="email" type="email"><label>Password</label><input id="password" type="password"><label>Nome fantallenatore (solo alla registrazione)</label><input id="managerName" placeholder="Zillo / Picco / Mino / Albi / Pevez / Bedo / Ventu / Dello / Tommi"><button onclick="login()">Accedi</button><button class="secondary" onclick="signup()">Registrati</button><button class="secondary" onclick="hideAuth()">Chiudi</button></section>
+<section id="auth" class="card hidden">
+
+  <h2>Accedi</h2>
+
+  <label>Email</label>
+  <input
+    id="email"
+    type="email"
+    name="email"
+    autocomplete="username"
+  >
+
+  <label>Password</label>
+  <input
+    id="password"
+    type="password"
+    name="password"
+    autocomplete="current-password"
+  >
+
+  <label>Nome fantallenatore (solo alla registrazione)</label>
+  <input
+    id="managerName"
+    placeholder="Zillo / Picco / Mino / Albi / Pevez / Bedo / Ventu / Dello / Tommi"
+  >
+
+  <button onclick="login()">Accedi</button>
+  <button class="secondary" onclick="signup()">Registrati</button>
+  <button class="secondary" onclick="hideAuth()">Chiudi</button>
+
+</section>
 <section id="app" class="hidden"><nav id="nav"></nav><div id="content"></div></section>
 </main>
 <script>
