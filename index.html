@@ -956,7 +956,16 @@ let r=await db.from("rosters")
 <select
   data-p="${x.player_id}"
   data-pos="${x.players.position}"
-  onchange="updateLineupSummary()">
+onchange="
+  if(this.value==='out'){
+    let captain=document.querySelector(
+      'input[data-captain=\"'+this.dataset.p+'\"]'
+    );
+    if(captain)
+      captain.checked=false;
+  }
+  updateLineupSummary();
+">
 
               <option value="out">
                 Fuori
