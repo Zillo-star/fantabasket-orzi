@@ -982,7 +982,7 @@ let r=await db.from("rosters")
               <input
                 type="checkbox"
                 data-captain="${x.player_id}"
-                onchange="checkCaptain(this)">
+onchange="checkCaptain(this); updateLineupSummary()">
 
               Capitano
 
