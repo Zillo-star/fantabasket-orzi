@@ -1015,10 +1015,10 @@ console.log("LOAD PLAYER GAMES PARTITA!");
     `)
     .eq("matchday_id",matchdayId);
 
+console.log("PARTITE GIORNATA:", games.data);
+  
   if(games.error)
     return message(games.error.message,"err");
-
-console.log("PARTITE GIORNATA:", games.data);
   
   let gamesByTeam={};
 
