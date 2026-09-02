@@ -708,114 +708,102 @@ ${x.players.is_foreign?" · STRANIERO":""}
 }
 async function lineup(){
 
-  let m=await db.from("matchdays")
+  /* =========================
+     GIORNATE
+  ========================= */
+
+  let m=await db
+    .from("matchdays")
     .select("id,number,lineup_deadline,status")
     .order("number");
-
-let r=await db.from("rosters")
-  .select(`
-    player_id,
-    players(
-      name,
-      position,
-      real_team_id,
-      real_teams(
-        name
-      )
-    )
-  `)
-  .eq("manager_id",me.id)
-  .eq("active",true);
 
   if(m.error)
     return message(m.error.message,"err");
 
+  let days=m.data||[];
+
+
+  /* =========================
+     ROSA DEL FANTALLENATORE
+  ========================= */
+
+  let r=await db
+    .from("rosters")
+    .select(`
+      player_id,
+      players(
+        name,
+        position,
+        real_team_id,
+        real_teams(
+          name
+        )
+      )
+    `)
+    .eq("manager_id",me.id)
+    .eq("active",true);
+
   if(r.error)
     return message(r.error.message,"err");
 
-  let days=m.data||[];
 
-  let leagueMatches=await db
-  .from("league_matches")
-  .select(`
-    matchday_number,
-    home_team_id,
-    away_team_id,
-    home:home_team_id(name),
-    away:away_team_id(name)
-  `);
+  /* =========================
+     TROVA GIORNATA CORRENTE
+  ========================= */
 
-if(leagueMatches.error)
-  return message(leagueMatches.error.message,"err");
+  let matches=await db
+    .from("league_matches")
+    .select("matchday_number,completed");
 
-/*
-  Trova automaticamente la giornata corrente.
+  if(matches.error)
+    return message(matches.error.message,"err");
 
-  Una giornata è conclusa SOLO quando
-  tutte le sue partite hanno completed = true.
-*/
+  let grouped={};
 
-let matches=await db.from("league_matches")
-  .select("matchday_number,completed");
+  (matches.data||[]).forEach(x=>{
 
-if(matches.error)
-  return message(matches.error.message,"err");
+    if(!grouped[x.matchday_number])
+      grouped[x.matchday_number]=[];
 
-let grouped={};
+    grouped[x.matchday_number].push(x);
 
-(matches.data||[]).forEach(x=>{
+  });
 
-  if(!grouped[x.matchday_number])
-    grouped[x.matchday_number]=[];
 
-  grouped[x.matchday_number].push(x);
+  let currentDay=null;
 
-});
+  for(let day of days){
 
-let currentDay=null;
+    let number=day.number;
 
-for(let day of days){
+    let dayMatches=grouped[number]||[];
 
-  let number=day.number;
-  let dayMatches=grouped[number]||[];
+    let completed=
+      dayMatches.length===4 &&
+      dayMatches.every(x=>x.completed===true);
 
-  /*
-    La giornata è conclusa quando:
-    - ci sono tutte le 4 partite
-    - tutte hanno completed = true
-  */
+    if(!completed){
 
-  let completed=
-    dayMatches.length===4 &&
-    dayMatches.every(x=>x.completed===true);
+      currentDay=number;
+      break;
 
-  if(!completed){
-
-    currentDay=number;
-    break;
+    }
 
   }
 
-}
 
-  /*
-    Mostra solamente le giornate precedenti
-    e quella corrente.
-
-    Le giornate future NON vengono mostrate.
-  */
+  /* =========================
+     GIORNATE DISPONIBILI
+  ========================= */
 
   let currentIndex=
     days.findIndex(x=>x.number===currentDay);
 
   let availableDays=
     currentIndex>=0
-    ? days.slice(0,currentIndex+1)
-    : [];
+      ? days.slice(0,currentIndex+1)
+      : [];
 
-  /*
-    Salva le deadline disponibili.
-  */
 
   window.lineupDeadlines={};
 
@@ -826,21 +814,34 @@ for(let day of days){
 
   });
 
-  /*
-    Salva la giornata corrente.
-  */
-
   window.currentLineupDay=currentDay;
 
-  /*
-    Costruisce la schermata.
-  */
+
+  /* =========================
+     NOME SQUADRA FANTASY
+  ========================= */
+
+  let fantasyTeamName=
+    me.team_name || me.name;
+
+
+  /* =========================
+     SCHERMATA
+  ========================= */
 
   el("content").innerHTML=`
 
     <div class="card">
 
-      <h2>Formazione</h2>
+      <h2>${fantasyTeamName}</h2>
+
+      <p class="muted" style="margin-top:-10px">
+        Fantallenatore: ${me.name}
+      </p>
+
+
+      <h3>Formazione</h3>
+
 
       <select id="day"
               onchange="loadSavedLineup()">
@@ -884,6 +885,27 @@ for(let day of days){
 
             <b>${x.players.name}</b>
             · ${x.players.position}
+
+            <div
+              class="muted"
+              style="margin-top:4px;font-size:13px">
+
+              🏀
+              ${x.players.real_teams?.name || "Squadra non disponibile"}
+
+            </div>
+
+
+            <div
+              class="player-game"
+              data-player="${x.player_id}"
+              data-team="${x.players.real_team_id}"
+              style="margin-top:4px;font-size:13px">
+
+              Caricamento partita...
+
+            </div>
+
 
             <select
               data-p="${x.player_id}"
@@ -954,19 +976,199 @@ for(let day of days){
 
   `;
 
-  /*
-    Carica la formazione della giornata corrente.
-  */
+
+  /* =========================
+     CARICA FORMAZIONE
+  ========================= */
 
   await loadSavedLineup();
 
+
+  /* =========================
+     CARICA PARTITE REALI
+  ========================= */
+
+  await loadPlayerGames();
+
 }
+async function loadPlayerGames(){
 
-/*
-  Carica la formazione già salvata
-  per la giornata selezionata.
-*/
+  let daySelect=el("day");
 
+  if(!daySelect)
+    return;
+
+  let matchdayId=daySelect.value;
+
+  if(!matchdayId)
+    return;
+
+
+  let games=await db
+    .from("real_games")
+    .select(`
+      id,
+      matchday_id,
+      home_team_id,
+      away_team_id,
+      scheduled_at,
+      postponed,
+      cancelled,
+      home:home_team_id(
+        id,
+        name
+      ),
+      away:away_team_id(
+        id,
+        name
+      )
+    `)
+    .eq("matchday_id",matchdayId);
+
+
+  if(games.error)
+    return message(games.error.message,"err");
+
+
+  let gameByTeam={};
+
+
+  (games.data||[]).forEach(game=>{
+
+    if(game.home_team_id){
+
+      gameByTeam[game.home_team_id]={
+        opponent:game.away?.name || "—",
+        home:true,
+        scheduled_at:game.scheduled_at,
+        postponed:game.postponed,
+        cancelled:game.cancelled
+      };
+
+    }
+
+
+    if(game.away_team_id){
+
+      gameByTeam[game.away_team_id]={
+        opponent:game.home?.name || "—",
+        home:false,
+        scheduled_at:game.scheduled_at,
+        postponed:game.postponed,
+        cancelled:game.cancelled
+      };
+
+    }
+
+  });
+
+
+  document
+    .querySelectorAll(".player-game")
+    .forEach(box=>{
+
+      let teamId=box.dataset.team;
+
+      let game=gameByTeam[teamId];
+
+
+      if(!game){
+
+        box.innerHTML=`
+          <span class="muted">
+            💤 Riposo
+          </span>
+        `;
+
+        return;
+
+      }
+
+
+      if(game.cancelled){
+
+        box.innerHTML=`
+          <span>
+            ❌ Partita annullata
+          </span>
+        `;
+
+        return;
+
+      }
+
+
+      if(game.postponed){
+
+        box.innerHTML=`
+          <span>
+            ⏸️ Partita rinviata
+          </span>
+        `;
+
+        return;
+
+      }
+
+
+      let teamName=
+        box.parentElement
+          .querySelector(".muted")
+          ?.textContent
+          ?.replace("🏀","")
+          ?.trim()
+        || "";
+
+
+      let homeTeam=
+        game.home
+          ? teamName
+          : game.opponent;
+
+      let awayTeam=
+        game.home
+          ? game.opponent
+          : teamName;
+
+
+      let dateText="";
+
+
+      if(game.scheduled_at){
+
+        let d=new Date(game.scheduled_at);
+
+        dateText=
+          d.toLocaleDateString("it-IT",{
+            day:"2-digit",
+            month:"2-digit"
+          })
+          +" · "
+          +
+          d.toLocaleTimeString("it-IT",{
+            hour:"2-digit",
+            minute:"2-digit"
+          });
+
+      }
+
+
+      box.innerHTML=`
+
+        <b>
+          ${homeTeam} vs ${awayTeam}
+        </b>
+
+        ${dateText
+          ? `<div class="muted">${dateText}</div>`
+          : ""
+        }
+
+      `;
+
+    });
+
+}
 async function loadSavedLineup(){
 
   let select=el("day");
