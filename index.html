@@ -1016,6 +1016,8 @@ async function loadPlayerGames(){
   if(games.error)
     return message(games.error.message,"err");
 
+console.log("PARTITE GIORNATA:", games.data);
+  
   let gamesByTeam={};
 
   (games.data||[]).forEach(game=>{
