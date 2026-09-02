@@ -1627,16 +1627,13 @@ function updateLineupLock(deadline){
 }
 function checkCaptain(box){
 
-  if(!box.checked)
-    return;
-
   let playerId=box.dataset.captain;
 
   let playerSelect=document.querySelector(
     `select[data-p="${playerId}"]`
   );
 
-  if(playerSelect && playerSelect.value==="out"){
+  if(box.checked && playerSelect?.value==="out"){
 
     box.checked=false;
 
@@ -1646,6 +1643,9 @@ function checkCaptain(box){
     );
 
   }
+
+  if(!box.checked)
+    return;
 
   document.querySelectorAll(
     'input[data-captain]'
