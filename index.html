@@ -1633,7 +1633,189 @@ function checkCaptain(box){
 /*
   Salva o aggiorna la formazione.
 */
+function updateLineupSummary(){
 
+  let box=el("lineupSummary");
+
+  if(!box)
+    return;
+
+  let selects=
+    [...document.querySelectorAll("#lp select[data-p]")];
+
+  let groups={
+    starter:[],
+    sixth:[],
+    bench:[],
+    out:[]
+  };
+
+  selects.forEach(s=>{
+
+    let card=s.closest(".card");
+
+    if(!card)
+      return;
+
+    let name=
+      card.querySelector("b")?.textContent?.trim()
+      || "Giocatore";
+
+    let position=
+      s.dataset.pos || "";
+
+    let playerId=
+      s.dataset.p;
+
+    let captain=
+      document.querySelector(
+        `input[data-captain="${playerId}"]`
+      )?.checked;
+
+    groups[s.value].push({
+      name,
+      position,
+      captain
+    });
+
+  });
+
+  let starters=groups.starter;
+
+  let g=
+    starters.filter(x=>x.position==="G").length;
+
+  let a=
+    starters.filter(x=>x.position==="A").length;
+
+  let c=
+    starters.filter(x=>x.position==="C").length;
+
+  let modulo="";
+
+  if(g===2 && a===2 && c===1)
+    modulo="2G – 2A – 1C";
+
+  else if(g===1 && a===3 && c===1)
+    modulo="1G – 3A – 1C";
+
+  else if(g===1 && a===2 && c===2)
+    modulo="1G – 2A – 2C";
+
+  else if(g===2 && a===1 && c===2)
+    modulo="2G – 1A – 2C";
+
+  else if(g===3 && a===1 && c===1)
+    modulo="3G – 1A – 1C";
+
+
+  function playerRow(x){
+
+    return `
+      <div style="
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        padding:6px 0;
+        border-bottom:1px solid rgba(255,255,255,.08);
+      ">
+
+        <span>
+          <b>${x.name}</b>
+          ${x.captain ? " 👑" : ""}
+          <small class="muted">
+            ${x.position}
+          </small>
+        </span>
+
+      </div>
+    `;
+
+  }
+
+
+  let html=`
+
+    <h3 style="margin-top:0">
+      🏀 Formazione attuale
+    </h3>
+
+  `;
+
+
+  if(modulo){
+
+    html+=`
+      <div style="
+        margin-bottom:12px;
+        font-size:16px;
+      ">
+        <b>Modulo: ${modulo}</b>
+      </div>
+    `;
+
+  }else{
+
+    html+=`
+      <div class="muted" style="margin-bottom:12px;">
+        Modulo non ancora completo.
+      </div>
+    `;
+
+  }
+
+
+  if(groups.starter.length){
+
+    html+=`
+      <div style="margin-top:10px;">
+        <b>🏀 Titolari</b>
+        ${groups.starter.map(playerRow).join("")}
+      </div>
+    `;
+
+  }
+
+
+  if(groups.sixth.length){
+
+    html+=`
+      <div style="margin-top:12px;">
+        <b>6️⃣ Sesto uomo</b>
+        ${groups.sixth.map(playerRow).join("")}
+      </div>
+    `;
+
+  }
+
+
+  if(groups.bench.length){
+
+    html+=`
+      <div style="margin-top:12px;">
+        <b>🪑 Panchina</b>
+        ${groups.bench.map(playerRow).join("")}
+      </div>
+    `;
+
+  }
+
+
+  if(groups.out.length){
+
+    html+=`
+      <div style="margin-top:12px;">
+        <b>❌ Fuori</b>
+        ${groups.out.map(playerRow).join("")}
+      </div>
+    `;
+
+  }
+
+
+  box.innerHTML=html;
+
+}
 async function saveLineup(){
 
   let select=el("day");
