@@ -844,7 +844,7 @@ async function lineup(){
 
 
       <select id="day"
-              onchange="loadSavedLineup()">
+onchange="loadSavedLineup(); loadPlayerGames()"
 
         ${availableDays.map(x=>`
 
