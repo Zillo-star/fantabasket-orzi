@@ -1226,11 +1226,27 @@ async function loadSavedLineup(){
       status.textContent=
         "Nessuna formazione salvata per questa giornata.";
 
-    let deadline=
-      window.lineupDeadlines?.[matchdayNumber];
+    /*
+      Se è la giornata attuale,
+      applichiamo la deadline.
 
-    if(deadline)
-      updateLineupLock(new Date(deadline));
+      Se è una giornata precedente,
+      rimane bloccata.
+    */
+
+    if(isCurrentDay){
+
+      let deadline=
+        window.lineupDeadlines?.[matchdayNumber];
+
+      if(deadline)
+        updateLineupLock(new Date(deadline));
+
+    }else{
+
+      updateLineupLock(null);
+
+    }
 
     return;
 
