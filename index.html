@@ -843,24 +843,24 @@ let r=await db.from("rosters")
       <h3>Formazione</h3>
 
 
-      <select id="day"
-onchange="loadSavedLineup(); loadPlayerGames()"
+    <select id="day"
+  onchange="loadSavedLineup(); loadPlayerGames()">
 
-        ${availableDays.map(x=>`
+  ${availableDays.map(x=>`
 
-          <option
-            value="${x.id}"
-            data-number="${x.number}"
-            ${x.number===currentDay?"selected":""}>
+    <option
+      value="${x.id}"
+      data-number="${x.number}"
+      ${x.number===currentDay?"selected":""}>
 
-            Giornata ${x.number}
-            ${x.number===currentDay?" · ATTUALE":""}
+      Giornata ${x.number}
+      ${x.number===currentDay?" · ATTUALE":""}
 
-          </option>
+    </option>
 
-        `).join("")}
+  `).join("")}
 
-      </select>
+</select>
 
 
       <div id="deadlineBox" class="card">
