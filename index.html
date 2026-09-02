@@ -727,21 +727,20 @@ async function lineup(){
      ROSA DEL FANTALLENATORE
   ========================= */
 
-  let r=await db
-    .from("rosters")
-    .select(`
-      player_id,
-      players(
-        name,
-        position,
-        real_team_id,
-        real_teams(
-          name
-        )
+let r=await db.from("rosters")
+  .select(`
+    player_id,
+    players(
+      name,
+      position,
+      real_team_id,
+      real_teams(
+        name
       )
-    `)
-    .eq("manager_id",me.id)
-    .eq("active",true);
+    )
+  `)
+  .eq("manager_id",me.id)
+  .eq("active",true);
 
   if(r.error)
     return message(r.error.message,"err");
