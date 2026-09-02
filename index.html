@@ -475,6 +475,8 @@ async function players(){
 
   if(r.error)
     return message(r.error.message,"err");
+  
+  console.log("ROSA + SQUADRE:", r.data);
 
   let c=await db.from("real_teams")
     .select("id,name,coach")
