@@ -2578,9 +2578,13 @@ async function calendar(){
 
   if(managerIds.length){
 
-    let m=await db.from("managers")
-      .select("id,name,team_name")
-      .in("id",managerIds);
+let m=await db.from("managers")
+  .select(`
+    id,
+    name,
+    team_name
+  `)
+  .in("id",managerIds);
 
     if(m.error)
       return message(m.error.message,"err");
