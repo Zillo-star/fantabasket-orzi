@@ -2957,6 +2957,9 @@ let awayName=
   awayManager?.name ||
   "—";
 
+let homeLogo=coachMap[x.home_manager_id]?.logo_url || "";
+let awayLogo=coachMap[x.away_manager_id]?.logo_url || "";
+
 let homeManagerSmall=
   homeManager?.name || "";
 
