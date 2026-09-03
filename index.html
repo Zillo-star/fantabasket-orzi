@@ -2710,10 +2710,19 @@ let m=await db.from("managers")
 
   if(playerIds.length){
 
-    let p=await db.from("players")
-      .select("id,name,position")
-      .in("id",playerIds);
-
+let p=await db.from("players")
+  .select(`
+    id,
+    name,
+    position,
+    real_team_id,
+    real_teams(
+      name,
+      logo_url
+    )
+  `)
+  .in("id",playerIds);
+    
     if(p.error)
       return message(p.error.message,"err");
 
