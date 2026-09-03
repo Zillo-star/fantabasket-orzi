@@ -2603,9 +2603,8 @@ let m=await db.from("managers")
           logo_url
         )
       `)
-      .in("manager_id",managerIds)
-      .eq("active",true);
-
+      .in("manager_id",managerIds);
+    
     if(c.error)
       return message(c.error.message,"err");
 
