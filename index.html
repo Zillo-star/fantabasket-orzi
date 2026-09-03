@@ -1821,12 +1821,14 @@ let teamName=
         `input[data-captain="${playerId}"]`
       )?.checked;
 
-    groups[s.value].push({
-      name,
-      position,
-      captain
-    });
-
+groups[s.value].push({
+  name,
+  position,
+  captain,
+  logoUrl,
+  teamName
+});
+    
   });
 
   let starters=groups.starter;
