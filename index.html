@@ -2590,6 +2590,31 @@ let m=await db.from("managers")
 
   }
 
+  let coachMap={};
+
+  if(managerIds.length){
+
+    let c=await db.from("manager_coaches")
+      .select(`
+        manager_id,
+        real_team_id,
+        real_teams(
+          name,
+          logo_url
+        )
+      `)
+      .in("manager_id",managerIds)
+      .eq("active",true);
+
+    if(c.error)
+      return message(c.error.message,"err");
+
+    (c.data||[]).forEach(x=>{
+      coachMap[x.manager_id]=x.real_teams;
+    });
+
+  }
+  
   /*
     Recuperiamo gli ID delle giornate.
     Sono UUID e NON i numeri 1, 2, 3...
