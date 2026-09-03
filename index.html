@@ -2986,11 +2986,20 @@ let awayManagerSmall=
           <tr>
 
 <td>
-  <b>${homeName}</b>
-  <br>
-  <small class="muted">
-    ${homeManagerSmall}
-  </small>
+  <div style="display:flex;align-items:center;gap:8px;">
+    ${
+      homeLogo
+      ? `<img src="${homeLogo}" style="width:32px;height:32px;object-fit:contain;">`
+      : ""
+    }
+    <div>
+      <b>${homeName}</b>
+      <br>
+      <small class="muted">
+        ${homeManagerSmall}
+      </small>
+    </div>
+  </div>
 </td>
 
             <td>
