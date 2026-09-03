@@ -887,8 +887,9 @@ let r=await db.from("rosters")
       position,
       real_team_id,
       real_teams(
-        name
-      )
+  name,
+  logo_url
+)
     )
   `)
   .eq("manager_id",me.id)
