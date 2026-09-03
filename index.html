@@ -260,7 +260,89 @@ const el=id=>document.getElementById(id);
 function showAuth(){
   document.getElementById("auth").classList.remove("hidden");
 }
+function showPasswordReset(){
 
+  el("auth").classList.add("hidden");
+
+  el("content").innerHTML=`
+
+    <div class="card">
+
+      <h2>🔐 Nuova password</h2>
+
+      <p class="muted">
+        Inserisci la nuova password per il tuo account.
+      </p>
+
+      <label>Nuova password</label>
+
+      <input
+        id="newPassword"
+        type="password"
+        minlength="6"
+        autocomplete="new-password"
+        placeholder="Nuova password"
+      >
+
+      <label>Ripeti password</label>
+
+      <input
+        id="newPassword2"
+        type="password"
+        minlength="6"
+        autocomplete="new-password"
+        placeholder="Ripeti password"
+      >
+
+      <button onclick="updatePassword()">
+        Salva nuova password
+      </button>
+
+    </div>
+
+  `;
+
+  el("app").classList.remove("hidden");
+
+}
+
+async function updatePassword(){
+
+  let p1=el("newPassword")?.value || "";
+  let p2=el("newPassword2")?.value || "";
+
+  if(p1.length<6)
+    return message(
+      "La password deve avere almeno 6 caratteri.",
+      "err"
+    );
+
+  if(p1!==p2)
+    return message(
+      "Le due password non coincidono.",
+      "err"
+    );
+
+  let r=await db.auth.updateUser({
+    password:p1
+  });
+
+  if(r.error)
+    return message(
+      "Errore cambio password: "+r.error.message,
+      "err"
+    );
+
+  message(
+    "✅ Password aggiornata correttamente. Ora puoi accedere con la nuova password.",
+    "ok"
+  );
+
+  setTimeout(()=>{
+    location.href=window.location.origin+window.location.pathname;
+  },1200);
+
+}
 function hideAuth(){
   document.getElementById("auth").classList.add("hidden");
 }
@@ -3836,5 +3918,37 @@ message(
 admin();
 
 }
-boot();
+async function checkPasswordRecovery(){
+
+  let hash=window.location.hash || "";
+
+  if(
+    hash.includes("type=recovery") ||
+    hash.includes("access_token=")
+  ){
+
+    let s=await db.auth.getSession();
+
+    if(s.data.session){
+
+      showPasswordReset();
+
+      return true;
+
+    }
+
+  }
+
+  return false;
+
+}
+
+(async()=>{
+
+  let recovery=await checkPasswordRecovery();
+
+  if(!recovery)
+    await boot();
+
+})();
 </script></body></html>
