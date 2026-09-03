@@ -1860,29 +1860,59 @@ groups[s.value].push({
     modulo="3G – 1A – 1C";
 
 
-  function playerRow(x){
+function playerRow(x){
 
-    return `
-      <div style="
+  return `
+    <div style="
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:6px 0;
+      border-bottom:1px solid rgba(255,255,255,.08);
+    ">
+
+      <span style="
         display:flex;
-        justify-content:space-between;
         align-items:center;
-        padding:6px 0;
-        border-bottom:1px solid rgba(255,255,255,.08);
+        gap:8px;
       ">
+
+        ${
+          x.logoUrl
+            ? `<img
+                src="${x.logoUrl}"
+                style="
+                  width:28px;
+                  height:28px;
+                  object-fit:contain;
+                "
+              >`
+            : ""
+        }
 
         <span>
           <b>${x.name}</b>
           ${x.captain ? " 👑" : ""}
+
           <small class="muted">
             ${x.position}
           </small>
+
+          ${
+            x.teamName
+              ? `<small class="muted" style="margin-left:6px;">
+                  ${x.teamName}
+                </small>`
+              : ""
+          }
         </span>
 
-      </div>
-    `;
+      </span>
 
-  }
+    </div>
+  `;
+
+}
 
 
   let html=`
