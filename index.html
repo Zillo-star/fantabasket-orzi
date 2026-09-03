@@ -3222,7 +3222,7 @@ let r=await db.from("rosters")
 if(r.error)return message(r.error.message,"err");
 
 let p=await db.from("players")
-.select("id,name,position,is_foreign,real_teams(name)")
+.select("id,name,position,is_foreign,real_teams(name,logo_url)")
 .order("name");
 
 if(p.error)return message(p.error.message,"err");
