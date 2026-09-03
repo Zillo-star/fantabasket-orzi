@@ -3007,11 +3007,20 @@ let awayManagerSmall=
             </td>
 
 <td>
-  <b>${awayName}</b>
-  <br>
-  <small class="muted">
-    ${awayManagerSmall}
-  </small>
+  <div style="display:flex;align-items:center;gap:8px;">
+    ${
+      awayLogo
+      ? `<img src="${awayLogo}" style="width:32px;height:32px;object-fit:contain;">`
+      : ""
+    }
+    <div>
+      <b>${awayName}</b>
+      <br>
+      <small class="muted">
+        ${awayManagerSmall}
+      </small>
+    </div>
+  </div>
 </td>
 
           </tr>
