@@ -270,6 +270,37 @@ function message(t,c=""){
     t?`<div class="${c}">${t}</div>`:"";
 }
 async function login(){let r=await db.auth.signInWithPassword({email:el("email").value.trim(),password:el("password").value});if(r.error)return message(r.error.message,"err");hideAuth();boot()}
+async function forgotPassword(){
+
+  let email=el("email").value.trim();
+
+  if(!email)
+    return message(
+      "Inserisci prima la tua email.",
+      "err"
+    );
+
+  let redirectTo=window.location.origin+window.location.pathname;
+
+  let r=await db.auth.resetPasswordForEmail(
+    email,
+    {
+      redirectTo:redirectTo
+    }
+  );
+
+  if(r.error)
+    return message(
+      "Errore invio email: "+r.error.message,
+      "err"
+    );
+
+  message(
+    "Email inviata. Controlla la posta e apri il link per impostare la nuova password.",
+    "ok"
+  );
+
+}
 async function signup(){let n=document.getElementById("managerName").value.trim(),e=document.getElementById("email").value.trim(),p=document.getElementById("password").value;if(!n||!e||p.length<6)return message("Inserisci nome, email e password (minimo 6 caratteri).","err");let r=await db.auth.signUp({email:e,password:p,options:{data:{manager_name:n}}});if(r.error)return message(r.error.message,"err");message("Registrazione effettuata. Ora puoi accedere.","ok")}
 async function boot(){
 
