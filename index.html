@@ -2860,13 +2860,28 @@ let teamName=x.player.real_teams?.name || "";
           padding:6px 0;
           border-bottom:1px solid rgba(255,255,255,.08);
         ">
-          <span>
-            <b>${x.player.name}</b>
-            ${captain}
-            <small class="muted">
-              ${x.player.position||""}
-            </small>
-          </span>
+<span style="display:flex;align-items:center;gap:8px;">
+
+  ${
+    teamLogo
+      ? `<img src="${teamLogo}" style="width:28px;height:28px;object-fit:contain;">`
+      : ""
+  }
+
+  <span>
+    <b>${x.player.name}</b>
+    ${captain}
+    <small class="muted">
+      ${x.player.position||""}
+    </small>
+    ${
+      teamName
+        ? `<small class="muted" style="margin-left:6px;">${teamName}</small>`
+        : ""
+    }
+  </span>
+
+</span>
           <span>
             ${scoreText}
           </span>
