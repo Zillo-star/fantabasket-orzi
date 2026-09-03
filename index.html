@@ -2834,6 +2834,9 @@ let p=await db.from("players")
 
     function playerRow(x){
 
+let teamLogo=x.player.real_teams?.logo_url || "";
+let teamName=x.player.real_teams?.name || "";
+      
       let score=
         scoreMap[
           managerId+"_"+matchdayId+"_"+x.player_id
