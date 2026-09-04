@@ -439,7 +439,7 @@ async function boot(){
 
 }
 async function logout(){await db.auth.signOut();location.reload()}
-function nav(){let a=[["home","Dashboard"],["players","Listone"],["roster","Rosa"],["lineup","Formazione"],["trades","Scambi"],["calendar","Calendario"],["standings","Classifica"]];if(me.is_admin)a.push(["admin","Admin"]);el("nav").innerHTML=a.map(x=>`<button onclick="${x[0]}()">${x[1]}</button>`).join("")}
+function nav(){let a=[["home","Dashboard"],["players","Listone"],["roster","Rose"],["lineup","Formazione"],["trades","Scambi"],["calendar","Calendario"],["standings","Classifica"]];if(me.is_admin)a.push(["admin","Admin"]);el("nav").innerHTML=a.map(x=>`<button onclick="${x[0]}()">${x[1]}</button>`).join("")}
 async function home(){
 
 let r=await db.from("fantasy_scores")
