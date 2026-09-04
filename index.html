@@ -2146,11 +2146,11 @@ let moduloValido=
   (g===2&&a===1&&c===2) ||
   (g===3&&a===1&&c===1);
 
-  if(!moduloValido)
-    return message(
-  "Modulo non valido. Moduli consentiti: 2G-2A-1C, 1G-3A-1C, 1G-2A-2C, 2G-1A-2C, 3G-1A-1C."
-      "err"
-    );
+if(!moduloValido)
+  return message(
+    "Modulo non valido. Moduli consentiti: 2G-2A-1C, 1G-3A-1C, 1G-2A-2C, 2G-1A-2C, 3G-1A-1C.",
+    "err"
+  );
 
   let captains=[
     ...document.querySelectorAll(
