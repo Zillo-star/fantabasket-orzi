@@ -752,7 +752,14 @@ function renderPlayers(a){
 
         <tr>
 
-          <td>${p.name}</td>
+<td>
+  ${(() => {
+    let parti=(p.name||"").trim().split(" ");
+    let cognome=parti.pop();
+    let nome=parti.join(" ");
+    return `<b>${cognome}</b> ${nome}`;
+  })()}
+</td>
 
           <td>
             ${p.position||"Da definire"}
