@@ -638,11 +638,18 @@ async function players(){
 
 window.pc=r.data||[];
 
-window.pc.sort((a,b)=>{
-  let cognomeA=(a.name||"").trim().split(" ").slice(-1)[0].toLowerCase();
-  let cognomeB=(b.name||"").trim().split(" ").slice(-1)[0].toLowerCase();
+window.pc.forEach(p=>{
+  if(!p.surname){
+    let parti=(p.name||"").trim().split(" ");
+    p.surname=parti.pop();
+  }
+});
 
-  return cognomeA.localeCompare(cognomeB,"it");
+window.pc.sort((a,b)=>{
+  return (a.surname||"").localeCompare(
+    b.surname||"",
+    "it"
+  );
 });
 
 window.realTeams=c.data||[];
