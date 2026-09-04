@@ -760,12 +760,8 @@ function renderPlayers(a){
         <tr>
 
 <td>
-  ${(() => {
-    let parti=(p.name||"").trim().split(" ");
-    let cognome=parti.pop();
-    let nome=parti.join(" ");
-    return `<b>${cognome}</b> ${nome}`;
-  })()}
+  <b>${p.surname||""}</b>
+  ${(p.name||"").replace(p.surname||"","").trim()}
 </td>
 
           <td>
