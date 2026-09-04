@@ -636,8 +636,16 @@ async function players(){
   if(c.error)
     return message(c.error.message,"err");
 
-  window.pc=r.data||[];
-  window.realTeams=c.data||[];
+window.pc=r.data||[];
+
+window.pc.sort((a,b)=>{
+  let cognomeA=(a.name||"").trim().split(" ").slice(-1)[0].toLowerCase();
+  let cognomeB=(b.name||"").trim().split(" ").slice(-1)[0].toLowerCase();
+
+  return cognomeA.localeCompare(cognomeB,"it");
+});
+
+window.realTeams=c.data||[];
 
   el("content").innerHTML=`
 
