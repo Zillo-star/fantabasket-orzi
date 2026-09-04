@@ -622,7 +622,7 @@ async function saveTeamName(){
 async function players(){
 
   let r=await db.from("players")
-    .select("id,name,position,is_foreign,real_teams(id,name,coach)")
+    .select("id,name,surname,position,is_foreign,real_teams(id,name,coach)")
     .order("name");
 
   if(r.error)
