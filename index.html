@@ -2139,15 +2139,16 @@ if(!matchdayId)
       s=>s.dataset.pos==="C"
     ).length;
 
-  let moduloValido=
-    (g===2&&a===2&&c===1) ||
-    (g===1&&a===3&&c===1) ||
-    (g===1&&a===2&&c===2) ||
-    (g===2&&a===1&&c===2);
+let moduloValido=
+  (g===2&&a===2&&c===1) ||
+  (g===1&&a===3&&c===1) ||
+  (g===1&&a===2&&c===2) ||
+  (g===2&&a===1&&c===2) ||
+  (g===3&&a===1&&c===1);
 
   if(!moduloValido)
     return message(
-      "Modulo non valido. Moduli consentiti: 2G-2A-1C, 1G-3A-1C, 1G-2A-2C, 2G-1A-2C.",
+"Modulo non valido. Moduli consentiti: 2G-2A-1C, 1G-3A-1C, 1G-2A-2C, 2G-1A-2C, 3G-1A-1C."
       "err"
     );
 
