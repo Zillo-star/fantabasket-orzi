@@ -1502,18 +1502,9 @@ let r=await db.from("rosters")
   data-real-team="${x.players.real_teams?.name || ""}"
 >
 
-            <b>${x.players.name}</b>
-            · ${x.players.position}
-
-<div
-  class="muted"
-  style="margin-top:4px;font-size:13px"
-  data-real-team="${x.players.real_team_id}">
-
-  🏀
-${x.players.real_teams?.name || "Squadra non disponibile"}
-
-</div>
+<b>${x.players.name}</b>
+· ${x.players.position}
+· ${x.players.real_teams?.name || "Squadra non disponibile"}
 
 <div
   class="muted"
