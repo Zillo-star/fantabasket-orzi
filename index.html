@@ -2243,9 +2243,9 @@ function updateLineupSummary(){
     if(!card)
       return;
 
-    let name=
-      card.querySelector("b")?.textContent?.trim()
-      || "Giocatore";
+let name=
+  card.querySelector(`b`)?.childNodes[0]?.textContent?.trim()
+  || "Giocatore";
 
     let position=
       s.dataset.pos || "";
