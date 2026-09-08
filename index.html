@@ -1736,17 +1736,18 @@ if(game.scheduled_at){
 
 }
 
-      box.innerHTML=`
+box.innerHTML=`
 
-        🆚 <b>Avversaria: ${game.opponent}</b>
+  ${game.home ? "🏠" : "✈️"}
+  <b>vs ${game.opponent}</b>
 
-        ${
-          dateText
-          ? `<div class="muted">${dateText}</div>`
-          : ""
-        }
+  ${
+    dateText
+    ? `<div class="muted">${dateText}</div>`
+    : ""
+  }
 
-      `;
+`;
 
     });
 
