@@ -1500,6 +1500,7 @@ let r=await db.from("rosters")
   class="card"
   data-logo-url="${x.players.real_teams?.logo_url || ""}"
   data-real-team="${x.players.real_team_id || ""}"
+  data-real-team-name="${x.players.real_teams?.name || ""}"
 >
 
 <b>${x.players.name}</b>
