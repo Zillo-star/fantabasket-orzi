@@ -1678,17 +1678,12 @@ console.log("PARTITE GIORNATA:", games.data);
       if(!playerCard)
         return;
 
-      let teamElement=
-        playerCard.querySelector(
-          "[data-real-team]"
-        );
+let teamId=
+  playerCard.dataset.realTeam;
 
-      if(!teamElement)
-        return;
-
-      let teamId=
-        teamElement.dataset.realTeam;
-
+if(!teamId)
+  return;
+      
       let game=
         gamesByTeam[teamId];
 
