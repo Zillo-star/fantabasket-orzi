@@ -1499,7 +1499,7 @@ let r=await db.from("rosters")
 <div
   class="card"
   data-logo-url="${x.players.real_teams?.logo_url || ""}"
-  data-real-team="${x.players.real_teams?.name || ""}"
+  data-real-team="${x.players.real_team_id || ""}"
 >
 
 <b>${x.players.name}</b>
