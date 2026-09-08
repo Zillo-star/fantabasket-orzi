@@ -2250,6 +2250,9 @@ let name =
     ?.textContent
     ?.trim()
     || "Giocatore";
+    
+console.log("NOME LETTO:", name);
+console.log("CARD:", card);
 
 name = name.split(/\s+[0-9a-f]{8}-[0-9a-f-]{27,}\s*$/i)[0].trim();
 
