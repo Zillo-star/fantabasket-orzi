@@ -2268,20 +2268,20 @@ name = name.split(/\s+[0-9a-f]{8}-[0-9a-f-]{27,}\s*$/i)[0].trim();
 let logoUrl=card.dataset.logoUrl || "";
 let photoUrl=card.dataset.photoUrl || "";
 let teamName=card.dataset.realTeamName || "";
-    
-    let captain=
-      document.querySelector(
-        `input[data-captain="${playerId}"]`
-      )?.checked;
+
+let captain=
+  document.querySelector(
+    `input[data-captain="${playerId}"]`
+  )?.checked;
 
 groups[s.value].push({
   name,
   position,
   captain,
   logoUrl,
+  photoUrl,
   teamName
 });
-    
   });
 
   let starters=groups.starter;
