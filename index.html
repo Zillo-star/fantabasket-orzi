@@ -3452,14 +3452,13 @@ let teamName=x.player.real_teams?.name || "";
         ">
 <span style="display:flex;align-items:center;gap:8px;">
 
-  ${
-    teamLogo
-      ? `<img src="${teamLogo}" style="width:28px;height:28px;object-fit:contain;">`
-      : ""
-  }
-
-  <span>
-    <b>${x.player.name}</b>
+${
+  x.photoUrl
+    ? `<img src="${x.photoUrl}" alt="${x.name}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid #293452;">`
+    : `<div style="width:44px;height:44px;border-radius:50%;background:#0d1528;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px;">🏀</div>`
+}
+<span>
+  <b>${x.name}</b>
     ${captain}
     <small class="muted">
       ${x.player.position||""}
