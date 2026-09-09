@@ -1341,11 +1341,12 @@ let r=await db.from("rosters")
     players(
       name,
       position,
+      photo_url,
       real_team_id,
       real_teams(
-  name,
-  logo_url
-)
+        name,
+        logo_url
+      )
     )
   `)
   .eq("manager_id",me.id)
