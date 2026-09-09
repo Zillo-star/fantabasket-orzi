@@ -2343,17 +2343,21 @@ function playerRow(x){
                   flex-shrink:0;
                   border:2px solid #293452;
                 ">`
-            : `<div style="
-                width:44px;
-                height:44px;
-                border-radius:50%;
-                background:#0d1528;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                flex-shrink:0;
-                font-size:20px;
-              ">🏀</div>`
+            : ""
+        }
+
+        ${
+          x.logoUrl
+            ? `<img
+                src="${x.logoUrl}"
+                alt=""
+                style="
+                  width:28px;
+                  height:28px;
+                  object-fit:contain;
+                  flex-shrink:0;
+                ">`
+            : ""
         }
 
         <span>
@@ -2377,90 +2381,6 @@ function playerRow(x){
 
     </div>
   `;
-
-}
-
-
-  let html=`
-
-    <h3 style="margin-top:0">
-      🏀 Formazione attuale
-    </h3>
-
-  `;
-
-
-  if(modulo){
-
-    html+=`
-      <div style="
-        margin-bottom:12px;
-        font-size:16px;
-      ">
-        <b>Modulo: ${modulo}</b>
-      </div>
-    `;
-
-  }else{
-
-    html+=`
-      <div class="muted" style="margin-bottom:12px;">
-        Modulo non ancora completo.
-      </div>
-    `;
-
-  }
-
-
-  if(groups.starter.length){
-
-    html+=`
-      <div style="margin-top:10px;">
-        <b>🏀 Titolari</b>
-        ${groups.starter.map(playerRow).join("")}
-      </div>
-    `;
-
-  }
-
-
-  if(groups.sixth.length){
-
-    html+=`
-      <div style="margin-top:12px;">
-        <b>6️⃣ Sesto uomo</b>
-        ${groups.sixth.map(playerRow).join("")}
-      </div>
-    `;
-
-  }
-
-
-  if(groups.bench.length){
-
-    html+=`
-      <div style="margin-top:12px;">
-        <b>🪑 Panchina</b>
-        ${groups.bench.map(playerRow).join("")}
-      </div>
-    `;
-
-  }
-
-
-  if(groups.out.length){
-
-    html+=`
-      <div style="margin-top:12px;">
-        <b>❌ Fuori</b>
-        ${groups.out.map(playerRow).join("")}
-      </div>
-    `;
-
-  }
-
-
-  box.innerHTML=html;
 
 }
 async function saveLineup(){
