@@ -4,11 +4,11 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{
-  box-sizing:border-box
+  box-sizing:border-box;
 }
 
 html{
-  overflow-x:hidden
+  overflow-x:hidden;
 }
 
 body{
@@ -16,7 +16,7 @@ body{
   background:#0b1020;
   color:#eef2ff;
   font-family:system-ui,sans-serif;
-  overflow-x:hidden
+  overflow-x:hidden;
 }
 
 header{
@@ -25,13 +25,13 @@ header{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  gap:12px
+  gap:12px;
 }
 
 main{
   max-width:1100px;
   margin:auto;
-  padding:22px
+  padding:22px;
 }
 
 .card{
@@ -39,7 +39,7 @@ main{
   border:1px solid #293452;
   border-radius:14px;
   padding:18px;
-  margin-bottom:16px
+  margin-bottom:16px;
 }
 
 button{
@@ -50,16 +50,16 @@ button{
   padding:10px 14px;
   font-weight:700;
   cursor:pointer;
-  margin:3px
+  margin:3px;
 }
 
 button.secondary{
-  background:#26314d
+  background:#26314d;
 }
 
 button:disabled{
   opacity:.5;
-  cursor:not-allowed
+  cursor:not-allowed;
 }
 
 input,
@@ -71,72 +71,75 @@ select{
   padding:10px;
   width:100%;
   margin:5px 0 12px;
-  min-width:0
+  min-width:0;
 }
 
 nav{
   display:flex;
   gap:7px;
   flex-wrap:wrap;
-  margin-bottom:18px
+  margin-bottom:18px;
 }
 
 .hidden{
-  display:none
+  display:none;
 }
 
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
-  gap:14px
+  gap:14px;
 }
 
 table{
   width:100%;
-  border-collapse:collapse
+  border-collapse:collapse;
 }
 
 td,
 th{
   text-align:left;
   padding:8px;
-  border-bottom:1px solid #293452
+  border-bottom:1px solid #293452;
 }
 
 .muted{
-  color:#9da9c4
+  color:#9da9c4;
 }
 
 .err{
   background:#3b1821;
   padding:10px;
-  border-radius:8px
+  border-radius:8px;
 }
 
 .ok{
   background:#143522;
   padding:10px;
-  border-radius:8px
+  border-radius:8px;
 }
 
-/* ---------- NOME SQUADRA ---------- */
+
+/* =========================================================
+   NOME SQUADRA
+   ========================================================= */
 
 .team-name-box{
   display:flex;
   gap:8px;
-  align-items:center
+  align-items:center;
 }
 
 .team-name-box input{
   margin:5px 0 0;
   font-size:16px;
-  min-height:46px
+  min-height:46px;
 }
 
 .team-name-box button{
   min-height:46px;
   margin:5px 0 0;
-  white-space:nowrap
+  white-space:nowrap;
 }
 
 
@@ -147,35 +150,43 @@ th{
 @media(max-width:600px){
 
   html{
-    overflow-x:hidden
+    overflow-x:hidden;
   }
 
   body{
-    font-size:15px
+    width:100%;
+    max-width:100%;
+    overflow-x:hidden;
+    font-size:15px;
   }
 
   /* ---------- HEADER ---------- */
 
   header{
+    width:100%;
     padding:10px 12px;
     gap:8px;
-    align-items:center
+    align-items:center;
   }
 
   header > div:first-child{
-    min-width:0
+    min-width:0;
+    flex:1;
   }
 
   header > div:first-child > b{
     display:block;
     font-size:16px;
-    white-space:nowrap
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
   }
 
   header button{
+    flex-shrink:0;
     white-space:nowrap;
     padding:8px 10px;
-    font-size:13px
+    font-size:13px;
   }
 
 
@@ -184,57 +195,41 @@ th{
   main{
     width:100%;
     max-width:none;
-    padding:12px 10px 24px
+    padding:10px;
+    overflow:visible;
   }
 
   .card{
     width:100%;
+    max-width:100%;
     padding:13px 12px;
     border-radius:12px;
-    margin-bottom:12px
-  }
-
-
-  /* ---------- NOME SQUADRA ---------- */
-
-  .team-name-box{
-    display:block;
-    width:100%
-  }
-
-  .team-name-box input{
-    width:100%;
-    min-height:46px;
-    margin:5px 0 0;
-    font-size:16px;
-    -webkit-appearance:none;
-    appearance:none
-  }
-
-  .team-name-box button{
-    width:100%;
-    min-height:46px;
-    margin:7px 0 0;
-    font-size:15px
+    margin-bottom:12px;
   }
 
 
   /* ---------- MENU ---------- */
 
   nav{
+    width:100%;
     display:flex;
     flex-wrap:nowrap;
     gap:6px;
     margin-bottom:14px;
-    padding:2px 0 7px;
+    padding:2px 0 8px;
+
+    /*
+      Il menu può scorrere orizzontalmente.
+      La pagina invece rimane ferma.
+    */
     overflow-x:auto;
     overflow-y:hidden;
     -webkit-overflow-scrolling:touch;
-    scrollbar-width:none
+    scrollbar-width:none;
   }
 
   nav::-webkit-scrollbar{
-    display:none
+    display:none;
   }
 
   nav button{
@@ -244,7 +239,7 @@ th{
     padding:9px 12px;
     font-size:13px;
     white-space:nowrap;
-    border-radius:9px
+    border-radius:9px;
   }
 
 
@@ -252,16 +247,17 @@ th{
 
   h1{
     font-size:22px;
-    line-height:1.2
+    line-height:1.2;
   }
 
   h2{
     font-size:19px;
-    line-height:1.25
+    line-height:1.25;
   }
 
   h3{
-    font-size:17px
+    font-size:17px;
+    line-height:1.25;
   }
 
 
@@ -272,12 +268,12 @@ th{
     width:100%;
     max-width:100%;
     min-height:42px;
-    font-size:16px !important
+    font-size:16px !important;
   }
 
   button{
     min-height:40px;
-    font-size:14px
+    font-size:14px;
   }
 
 
@@ -285,39 +281,62 @@ th{
 
   .grid{
     grid-template-columns:1fr !important;
-    gap:10px
+    gap:10px;
   }
 
 
-  /* ---------- TABELLE ---------- */
+  /* =======================================================
+     LISTONE — MOBILE
+     ======================================================= */
 
-  table{
-    font-size:13px
+  /*
+     Il contenitore del Listone non deve mai uscire
+     dallo schermo.
+  */
+
+  #lp{
+    width:100%;
+    max-width:100%;
+    overflow:hidden;
   }
 
-  td,
-  th{
-    padding:7px 6px
+  #lp .card{
+    width:100%;
+    max-width:100%;
+    padding:11px;
   }
 
-    /* ---------- LISTONE MOBILE ---------- */
+
+  /* tabella del Listone */
 
   #lp table{
-    width:100%;
-    table-layout:fixed;
+    width:100% !important;
+    max-width:100% !important;
+    table-layout:fixed !important;
+    border-collapse:collapse;
+    font-size:12px;
   }
 
   #lp table th,
   #lp table td{
-    padding:7px 4px;
-    font-size:12px;
+    padding:7px 3px;
     vertical-align:middle;
     overflow:hidden;
   }
 
+
+  /*
+     5 colonne:
+     Giocatore 27%
+     Ruolo      9%
+     Squadra   25%
+     Stato     32%
+     Stella     7%
+  */
+
   #lp table th:nth-child(1),
   #lp table td:nth-child(1){
-    width:28%;
+    width:27%;
   }
 
   #lp table th:nth-child(2),
@@ -328,12 +347,12 @@ th{
 
   #lp table th:nth-child(3),
   #lp table td:nth-child(3){
-    width:27%;
+    width:25%;
   }
 
   #lp table th:nth-child(4),
   #lp table td:nth-child(4){
-    width:29%;
+    width:32%;
   }
 
   #lp table th:nth-child(5),
@@ -342,122 +361,256 @@ th{
     text-align:center;
   }
 
+
+  /* nome giocatore */
+
   #lp table td:nth-child(1){
     font-size:13px;
+    line-height:1.15;
+    word-break:normal;
+    overflow-wrap:anywhere;
   }
+
+
+  /* ruolo */
+
+  #lp table td:nth-child(2){
+    font-size:13px;
+    font-weight:600;
+  }
+
+
+  /* squadra */
 
   #lp table td:nth-child(3){
-    line-height:1.2;
+    font-size:12px;
+    line-height:1.15;
+    overflow-wrap:anywhere;
   }
 
+
+  /* stato */
+
   #lp table td:nth-child(4){
+    font-size:11px;
     white-space:nowrap;
   }
+
+  /*
+     Ridimensiona automaticamente i pulsanti
+     ACQUISTATO / SVINCOLATO.
+  */
+
+  #lp table td:nth-child(4) button{
+    max-width:100%;
+    width:auto;
+    margin:0;
+    padding:6px 5px;
+    font-size:10px;
+    line-height:1.1;
+    white-space:nowrap;
+  }
+
+
+  /* stella straniero */
 
   #lp table td:nth-child(5){
     font-size:18px;
+    padding-left:1px;
+    padding-right:1px;
   }
 
-  #lp table td:nth-child(4) button{
-    font-size:10px;
-    padding:6px 7px;
-    margin:0;
-    white-space:nowrap;
-  }
 
-  /* ---------- LISTONE ---------- */
-
-  #lp .card{
-    padding:11px
-  }
+  /* ---------- FILTRI LISTONE ---------- */
 
   #lp input,
   #lp select{
-    margin-top:6px
+    width:100%;
+    max-width:100%;
+    margin-top:6px;
   }
 
 
-  /* ---------- FORMAZIONE ---------- */
+  /* =======================================================
+     FORMAZIONE
+     ======================================================= */
+
+  #lineup{
+    width:100%;
+    max-width:100%;
+    overflow:hidden;
+  }
 
   #lineup .card{
-    padding:11px
+    width:100%;
+    padding:11px;
+  }
+
+  #lp .card{
+    margin-bottom:9px;
   }
 
 
   /* ---------- DEADLINE ---------- */
 
   #deadlineBox{
+    width:100%;
+    max-width:100%;
     margin-top:10px;
     padding:10px;
-    font-size:14px
+    font-size:14px;
   }
 
 
-  /* ---------- CALENDARIO ---------- */
+  /* =======================================================
+     ROSE
+     ======================================================= */
+
+  #roster{
+    width:100%;
+    max-width:100%;
+    overflow:hidden;
+  }
+
+
+  /* =======================================================
+     CALENDARIO
+     ======================================================= */
+
+  #calendar{
+    width:100%;
+    max-width:100%;
+    overflow:hidden;
+  }
 
   #calendar .card{
-    overflow:hidden
+    width:100%;
+    overflow:hidden;
   }
 
   #calendar details{
     width:100%;
-    box-sizing:border-box
+    max-width:100%;
+    box-sizing:border-box;
   }
 
 
-  /* ---------- SCAMBI ---------- */
+  /* =======================================================
+     SCAMBI
+     ======================================================= */
+
+  #trades{
+    width:100%;
+    max-width:100%;
+    overflow:hidden;
+  }
 
   #trades .card{
-    overflow:hidden
+    overflow:hidden;
   }
 
 
-  /* ---------- TESTI LUNGHI ---------- */
+  /* =======================================================
+     TESTI LUNGHI
+     ======================================================= */
 
   .team-name,
   .player-name{
-    overflow-wrap:anywhere
+    overflow-wrap:anywhere;
   }
 
 
-  /* ---------- IMMAGINI TONDE ---------- */
+  /* immagini tonde */
 
   img[style*="border-radius:50%"]{
-    flex-shrink:0
+    flex-shrink:0;
   }
+
+
+  /* ---------- NOME SQUADRA ---------- */
+
+  .team-name-box{
+    display:block;
+    width:100%;
+  }
+
+  .team-name-box input{
+    width:100%;
+    min-height:46px;
+    margin:5px 0 0;
+    font-size:16px;
+    -webkit-appearance:none;
+    appearance:none;
+  }
+
+  .team-name-box button{
+    width:100%;
+    min-height:46px;
+    margin:7px 0 0;
+    font-size:15px;
+  }
+
+
+  /* ---------- TABELLE GENERICHE ---------- */
+
+  /*
+     Le tabelle normali non vengono tagliate.
+     Se una tabella non è quella del Listone,
+     può scorrere internamente.
+  */
+
+  .card > table:not(#lp table){
+    max-width:100%;
+  }
+
 }
 
 
 /* =========================================================
-   📱 TELEFONI PICCOLI
+   📱 TELEFONI MOLTO PICCOLI
    ========================================================= */
 
 @media(max-width:380px){
 
   main{
     padding-left:8px;
-    padding-right:8px
+    padding-right:8px;
   }
 
   .card{
-    padding:11px 9px
+    padding:11px 9px;
   }
 
   nav button{
     padding:8px 10px;
-    font-size:12px
+    font-size:12px;
   }
 
   h1{
-    font-size:20px
+    font-size:20px;
   }
 
   h2{
-    font-size:18px
+    font-size:18px;
   }
 
   button{
-    font-size:13px
+    font-size:13px;
+  }
+
+  #lp table th,
+  #lp table td{
+    padding-left:2px;
+    padding-right:2px;
+  }
+
+  #lp table td:nth-child(4) button{
+    font-size:9px;
+    padding:5px 3px;
+  }
+
+  #lp table td:nth-child(5){
+    font-size:16px;
   }
 }
 </style></head><body>
