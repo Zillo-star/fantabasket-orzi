@@ -3,7 +3,13 @@
 <title>FantaBasket Orzi</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-*{box-sizing:border-box}
+*{
+  box-sizing:border-box
+}
+
+html{
+  overflow-x:hidden
+}
 
 body{
   margin:0;
@@ -56,7 +62,8 @@ button:disabled{
   cursor:not-allowed
 }
 
-input,select{
+input,
+select{
   background:#0d1528;
   color:white;
   border:1px solid #394563;
@@ -89,7 +96,8 @@ table{
   border-collapse:collapse
 }
 
-td,th{
+td,
+th{
   text-align:left;
   padding:8px;
   border-bottom:1px solid #293452
@@ -110,6 +118,9 @@ td,th{
   padding:10px;
   border-radius:8px
 }
+
+/* ---------- NOME SQUADRA ---------- */
+
 .team-name-box{
   display:flex;
   gap:8px;
@@ -128,13 +139,73 @@ td,th{
   white-space:nowrap
 }
 
+
+/* =========================================================
+   📱 MOBILE
+   ========================================================= */
+
+@media(max-width:600px){
+
+  html{
+    overflow-x:hidden
+  }
+
+  body{
+    font-size:15px
+  }
+
+  /* ---------- HEADER ---------- */
+
+  header{
+    padding:10px 12px;
+    gap:8px;
+    align-items:center
+  }
+
+  header > div:first-child{
+    min-width:0
+  }
+
+  header > div:first-child > b{
+    display:block;
+    font-size:16px;
+    white-space:nowrap
+  }
+
+  header button{
+    white-space:nowrap;
+    padding:8px 10px;
+    font-size:13px
+  }
+
+
+  /* ---------- CONTENUTO ---------- */
+
+  main{
+    width:100%;
+    max-width:none;
+    padding:12px 10px 24px
+  }
+
+  .card{
+    width:100%;
+    padding:13px 12px;
+    border-radius:12px;
+    margin-bottom:12px
+  }
+
+
+  /* ---------- NOME SQUADRA ---------- */
+
   .team-name-box{
-    display:block
+    display:block;
+    width:100%
   }
 
   .team-name-box input{
     width:100%;
-    min-height:48px;
+    min-height:46px;
+    margin:5px 0 0;
     font-size:16px;
     -webkit-appearance:none;
     appearance:none
@@ -142,68 +213,187 @@ td,th{
 
   .team-name-box button{
     width:100%;
-    min-height:48px;
-    margin:8px 0 0;
+    min-height:46px;
+    margin:7px 0 0;
     font-size:15px
   }
 
-}
 
-@media(max-width:600px){
-
-  header{
-    padding:12px 14px;
-    align-items:flex-start
-  }
-
-  header button{
-    white-space:nowrap
-  }
-
-  main{
-    padding:12px
-  }
-
-  .card{
-    padding:14px;
-    border-radius:12px
-  }
+  /* ---------- MENU ---------- */
 
   nav{
-    display:grid;
-    grid-template-columns:repeat(2,1fr);
-    gap:6px
+    display:flex;
+    flex-wrap:nowrap;
+    gap:6px;
+    margin-bottom:14px;
+    padding:2px 0 7px;
+    overflow-x:auto;
+    overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none
+  }
+
+  nav::-webkit-scrollbar{
+    display:none
   }
 
   nav button{
-    width:100%;
+    flex:0 0 auto;
+    width:auto;
     margin:0;
-    padding:10px 6px;
+    padding:9px 12px;
+    font-size:13px;
+    white-space:nowrap;
+    border-radius:9px
+  }
+
+
+  /* ---------- TITOLI ---------- */
+
+  h1{
+    font-size:22px;
+    line-height:1.2
+  }
+
+  h2{
+    font-size:19px;
+    line-height:1.25
+  }
+
+  h3{
+    font-size:17px
+  }
+
+
+  /* ---------- INPUT / SELECT ---------- */
+
+  input,
+  select{
+    width:100%;
+    max-width:100%;
+    min-height:42px;
+    font-size:16px !important
+  }
+
+  button{
+    min-height:40px;
     font-size:14px
   }
+
+
+  /* ---------- GRID ---------- */
 
   .grid{
-    grid-template-columns:1fr
+    grid-template-columns:1fr !important;
+    gap:10px
   }
 
+
+  /* ---------- TABELLE ---------- */
+
   table{
+    font-size:13px
+  }
+
+  td,
+  th{
+    padding:7px 6px
+  }
+
+
+  /* ---------- LISTONE ---------- */
+
+  #lp .card{
+    padding:11px
+  }
+
+  #lp input,
+  #lp select{
+    margin-top:6px
+  }
+
+
+  /* ---------- FORMAZIONE ---------- */
+
+  #lineup .card{
+    padding:11px
+  }
+
+
+  /* ---------- DEADLINE ---------- */
+
+  #deadlineBox{
+    margin-top:10px;
+    padding:10px;
     font-size:14px
   }
 
-  td,th{
-    padding:7px 5px
+
+  /* ---------- CALENDARIO ---------- */
+
+  #calendar .card{
+    overflow:hidden
   }
 
-  #lp .card{
-    padding:12px
+  #calendar details{
+    width:100%;
+    box-sizing:border-box
   }
 
-  #lp select{
-    margin-top:8px
+
+  /* ---------- SCAMBI ---------- */
+
+  #trades .card{
+    overflow:hidden
   }
 
-  #deadlineBox{
-    margin-top:12px
+
+  /* ---------- TESTI LUNGHI ---------- */
+
+  .team-name,
+  .player-name{
+    overflow-wrap:anywhere
+  }
+
+
+  /* ---------- IMMAGINI TONDE ---------- */
+
+  img[style*="border-radius:50%"]{
+    flex-shrink:0
+  }
+}
+
+
+/* =========================================================
+   📱 TELEFONI PICCOLI
+   ========================================================= */
+
+@media(max-width:380px){
+
+  main{
+    padding-left:8px;
+    padding-right:8px
+  }
+
+  .card{
+    padding:11px 9px
+  }
+
+  nav button{
+    padding:8px 10px;
+    font-size:12px
+  }
+
+  h1{
+    font-size:20px
+  }
+
+  h2{
+    font-size:18px
+  }
+
+  button{
+    font-size:13px
   }
 }
 </style></head><body>
