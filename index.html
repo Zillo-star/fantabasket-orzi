@@ -289,11 +289,6 @@ th{
      LISTONE — MOBILE
      ======================================================= */
 
-  /*
-     Il contenitore del Listone non deve mai uscire
-     dallo schermo.
-  */
-
   #lp{
     width:100%;
     max-width:100%;
@@ -306,118 +301,146 @@ th{
     padding:11px;
   }
 
+  /*
+     CONTENITORE SCORRIBILE DEL LISTONE
 
-  /* tabella del Listone */
+     Su telefono la tabella può essere leggermente
+     più larga dello schermo e si può trascinare
+     lateralmente.
+  */
 
-  #lp table{
-    width:100% !important;
-    max-width:100% !important;
-    table-layout:fixed !important;
-    border-collapse:collapse;
-    font-size:12px;
+  .listone-table-wrap{
+    width:100%;
+    max-width:100%;
+    overflow-x:auto;
+    overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
   }
 
-  #lp table th,
-  #lp table td{
-    padding:7px 3px;
+  .listone-table-wrap::-webkit-scrollbar{
+    display:none;
+  }
+
+  /*
+     La tabella non viene più schiacciata.
+  */
+
+  .listone-table-wrap table{
+    width:560px !important;
+    min-width:560px !important;
+    max-width:none !important;
+    table-layout:fixed !important;
+    border-collapse:collapse;
+    font-size:13px;
+  }
+
+  .listone-table-wrap th,
+  .listone-table-wrap td{
+    padding:8px 6px;
     vertical-align:middle;
     overflow:hidden;
   }
 
-
   /*
-     5 colonne:
-     Giocatore 27%
-     Ruolo      9%
-     Squadra   25%
-     Stato     32%
-     Stella     7%
+     Larghezze reali della tabella mobile
   */
 
-  #lp table th:nth-child(1),
-  #lp table td:nth-child(1){
-    width:27%;
+  .listone-table-wrap th:nth-child(1),
+  .listone-table-wrap td:nth-child(1){
+    width:150px;
   }
 
-  #lp table th:nth-child(2),
-  #lp table td:nth-child(2){
-    width:9%;
+  .listone-table-wrap th:nth-child(2),
+  .listone-table-wrap td:nth-child(2){
+    width:55px;
     text-align:center;
   }
 
-  #lp table th:nth-child(3),
-  #lp table td:nth-child(3){
-    width:25%;
+  .listone-table-wrap th:nth-child(3),
+  .listone-table-wrap td:nth-child(3){
+    width:125px;
   }
 
-  #lp table th:nth-child(4),
-  #lp table td:nth-child(4){
-    width:32%;
+  .listone-table-wrap th:nth-child(4),
+  .listone-table-wrap td:nth-child(4){
+    width:180px;
   }
 
-  #lp table th:nth-child(5),
-  #lp table td:nth-child(5){
-    width:7%;
+  .listone-table-wrap th:nth-child(5),
+  .listone-table-wrap td:nth-child(5){
+    width:50px;
     text-align:center;
   }
 
+  /*
+     NOME GIOCATORE
+  */
 
-  /* nome giocatore */
-
-  #lp table td:nth-child(1){
+  .listone-table-wrap td:nth-child(1){
     font-size:13px;
-    line-height:1.15;
-    word-break:normal;
-    overflow-wrap:anywhere;
+    line-height:1.2;
+    white-space:normal;
+    overflow-wrap:break-word;
   }
 
+  /*
+     RUOLO
+  */
 
-  /* ruolo */
-
-  #lp table td:nth-child(2){
+  .listone-table-wrap td:nth-child(2){
     font-size:13px;
     font-weight:600;
   }
 
+  /*
+     SQUADRA
+  */
 
-  /* squadra */
-
-  #lp table td:nth-child(3){
+  .listone-table-wrap td:nth-child(3){
     font-size:12px;
-    line-height:1.15;
-    overflow-wrap:anywhere;
-  }
-
-
-  /* stato */
-
-  #lp table td:nth-child(4){
-    font-size:11px;
-    white-space:nowrap;
+    line-height:1.2;
+    white-space:normal;
+    overflow-wrap:break-word;
   }
 
   /*
-     Ridimensiona automaticamente i pulsanti
-     ACQUISTATO / SVINCOLATO.
+     STATO
+
+     Qui lasciamo spazio sufficiente per:
+     ACQUISTATO / SVINCOLATO
+     + nome della squadra fantasy.
   */
 
-  #lp table td:nth-child(4) button{
-    max-width:100%;
+  .listone-table-wrap td:nth-child(4){
+    font-size:11px;
+    white-space:normal;
+    overflow:visible;
+  }
+
+  .listone-table-wrap td:nth-child(4) span{
+    max-width:none !important;
+  }
+
+  .listone-table-wrap td:nth-child(4) button{
+    max-width:none;
     width:auto;
     margin:0;
-    padding:6px 5px;
-    font-size:10px;
+    padding:6px 8px;
+    font-size:11px;
     line-height:1.1;
     white-space:nowrap;
   }
 
+  /*
+     STELLA STRANIERO
+  */
 
-  /* stella straniero */
-
-  #lp table td:nth-child(5){
+  .listone-table-wrap td:nth-child(5){
     font-size:18px;
-    padding-left:1px;
-    padding-right:1px;
+    padding-left:4px;
+    padding-right:4px;
+    white-space:nowrap;
   }
 
 
