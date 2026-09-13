@@ -288,7 +288,79 @@ th{
   /* =======================================================
      LISTONE — MOBILE
      ======================================================= */
+  
+  /* ---------- LISTONE: SCORRIMENTO REALE ---------- */
 
+  #pt{
+    width:100%;
+    max-width:100%;
+    overflow-x:auto;
+    overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+
+  #pt::-webkit-scrollbar{
+    display:none;
+  }
+
+  #pt table{
+    width:560px !important;
+    min-width:560px !important;
+    max-width:none !important;
+    table-layout:fixed !important;
+  }
+
+  #pt th,
+  #pt td{
+    box-sizing:border-box;
+  }
+
+  #pt th:nth-child(1),
+  #pt td:nth-child(1){
+    width:150px;
+  }
+
+  #pt th:nth-child(2),
+  #pt td:nth-child(2){
+    width:55px;
+    text-align:center;
+  }
+
+  #pt th:nth-child(3),
+  #pt td:nth-child(3){
+    width:125px;
+  }
+
+  #pt th:nth-child(4),
+  #pt td:nth-child(4){
+    width:180px;
+  }
+
+  #pt th:nth-child(5),
+  #pt td:nth-child(5){
+    width:50px;
+    text-align:center;
+  }
+
+  #pt td:nth-child(4){
+    overflow:visible;
+  }
+
+  #pt td:nth-child(4) span{
+    white-space:nowrap;
+  }
+
+  /* Indicatore straniero */
+  #pt td:nth-child(5){
+    font-size:0;
+  }
+
+  #pt td:nth-child(5)::after{
+    content:"★";
+    font-size:17px;
+    color:#fbbf24;
+  }
   #lp{
     width:100%;
     max-width:100%;
