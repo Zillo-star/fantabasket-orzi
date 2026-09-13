@@ -621,6 +621,10 @@ async function saveTeamName(){
 }
 async function players(){
 
+  /*
+    Recupera tutti i giocatori
+  */
+
   let r=await db.from("players")
     .select("id,name,surname,position,is_foreign,real_teams(id,name,coach)")
     .order("name");
@@ -628,31 +632,146 @@ async function players(){
   if(r.error)
     return message(r.error.message,"err");
 
+
+  /*
+    Recupera tutti i giocatori attualmente acquistati.
+    active=true = giocatore presente in una rosa.
+  */
+
+  let rosterResult=await db
+    .from("rosters")
+    .select("player_id,manager_id")
+    .eq("active",true);
+
+  if(rosterResult.error)
+    return message(rosterResult.error.message,"err");
+
+
+  /*
+    Recupera i fantallenatori proprietari.
+  */
+
+  let managerIds=[
+    ...new Set(
+      (rosterResult.data||[])
+        .map(x=>x.manager_id)
+        .filter(Boolean)
+    )
+  ];
+
+  let managersResult={
+    data:[],
+    error:null
+  };
+
+  if(managerIds.length){
+
+    managersResult=await db
+      .from("managers")
+      .select("id,name,team_name")
+      .in("id",managerIds);
+
+    if(managersResult.error)
+      return message(
+        managersResult.error.message,
+        "err"
+      );
+
+  }
+
+
+  /*
+    Crea una mappa:
+    player_id -> fantallenatore proprietario
+  */
+
+  let managersMap={};
+
+  (managersResult.data||[]).forEach(m=>{
+    managersMap[m.id]=m;
+  });
+
+  let ownershipMap={};
+
+  (rosterResult.data||[]).forEach(x=>{
+
+    let manager=managersMap[x.manager_id];
+
+    ownershipMap[x.player_id]={
+      managerId:x.manager_id,
+      managerName:manager?.name || "",
+      teamName:manager?.team_name || manager?.name || ""
+    };
+
+  });
+
+
+  /*
+    Aggiunge lo stato ad ogni giocatore.
+  */
+
+  window.pc=r.data||[];
+
+  window.pc.forEach(p=>{
+
+    if(!p.surname){
+
+      let parti=
+        (p.name||"")
+          .trim()
+          .split(" ");
+
+      p.surname=parti.pop();
+
+    }
+
+    let owner=ownershipMap[p.id];
+
+    p.owner=owner || null;
+
+    p.status=
+      owner
+        ? "acquistato"
+        : "svincolato";
+
+  });
+
+
+  /*
+    Ordinamento per cognome
+  */
+
+  window.pc.sort((a,b)=>{
+
+    return (a.surname||"").localeCompare(
+      b.surname||"",
+      "it"
+    );
+
+  });
+
+
+  /*
+    Recupera le squadre reali
+  */
+
   let c=await db.from("real_teams")
     .select("id,name,coach")
     .not("coach","is",null)
     .order("name");
 
   if(c.error)
-    return message(c.error.message,"err");
+    return message(
+      c.error.message,
+      "err"
+    );
 
-window.pc=r.data||[];
+  window.realTeams=c.data||[];
 
-window.pc.forEach(p=>{
-  if(!p.surname){
-    let parti=(p.name||"").trim().split(" ");
-    p.surname=parti.pop();
-  }
-});
 
-window.pc.sort((a,b)=>{
-  return (a.surname||"").localeCompare(
-    b.surname||"",
-    "it"
-  );
-});
-
-window.realTeams=c.data||[];
+  /*
+    SCHERMATA LISTONE
+  */
 
   el("content").innerHTML=`
 
@@ -665,11 +784,19 @@ window.realTeams=c.data||[];
       <input
         id="q"
         placeholder="Nome giocatore..."
-        oninput="filterPlayers()">
+      >
+
+      <label>Stato</label>
+
+      <select id="statusFilter">
+        <option value="">Tutti</option>
+        <option value="acquistato">Acquistati</option>
+        <option value="svincolato">Svincolati</option>
+      </select>
 
       <label>Ruolo</label>
 
-      <select id="roleFilter" onclick="event.stopPropagation()">
+      <select id="roleFilter">
         <option value="">Tutti i ruoli</option>
         <option value="G">Guardie</option>
         <option value="A">Ali</option>
@@ -678,24 +805,28 @@ window.realTeams=c.data||[];
 
       <label>Squadra</label>
 
-    <select id="teamFilter" onclick="event.stopPropagation()">
+      <select id="teamFilter">
 
         <option value="">Tutte le squadre</option>
 
         ${window.realTeams.map(t=>`
+
           <option value="${t.id}">
             ${t.name}
           </option>
+
         `).join("")}
 
       </select>
 
       <label>Straniero</label>
 
-    <select id="foreignFilter" onclick="event.stopPropagation()">
+      <select id="foreignFilter">
+
         <option value="">Tutti</option>
         <option value="yes">Stranieri</option>
         <option value="no">Italiani</option>
+
       </select>
 
       <div id="pt"></div>
@@ -717,8 +848,15 @@ window.realTeams=c.data||[];
         ${window.realTeams.map(x=>`
 
           <tr>
-            <td>${x.coach||"Da definire"}</td>
-            <td>${x.name||""}</td>
+
+            <td>
+              ${x.coach||"Da definire"}
+            </td>
+
+            <td>
+              ${x.name||""}
+            </td>
+
           </tr>
 
         `).join("")}
@@ -729,15 +867,49 @@ window.realTeams=c.data||[];
 
   `;
 
+
+  /*
+    Prima visualizzazione
+  */
+
   renderPlayers(window.pc);
 
-  el("q").addEventListener("input", filterPlayers);
-  el("roleFilter").addEventListener("change", filterPlayers);
-  el("teamFilter").addEventListener("change", filterPlayers);
-  el("foreignFilter").addEventListener("change", filterPlayers);
+
+  /*
+    Filtri
+  */
+
+  el("q")
+    .addEventListener(
+      "input",
+      filterPlayers
+    );
+
+  el("statusFilter")
+    .addEventListener(
+      "change",
+      filterPlayers
+    );
+
+  el("roleFilter")
+    .addEventListener(
+      "change",
+      filterPlayers
+    );
+
+  el("teamFilter")
+    .addEventListener(
+      "change",
+      filterPlayers
+    );
+
+  el("foreignFilter")
+    .addEventListener(
+      "change",
+      filterPlayers
+    );
 
 }
-
 function renderPlayers(a){
 
   el("pt").innerHTML=`
@@ -749,28 +921,106 @@ function renderPlayers(a){
     <table>
 
       <tr>
+
         <th>Giocatore</th>
         <th>Ruolo</th>
         <th>Squadra</th>
+        <th>Stato</th>
         <th>Str.</th>
+
       </tr>
+
 
       ${a.map(p=>`
 
         <tr>
 
-<td>
-  <b>${p.surname||""}</b>
-  ${(p.name||"").replace(p.surname||"","").trim()}
-</td>
+          <td>
+
+            <b>
+              ${p.surname||""}
+            </b>
+
+            ${(p.name||"")
+              .replace(p.surname||"","")
+              .trim()}
+
+          </td>
+
 
           <td>
             ${p.position||"Da definire"}
           </td>
 
+
           <td>
             ${p.real_teams?.name||"Da definire"}
           </td>
+
+
+          <td>
+
+            ${
+              p.status==="acquistato"
+
+              ?
+
+              `
+                <span style="
+                  display:inline-block;
+                  background:#143522;
+                  color:#86efac;
+                  border-radius:7px;
+                  padding:4px 7px;
+                  font-size:12px;
+                  font-weight:700;
+                  white-space:nowrap;
+                ">
+                  🟢 ACQUISTATO
+                </span>
+
+                ${
+                  p.owner?.teamName
+                  ?
+                  `
+                    <div
+                      class="muted"
+                      style="
+                        font-size:11px;
+                        margin-top:3px;
+                      "
+                    >
+                      ${p.owner.teamName}
+                    </div>
+                  `
+                  :
+                  ""
+                }
+
+              `
+
+              :
+
+              `
+
+                <span style="
+                  display:inline-block;
+                  background:#172554;
+                  color:#93c5fd;
+                  border-radius:7px;
+                  padding:4px 7px;
+                  font-size:12px;
+                  font-weight:700;
+                  white-space:nowrap;
+                ">
+                  🔵 SVINCOLATO
+                </span>
+
+              `
+            }
+
+          </td>
+
 
           <td>
             ${p.is_foreign?"Sì":""}
@@ -786,41 +1036,105 @@ function renderPlayers(a){
 
 }
 
-
 function filterPlayers(){
 
-  let q=(el("q")?.value||"").toLowerCase().trim();
+  let q=
+    (el("q")?.value||"")
+      .toLowerCase()
+      .trim();
 
-  let role=el("roleFilter")?.value||"";
+  let status=
+    el("statusFilter")?.value||"";
 
-  let team=el("teamFilter")?.value||"";
+  let role=
+    el("roleFilter")?.value||"";
 
-  let foreign=el("foreignFilter")?.value||"";
+  let team=
+    el("teamFilter")?.value||"";
 
-  let filtered=window.pc.filter(p=>{
+  let foreign=
+    el("foreignFilter")?.value||"";
 
-    let name=(p.name||"").toLowerCase();
 
-    let teamName=(p.real_teams?.name||"").toLowerCase();
+  let filtered=
+    window.pc.filter(p=>{
 
-    if(q && !name.includes(q) && !teamName.includes(q))
-      return false;
+      let name=
+        (p.name||"")
+          .toLowerCase();
 
-    if(role && p.position!==role)
-      return false;
+      let teamName=
+        (p.real_teams?.name||"")
+          .toLowerCase();
 
-    if(team && String(p.real_teams?.id)!==String(team))
-      return false;
 
-    if(foreign==="yes" && !p.is_foreign)
-      return false;
+      /*
+        Cerca giocatore / squadra
+      */
 
-    if(foreign==="no" && p.is_foreign)
-      return false;
+      if(
+        q &&
+        !name.includes(q) &&
+        !teamName.includes(q)
+      )
+        return false;
 
-    return true;
 
-  });
+      /*
+        Stato
+      */
+
+      if(
+        status &&
+        p.status!==status
+      )
+        return false;
+
+
+      /*
+        Ruolo
+      */
+
+      if(
+        role &&
+        p.position!==role
+      )
+        return false;
+
+
+      /*
+        Squadra reale
+      */
+
+      if(
+        team &&
+        String(p.real_teams?.id)!==String(team)
+      )
+        return false;
+
+
+      /*
+        Straniero
+      */
+
+      if(
+        foreign==="yes" &&
+        !p.is_foreign
+      )
+        return false;
+
+
+      if(
+        foreign==="no" &&
+        p.is_foreign
+      )
+        return false;
+
+
+      return true;
+
+    });
+
 
   renderPlayers(filtered);
 
