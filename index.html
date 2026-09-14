@@ -354,8 +354,9 @@ th{
 }
 
 /* Nome straniero in giallo */
-#pt tr:has(td:nth-child(5):not(:empty)) td:nth-child(1){
-  color:#fbbf24;
+#pt tr:has(td:nth-child(5):not(:empty)) td:nth-child(1),
+#pt tr:has(td:nth-child(5):not(:empty)) td:nth-child(1) b{
+  color:#fbbf24 !important;
 }
   #lp{
     width:100%;
