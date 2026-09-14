@@ -1422,29 +1422,12 @@ function renderPlayers(a){
 
         <tr>
 
-          <td>
-
-            <b>
-              ${p.surname||""}
-            </b>
-
-            ${(p.name||"")
-              .replace(p.surname||"","")
-              .trim()}
-
-            ${
-              p.is_foreign
-                ? `<span style="
-                    color:#fbbf24;
-                    font-size:16px;
-                    margin-left:5px;
-                    vertical-align:middle;
-                  ">★</span>`
-                : ""
-            }
-
-          </td>
-
+<td style="color:${p.is_foreign ? "#fbbf24" : "#fff"};">
+  <b style="color:${p.is_foreign ? "#fbbf24" : "#fff"};">
+    ${p.surname||""}
+  </b>
+  ${(p.name||"").replace(p.surname||"","").trim()}
+</td>
 
           <td>
             ${p.position||"Da definire"}
