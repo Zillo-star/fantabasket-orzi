@@ -345,16 +345,18 @@ th{
     white-space:nowrap;
   }
 
-  /* Indicatore straniero */
-  #pt td:nth-child(5){
-    font-size:0;
-  }
+#pt td:nth-child(5):not(:empty){
+  font-size:0;
+}
 
-  #pt td:nth-child(5)::after{
-    content:"★";
-    font-size:17px;
-    color:#fbbf24;
-  }
+#pt td:nth-child(5):not(:empty)::after{
+  content:"";
+}
+
+/* Nome straniero in giallo */
+#pt tr:has(td:nth-child(5):not(:empty)) td:nth-child(1){
+  color:#fbbf24;
+}
   #lp{
     width:100%;
     max-width:100%;
