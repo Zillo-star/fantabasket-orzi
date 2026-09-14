@@ -1428,7 +1428,6 @@ function renderPlayers(a){
         <th>Ruolo</th>
         <th>Squadra</th>
         <th>Stato</th>
-        <th>Str.</th>
 
       </tr>
 
@@ -1446,6 +1445,17 @@ function renderPlayers(a){
             ${(p.name||"")
               .replace(p.surname||"","")
               .trim()}
+
+            ${
+              p.is_foreign
+                ? `<span style="
+                    color:#fbbf24;
+                    font-size:16px;
+                    margin-left:5px;
+                    vertical-align:middle;
+                  ">★</span>`
+                : ""
+            }
 
           </td>
 
@@ -1521,11 +1531,6 @@ function renderPlayers(a){
               `
             }
 
-          </td>
-
-
-          <td>
-            ${p.is_foreign?"Sì":""}
           </td>
 
         </tr>
