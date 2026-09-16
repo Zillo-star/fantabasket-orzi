@@ -2132,7 +2132,7 @@ async function roster(){
   }
 
 
-    /*
+  /*
     PAGINA PRINCIPALE
   */
 
@@ -2151,14 +2151,22 @@ async function roster(){
         Squadra
       </label>
 
+
       <select
         id="rosterManagerSelect"
-        onchange="window.renderSelectedRoster(this.value)"
+        onchange="
+          if(this.value==='all'){
+            window.renderAllRosters();
+          }else{
+            window.renderSelectedRoster(this.value);
+          }
+        "
       >
 
         <option value="all" selected>
           Tutte le squadre
         </option>
+
 
         ${
           managers.map(manager=>`
@@ -2188,438 +2196,65 @@ async function roster(){
 
 
   /*
-    Rende la funzione disponibile
-    al menu a tendina
+    Rende disponibile la funzione
+    per mostrare una singola rosa
   */
 
-  window.renderSelectedRoster=function(managerId){
+  window.renderSelectedRoster=
+    renderSelectedRoster;
 
-    /*
-      TUTTE LE SQUADRE
-    */
 
-    if(managerId==="all"){
+  /*
+    Mostra tutte le rose
+  */
 
-      let box=el("selectedRoster");
+  window.renderAllRosters=function(){
 
-      if(!box)
-        return;
+    let box=el("selectedRoster");
 
-
-      box.innerHTML=managers.map(manager=>{
-
-        let rosa=allRosters.filter(
-          x=>String(x.manager_id)===String(manager.id)
-        );
-
-        let coach=allCoaches.find(
-          x=>String(x.manager_id)===String(manager.id)
-        );
-
-
-        let playerSpent=rosa.reduce(
-          (sum,x)=>sum+Number(x.purchase_price||0),
-          0
-        );
-
-        let coachSpent=coach
-          ? Number(coach.purchase_price||0)
-          : 0;
-
-        let totalSpent=
-          playerSpent+
-          coachSpent;
-
-
-        return `
-
-          <div class="card" style="padding:16px;margin-bottom:16px;">
-
-            <!-- HEADER ROSA -->
-
-            <div style="
-              display:flex;
-              justify-content:space-between;
-              align-items:flex-start;
-              gap:12px;
-              flex-wrap:wrap;
-              margin-bottom:14px;
-            ">
-
-              <div>
-
-                <h2 style="margin:0 0 3px;">
-                  ${manager.team_name || manager.name}
-                </h2>
-
-                <div class="muted">
-                  Fantallenatore: ${manager.name}
-                </div>
-
-              </div>
-
-
-              <div style="
-                text-align:right;
-                white-space:nowrap;
-              ">
-
-                <b style="font-size:18px;">
-                  ${rosa.length}/13
-                </b>
-
-                <div class="muted" style="font-size:12px;">
-                  giocatori
-                </div>
-
-              </div>
-
-            </div>
-
-
-            <!-- CREDITI -->
-
-            <div style="
-              display:grid;
-              grid-template-columns:repeat(2,minmax(0,1fr));
-              gap:10px;
-              margin-bottom:18px;
-            ">
-
-              <div style="
-                background:#0d1528;
-                border:1px solid #293452;
-                border-radius:10px;
-                padding:12px;
-              ">
-
-                <div class="muted" style="font-size:12px;">
-                  Crediti spesi
-                </div>
-
-                <b style="font-size:18px;">
-                  ${totalSpent} crediti
-                </b>
-
-              </div>
-
-
-              <div style="
-                background:#0d1528;
-                border:1px solid #293452;
-                border-radius:10px;
-                padding:12px;
-              ">
-
-                <div class="muted" style="font-size:12px;">
-                  Crediti rimasti
-                </div>
-
-                <b style="font-size:18px;">
-                  ${Number(manager.credits||0)} crediti
-                </b>
-
-              </div>
-
-            </div>
-
-
-            <!-- ALLENATORE -->
-
-            <h3 style="margin-bottom:10px;">
-              👨‍🏫 Allenatore
-            </h3>
-
-
-            ${
-              coach
-
-              ?
-
-              `
-
-                <div style="
-                  display:flex;
-                  align-items:center;
-                  gap:10px;
-                  padding:9px 0;
-                  border-bottom:1px solid #293452;
-                  margin-bottom:16px;
-                ">
-
-                  ${
-                    coach.real_teams?.logo_url
-
-                    ?
-
-                    `
-                      <img
-                        src="${coach.real_teams.logo_url}"
-                        alt=""
-                        style="
-                          width:38px;
-                          height:38px;
-                          object-fit:contain;
-                          flex-shrink:0;
-                        "
-                      >
-                    `
-
-                    :
-
-                    `
-                      <div style="
-                        width:38px;
-                        height:38px;
-                        display:flex;
-                        align-items:center;
-                        justify-content:center;
-                        background:#0d1528;
-                        border-radius:50%;
-                        flex-shrink:0;
-                      ">
-                        🏀
-                      </div>
-                    `
-                  }
-
-
-                  <div style="
-                    flex:1;
-                    min-width:0;
-                  ">
-
-                    <b>
-                      ${coach.real_teams?.coach||"—"}
-                    </b>
-
-                    <div class="muted" style="font-size:13px;">
-                      ${coach.real_teams?.name||"—"}
-                    </div>
-
-                  </div>
-
-                </div>
-
-              `
-
-              :
-
-              `
-
-                <p class="muted">
-                  Allenatore non ancora assegnato.
-                </p>
-
-              `
-            }
-
-
-            <!-- GIOCATORI -->
-
-            <h3 style="margin-bottom:10px;">
-              🏀 Giocatori
-            </h3>
-
-
-            ${
-              rosa.length
-
-              ?
-
-              `
-
-                <div>
-
-                  ${rosa.map((x,index)=>{
-
-                    let logo=
-                      x.players?.real_teams?.logo_url || "";
-
-                    let team=
-                      x.players?.real_teams?.name || "—";
-
-                    let position=
-                      x.players?.position || "—";
-
-
-                    return `
-
-                      <div style="
-                        display:flex;
-                        align-items:center;
-                        gap:10px;
-                        padding:9px 0;
-                        border-bottom:1px solid rgba(255,255,255,.08);
-                      ">
-
-
-                        <!-- NUMERO -->
-
-                        <div style="
-                          width:24px;
-                          text-align:center;
-                          color:#9da9c4;
-                          font-size:13px;
-                          flex-shrink:0;
-                        ">
-                          ${index+1}
-                        </div>
-
-
-                        <!-- LOGO SQUADRA -->
-
-                        ${
-                          logo
-
-                          ?
-
-                          `
-                            <img
-                              src="${logo}"
-                              alt=""
-                              style="
-                                width:38px;
-                                height:38px;
-                                object-fit:contain;
-                                flex-shrink:0;
-                              "
-                            >
-                          `
-
-                          :
-
-                          `
-                            <div style="
-                              width:38px;
-                              height:38px;
-                              display:flex;
-                              align-items:center;
-                              justify-content:center;
-                              background:#0d1528;
-                              border-radius:50%;
-                              flex-shrink:0;
-                            ">
-                              🏀
-                            </div>
-                          `
-                        }
-
-
-                        <!-- INFO GIOCATORE -->
-
-                        <div style="
-                          flex:1;
-                          min-width:0;
-                        ">
-
-                          <b>
-                            ${x.players?.name||"Giocatore"}
-                          </b>
-
-                          <div class="muted" style="
-                            font-size:13px;
-                            line-height:1.35;
-                          ">
-
-                            ${position}
-                            ·
-                            ${team}
-
-                            ${
-                              x.players?.is_foreign
-
-                              ?
-
-                              `
-                                ·
-                                <span style="
-                                  color:#fbbf24;
-                                  font-weight:bold;
-                                ">
-                                  ⭐
-                                </span>
-                              `
-
-                              :
-
-                              ""
-                            }
-
-                          </div>
-
-                        </div>
-
-
-                        <!-- PREZZO -->
-
-                        <div style="
-                          font-weight:bold;
-                          white-space:nowrap;
-                          text-align:right;
-                        ">
-
-                          ${Number(x.purchase_price||0)}
-
-                          <div
-                            class="muted"
-                            style="
-                              font-size:11px;
-                              font-weight:normal;
-                            "
-                          >
-                            crediti
-                          </div>
-
-                        </div>
-
-
-                      </div>
-
-                    `;
-
-                  }).join("")}
-
-                </div>
-
-              `
-
-              :
-
-              `
-
-                <p class="muted">
-                  Rosa vuota.
-                </p>
-
-              `
-            }
-
-
-          </div>
-
-        `;
-
-      }).join("");
-
+    if(!box)
       return;
-    }
+
+
+    let allHtml="";
+
+
+    managers.forEach(manager=>{
+
+      /*
+        Renderizza temporaneamente
+        la singola rosa
+      */
+
+      renderSelectedRoster(manager.id);
+
+
+      /*
+        Recupera l'HTML appena creato
+      */
+
+      allHtml+=box.innerHTML;
+
+    });
 
 
     /*
-      SINGOLA SQUADRA
+      Rimette tutte le rose insieme
     */
 
-    renderSelectedRoster(managerId);
+    box.innerHTML=allHtml;
 
   };
 
 
   /*
-    Mostra inizialmente TUTTE LE SQUADRE
+    All'apertura della pagina
+    vengono mostrate TUTTE le rose
   */
 
-  window.renderSelectedRoster("all");
+  window.renderAllRosters();
+
+}
 async function lineup(){
 
   /* =========================
