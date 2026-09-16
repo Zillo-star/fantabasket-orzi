@@ -1807,78 +1807,45 @@ async function roster(){
           margin-bottom:16px;
         ">
 
-          <div style="
-            background:#0d1528;
-            border:1px solid #293452;
-            border-radius:10px;
-            padding:10px;
-          ">
+<div style="
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+  margin-bottom:16px;
+">
 
-            <div class="muted" style="font-size:12px;">
-              Giocatori
-            </div>
+  <div style="
+    background:#0d1528;
+    border:1px solid #293452;
+    border-radius:10px;
+    padding:12px;
+  ">
+    <div class="muted" style="font-size:12px;">
+      Crediti spesi
+    </div>
 
-            <b>
-              ${playerSpent} crediti
-            </b>
-
-          </div>
-
-
-          <div style="
-            background:#0d1528;
-            border:1px solid #293452;
-            border-radius:10px;
-            padding:10px;
-          ">
-
-            <div class="muted" style="font-size:12px;">
-              Allenatore
-            </div>
-
-            <b>
-              ${coachSpent} crediti
-            </b>
-
-          </div>
+    <b style="font-size:18px;">
+      ${totalSpent} crediti
+    </b>
+  </div>
 
 
-          <div style="
-            background:#0d1528;
-            border:1px solid #293452;
-            border-radius:10px;
-            padding:10px;
-          ">
+  <div style="
+    background:#0d1528;
+    border:1px solid #293452;
+    border-radius:10px;
+    padding:12px;
+  ">
+    <div class="muted" style="font-size:12px;">
+      Crediti rimasti
+    </div>
 
-            <div class="muted" style="font-size:12px;">
-              Totale speso
-            </div>
+    <b style="font-size:18px;">
+      ${Number(manager.credits||0)} crediti
+    </b>
+  </div>
 
-            <b>
-              ${totalSpent} crediti
-            </b>
-
-          </div>
-
-
-          <div style="
-            background:#0d1528;
-            border:1px solid #293452;
-            border-radius:10px;
-            padding:10px;
-          ">
-
-            <div class="muted" style="font-size:12px;">
-              Crediti rimasti
-            </div>
-
-            <b>
-              ${Number(manager.credits||0)} crediti
-            </b>
-
-          </div>
-
-        </div>
+</div>
 
 
         <h3 style="margin-bottom:10px;">
