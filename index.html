@@ -1682,7 +1682,7 @@ async function roster(){
 
 
   /*
-    Recupera gli allenatori di tutti i fantallenatori
+    Recupera gli allenatori
   */
 
   let coachesResult=await db
@@ -1710,41 +1710,30 @@ async function roster(){
 
 
   /*
-    Costruzione pagina
+    Funzione che costruisce la rosa selezionata
   */
 
-  let html=`
+  function renderSelectedRoster(managerId){
 
-    <div class="card">
+    let manager=managers.find(
+      x=>String(x.id)===String(managerId)
+    );
 
-      <h2>👥 Rose dei fantallenatori</h2>
+    if(!manager)
+      return;
 
-      <p class="muted">
-        Tutte le rose complete, con squadra reale e crediti spesi all'asta.
-      </p>
-
-    </div>
-
-  `;
-
-
-  /*
-    Una card per ogni fantallenatore
-  */
-
-  managers.forEach(manager=>{
 
     let rosa=allRosters.filter(
-      x=>x.manager_id===manager.id
+      x=>String(x.manager_id)===String(manager.id)
     );
 
     let coach=allCoaches.find(
-      x=>x.manager_id===manager.id
+      x=>String(x.manager_id)===String(manager.id)
     );
 
 
     /*
-      Totale crediti spesi dai giocatori
+      Totale crediti spesi
     */
 
     let playerSpent=rosa.reduce(
@@ -1752,24 +1741,26 @@ async function roster(){
       0
     );
 
-
-    /*
-      Crediti spesi per l'allenatore
-    */
-
     let coachSpent=coach
       ? Number(coach.purchase_price||0)
       : 0;
-
 
     let totalSpent=
       playerSpent+
       coachSpent;
 
 
-    html+=`
+    let box=el("selectedRoster");
 
-      <div class="card" style="padding:16px;">
+    if(!box)
+      return;
+
+
+    box.innerHTML=`
+
+      <div class="card" style="padding:16px;margin-bottom:0;">
+
+        <!-- HEADER ROSA -->
 
         <div style="
           display:flex;
@@ -1811,54 +1802,54 @@ async function roster(){
         </div>
 
 
+        <!-- CREDITI -->
+
         <div style="
           display:grid;
-          grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
-          gap:8px;
-          margin-bottom:16px;
+          grid-template-columns:repeat(2,minmax(0,1fr));
+          gap:10px;
+          margin-bottom:18px;
         ">
 
-<div style="
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-  gap:10px;
-  margin-bottom:16px;
-">
+          <div style="
+            background:#0d1528;
+            border:1px solid #293452;
+            border-radius:10px;
+            padding:12px;
+          ">
 
-  <div style="
-    background:#0d1528;
-    border:1px solid #293452;
-    border-radius:10px;
-    padding:12px;
-  ">
-    <div class="muted" style="font-size:12px;">
-      Crediti spesi
-    </div>
+            <div class="muted" style="font-size:12px;">
+              Crediti spesi
+            </div>
 
-    <b style="font-size:18px;">
-      ${totalSpent} crediti
-    </b>
-  </div>
+            <b style="font-size:18px;">
+              ${totalSpent} crediti
+            </b>
+
+          </div>
 
 
-  <div style="
-    background:#0d1528;
-    border:1px solid #293452;
-    border-radius:10px;
-    padding:12px;
-  ">
-    <div class="muted" style="font-size:12px;">
-      Crediti rimasti
-    </div>
+          <div style="
+            background:#0d1528;
+            border:1px solid #293452;
+            border-radius:10px;
+            padding:12px;
+          ">
 
-    <b style="font-size:18px;">
-      ${Number(manager.credits||0)} crediti
-    </b>
-  </div>
+            <div class="muted" style="font-size:12px;">
+              Crediti rimasti
+            </div>
 
-</div>
+            <b style="font-size:18px;">
+              ${Number(manager.credits||0)} crediti
+            </b>
 
-</div>
+          </div>
+
+        </div>
+
+
+        <!-- ALLENATORE -->
 
         <h3 style="margin-bottom:10px;">
           👨‍🏫 Allenatore
@@ -1867,24 +1858,29 @@ async function roster(){
 
         ${
           coach
+
           ?
 
           `
+
             <div style="
               display:flex;
               align-items:center;
               gap:10px;
               padding:9px 0;
               border-bottom:1px solid #293452;
-              margin-bottom:12px;
+              margin-bottom:16px;
             ">
 
               ${
                 coach.real_teams?.logo_url
+
                 ?
+
                 `
                   <img
                     src="${coach.real_teams.logo_url}"
+                    alt=""
                     style="
                       width:38px;
                       height:38px;
@@ -1893,11 +1889,31 @@ async function roster(){
                     "
                   >
                 `
+
                 :
-                ""
+
+                `
+                  <div style="
+                    width:38px;
+                    height:38px;
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                    background:#0d1528;
+                    border-radius:50%;
+                    flex-shrink:0;
+                  ">
+                    🏀
+                  </div>
+                `
+
               }
 
-              <div style="flex:1;">
+
+              <div style="
+                flex:1;
+                min-width:0;
+              ">
 
                 <b>
                   ${coach.real_teams?.coach||"—"}
@@ -1909,25 +1925,23 @@ async function roster(){
 
               </div>
 
-              <div style="
-                font-weight:bold;
-                white-space:nowrap;
-              ">
-                ${coach.purchase_price} cr.
-              </div>
-
             </div>
+
           `
 
           :
 
           `
+
             <p class="muted">
               Allenatore non ancora assegnato.
             </p>
+
           `
         }
 
+
+        <!-- GIOCATORI -->
 
         <h3 style="margin-bottom:10px;">
           🏀 Giocatori
@@ -1940,6 +1954,7 @@ async function roster(){
           ?
 
           `
+
             <div>
 
               ${rosa.map((x,index)=>{
@@ -1953,6 +1968,7 @@ async function roster(){
                 let position=
                   x.players?.position || "—";
 
+
                 return `
 
                   <div style="
@@ -1963,6 +1979,8 @@ async function roster(){
                     border-bottom:1px solid rgba(255,255,255,.08);
                   ">
 
+
+                    <!-- NUMERO -->
 
                     <div style="
                       width:24px;
@@ -1975,9 +1993,13 @@ async function roster(){
                     </div>
 
 
+                    <!-- LOGO SQUADRA -->
+
                     ${
                       logo
+
                       ?
+
                       `
                         <img
                           src="${logo}"
@@ -1990,7 +2012,9 @@ async function roster(){
                           "
                         >
                       `
+
                       :
+
                       `
                         <div style="
                           width:38px;
@@ -2005,8 +2029,11 @@ async function roster(){
                           🏀
                         </div>
                       `
+
                     }
 
+
+                    <!-- INFO GIOCATORE -->
 
                     <div style="
                       flex:1;
@@ -2017,7 +2044,10 @@ async function roster(){
                         ${x.players?.name||"Giocatore"}
                       </b>
 
-                      <div class="muted" style="font-size:13px;">
+                      <div class="muted" style="
+                        font-size:13px;
+                        line-height:1.35;
+                      ">
 
                         ${position}
                         ·
@@ -2025,16 +2055,31 @@ async function roster(){
 
                         ${
                           x.players?.is_foreign
+
                           ?
-                          ` · <span style="color:#fbbf24;">STRANIERO</span>`
+
+                          `
+                            ·
+                            <span style="
+                              color:#fbbf24;
+                              font-weight:bold;
+                            ">
+                              ⭐
+                            </span>
+                          `
+
                           :
+
                           ""
+
                         }
 
                       </div>
 
                     </div>
 
+
+                    <!-- PREZZO -->
 
                     <div style="
                       font-weight:bold;
@@ -2046,7 +2091,10 @@ async function roster(){
 
                       <div
                         class="muted"
-                        style="font-size:11px;font-weight:normal;"
+                        style="
+                          font-size:11px;
+                          font-weight:normal;
+                        "
                       >
                         crediti
                       </div>
@@ -2061,15 +2109,19 @@ async function roster(){
               }).join("")}
 
             </div>
+
           `
 
           :
 
           `
+
             <p class="muted">
               Rosa vuota.
             </p>
+
           `
+
         }
 
 
@@ -2077,10 +2129,92 @@ async function roster(){
 
     `;
 
-  });
+  }
+
+
+  /*
+    PAGINA PRINCIPALE
+  */
+
+  let firstManager=
+    managers.find(
+      x=>String(x.id)===String(me.id)
+    ) || managers[0];
+
+
+  let html=`
+
+    <div class="card">
+
+      <h2>👥 Rose dei fantallenatori</h2>
+
+      <p class="muted" style="margin-top:-6px;">
+        Seleziona una squadra per visualizzare la rosa.
+      </p>
+
+
+      <label>
+        Squadra
+      </label>
+
+      <select
+        id="rosterManagerSelect"
+        onchange="window.renderSelectedRoster(this.value)"
+      >
+
+        ${
+          managers.map(manager=>`
+
+            <option
+              value="${manager.id}"
+              ${
+                firstManager &&
+                String(manager.id)===String(firstManager.id)
+                  ? "selected"
+                  : ""
+              }
+            >
+
+              ${manager.team_name || manager.name}
+              ·
+              ${manager.name}
+
+            </option>
+
+          `).join("")
+        }
+
+      </select>
+
+    </div>
+
+
+    <div id="selectedRoster"></div>
+
+  `;
 
 
   el("content").innerHTML=html;
+
+
+  /*
+    Rende la funzione disponibile al menu a tendina
+  */
+
+  window.renderSelectedRoster=
+    renderSelectedRoster;
+
+
+  /*
+    Mostra subito la rosa del fantallenatore
+    corrente
+  */
+
+  if(firstManager){
+
+    renderSelectedRoster(firstManager.id);
+
+  }
 
 }
 async function lineup(){
