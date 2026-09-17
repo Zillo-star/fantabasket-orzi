@@ -4405,113 +4405,332 @@ async function trades(){
 }
 async function loadTradePlayers(){
 
-  let receiverId=
+  let receiver=
     el("tradeReceiver")?.value;
 
-  let offeredSelect=
-    el("tradeOffered");
+  let area=
+    el("tradePlayersArea");
 
-  let requestedSelect=
-    el("tradeRequested");
-
-  if(!offeredSelect || !requestedSelect)
+  if(!area)
     return;
 
+  if(!receiver){
 
-  // Azzera i menu
+    area.innerHTML=`
+      <p class="muted">
+        Seleziona prima il fantallenatore.
+      </p>
+    `;
 
-  offeredSelect.innerHTML=`
-    <option value="">
-      Seleziona il giocatore che offri
-    </option>
-  `;
+    return;
+  }
 
-  requestedSelect.innerHTML=`
-    <option value="">
-      Seleziona il giocatore che vuoi ricevere
-    </option>
-  `;
+  let count=
+    Number(
+      el("tradeCount")?.value || 1
+    );
 
-
-  // Carica i miei giocatori
+  /*
+   * GIOCATORE DELLA PROPRIA ROSA
+   */
 
   let mine=await db
     .from("rosters")
     .select(`
       player_id,
+      purchase_price,
       players(
+        id,
         name,
-        position
+        surname,
+        position,
+        is_foreign,
+        real_team_id,
+        real_teams(name)
       )
     `)
     .eq("manager_id",me.id)
     .eq("active",true);
 
-
   if(mine.error)
-    return message(mine.error.message,"err");
+    return message(
+      mine.error.message,
+      "err"
+    );
 
-
-  (mine.data||[]).forEach(x=>{
-
-    if(!x.players)
-      return;
-
-    let option=
-      document.createElement("option");
-
-    option.value=x.player_id;
-
-    option.textContent=
-      `${x.players.name} · ${x.players.position}`;
-
-    offeredSelect.appendChild(option);
-
-  });
-
-
-  // Se non è ancora stato scelto il destinatario,
-  // non possiamo caricare i suoi giocatori.
-
-  if(!receiverId)
-    return;
-
-
-  // Carica i giocatori dell'altro fantallenatore
+  /*
+   * GIOCATORI DELL'ALTRO FANTALLENATORE
+   */
 
   let theirs=await db
     .from("rosters")
     .select(`
       player_id,
+      purchase_price,
       players(
+        id,
         name,
-        position
+        surname,
+        position,
+        is_foreign,
+        real_team_id,
+        real_teams(name)
       )
     `)
-    .eq("manager_id",receiverId)
+    .eq("manager_id",receiver)
     .eq("active",true);
 
-
   if(theirs.error)
-    return message(theirs.error.message,"err");
+    return message(
+      theirs.error.message,
+      "err"
+    );
+
+  function playerLabel(x){
+
+    let p=x.players;
+
+    if(!p)
+      return "";
+
+    let role=
+      p.position || "?";
+
+    let team=
+      p.real_teams?.name || "";
+
+    let foreign=
+      p.is_foreign
+        ? " ⭐"
+        : "";
+
+    return `
+      ${p.name || ""} ${p.surname || ""}
+      · ${role}
+      · ${team}${foreign}
+    `;
+  }
+
+  area.innerHTML=`
+
+    <div style="
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:15px;
+    ">
+
+      <div>
+
+        <label>
+          Tu dai
+        </label>
+
+        ${
+          Array.from(
+            {length:count},
+            (_,i)=>`
+
+              <select
+                class="tradeOfferedSelect"
+                id="tradeOffered${i}"
+                onchange="checkTradeRoles()"
+                style="margin-bottom:8px"
+              >
+
+                <option value="">
+                  Giocatore ${i+1}
+                </option>
+
+                ${(mine.data||[]).map(x=>`
+
+                  <option value="${x.player_id}">
+                    ${playerLabel(x)}
+                  </option>
+
+                `).join("")}
+
+              </select>
+
+            `
+          ).join("")
+        }
+
+      </div>
 
 
-  (theirs.data||[]).forEach(x=>{
+      <div>
 
-    if(!x.players)
-      return;
+        <label>
+          Tu ricevi
+        </label>
 
-    let option=
-      document.createElement("option");
+        ${
+          Array.from(
+            {length:count},
+            (_,i)=>`
 
-    option.value=x.player_id;
+              <select
+                class="tradeRequestedSelect"
+                id="tradeRequested${i}"
+                onchange="checkTradeRoles()"
+                style="margin-bottom:8px"
+              >
 
-    option.textContent=
-      `${x.players.name} · ${x.players.position}`;
+                <option value="">
+                  Giocatore ${i+1}
+                </option>
 
-    requestedSelect.appendChild(option);
+                ${(theirs.data||[]).map(x=>`
 
-  });
+                  <option value="${x.player_id}">
+                    ${playerLabel(x)}
+                  </option>
+
+                `).join("")}
+
+              </select>
+
+            `
+          ).join("")
+        }
+
+      </div>
+
+    </div>
+
+    <div
+      id="tradeRoleCheck"
+      class="muted"
+      style="
+        margin-top:12px;
+        padding:10px;
+        border-radius:10px;
+        background:rgba(255,255,255,.04);
+      "
+    >
+      Seleziona i giocatori.
+    </div>
+
+    <button
+      onclick="trade()"
+      style="
+        width:100%;
+        margin-top:12px;
+        min-height:46px;
+      "
+    >
+      Invia proposta
+    </button>
+
+  `;
+
+}
+async function checkTradeRoles(){
+
+  let offered=
+    [...document.querySelectorAll(
+      ".tradeOfferedSelect"
+    )]
+    .map(x=>x.value)
+    .filter(Boolean);
+
+  let requested=
+    [...document.querySelectorAll(
+      ".tradeRequestedSelect"
+    )]
+    .map(x=>x.value)
+    .filter(Boolean);
+
+  let box=
+    el("tradeRoleCheck");
+
+  if(!box)
+    return;
+
+  if(
+    offered.length===0 &&
+    requested.length===0
+  ){
+
+    box.textContent=
+      "Seleziona i giocatori.";
+
+    return;
+  }
+
+  if(
+    new Set(offered).size!==offered.length ||
+    new Set(requested).size!==requested.length
+  ){
+
+    box.innerHTML=
+      "❌ Non puoi selezionare due volte lo stesso giocatore.";
+
+    return;
+  }
+
+  if(offered.length!==requested.length){
+
+    box.innerHTML=
+      "⚠️ Devi selezionare lo stesso numero di giocatori da entrambe le parti.";
+
+    return;
+  }
+
+  let ids=[
+    ...offered,
+    ...requested
+  ];
+
+  let r=await db
+    .from("players")
+    .select("id,position")
+    .in("id",ids);
+
+  if(r.error){
+
+    box.textContent=
+      "Errore nel controllo dei ruoli.";
+
+    return;
+  }
+
+  let roles=
+    new Map(
+      (r.data||[]).map(x=>[
+        x.id,
+        x.position
+      ])
+    );
+
+  let offeredRoles=
+    offered
+      .map(id=>roles.get(id))
+      .sort()
+      .join("|");
+
+  let requestedRoles=
+    requested
+      .map(id=>roles.get(id))
+      .sort()
+      .join("|");
+
+  if(offeredRoles!==requestedRoles){
+
+    box.innerHTML=`
+      ❌ <b>Scambio non valido.</b><br>
+      I ruoli devono essere uguali da entrambe le parti.
+    `;
+
+    return;
+  }
+
+  box.innerHTML=`
+    ✅ <b>Composizione valida.</b><br>
+    ${offered.map(id=>roles.get(id)).join(" + ")}
+    ↔
+    ${requested.map(id=>roles.get(id)).join(" + ")}
+  `;
 
 }
 async function trade(){
