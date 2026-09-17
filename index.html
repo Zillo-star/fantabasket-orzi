@@ -4007,6 +4007,43 @@ async function trade(){
     );
 
 
+  /*
+    Recupera i nomi dei due giocatori
+    per costruire la notifica.
+  */
+
+  let playersData=await db
+    .from("players")
+    .select("id,name")
+    .in(
+      "id",
+      [
+        offeredPlayerId,
+        requestedPlayerId
+      ]
+    );
+
+
+  if(playersData.error)
+    return message(
+      playersData.error.message,
+      "err"
+    );
+
+
+  let offeredPlayer=
+    (playersData.data||[])
+      .find(x=>x.id===offeredPlayerId);
+
+  let requestedPlayer=
+    (playersData.data||[])
+      .find(x=>x.id===requestedPlayerId);
+
+
+  /*
+    Crea la proposta.
+  */
+
   let x=await db
     .from("trades")
     .insert({
@@ -4023,13 +4060,48 @@ async function trade(){
 
       status:"pending"
 
-    });
+    })
+    .select()
+    .single();
 
 
   if(x.error)
     return message(
       x.error.message,
       "err"
+    );
+
+
+  /*
+    Crea la notifica per il ricevente.
+  */
+
+  let notification=await db
+    .from("notifications")
+    .insert({
+
+      manager_id:receiverId,
+
+      type:"trade_new",
+
+      title:"🔄 Nuova proposta di scambio",
+
+      message:
+        (me.team_name || me.name || "Un fantallenatore")
+        + " ti ha proposto uno scambio: "
+        + (offeredPlayer?.name || "Giocatore")
+        + " ↔ "
+        + (requestedPlayer?.name || "Giocatore"),
+
+      trade_id:x.data.id
+
+    });
+
+
+  if(notification.error)
+    console.error(
+      "Errore creazione notifica:",
+      notification.error
     );
 
 
