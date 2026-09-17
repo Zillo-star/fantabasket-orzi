@@ -1050,6 +1050,10 @@ async function loadNotificationCount(){
 
 }
 async function showNotifications(){
+if(window.notificationInterval){
+clearInterval(window.notificationInterval);
+window.notificationInterval=null;
+}
 
   let r=await db
     .from("notifications")
@@ -1259,106 +1263,287 @@ function formatNotificationDate(date){
 }
 async function home(){
 
-let r=await db.from("fantasy_scores")
-.select("final_score")
-.eq("manager_id",me.id);
+  let r=await db
+    .from("fantasy_scores")
+    .select("final_score")
+    .eq("manager_id",me.id);
 
-if(r.error)
-return message(r.error.message,"err");
+  if(r.error)
+    return message(r.error.message,"err");
 
-let c=await db.from("fantasy_coach_scores")
-.select("final_score")
-.eq("manager_id",me.id);
 
-if(c.error)
-return message(c.error.message,"err");
+  let c=await db
+    .from("fantasy_coach_scores")
+    .select("final_score")
+    .eq("manager_id",me.id);
 
-let playerTotal=(r.data||[])
-.reduce((s,x)=>s+Number(x.final_score||0),0);
+  if(c.error)
+    return message(c.error.message,"err");
 
-let coachTotal=(c.data||[])
-.reduce((s,x)=>s+Number(x.final_score||0),0);
 
-let tot=playerTotal+coachTotal;
+  let playerTotal=(r.data||[])
+    .reduce(
+      (s,x)=>s+Number(x.final_score||0),
+      0
+    );
 
-let teamName=me.team_name || "Nome squadra non impostato";
 
-el("content").innerHTML=`
+  let coachTotal=(c.data||[])
+    .reduce(
+      (s,x)=>s+Number(x.final_score||0),
+      0
+    );
 
-<div class="grid">
 
-<div class="card">
+  let tot=playerTotal+coachTotal;
 
-<h2>${teamName}</h2>
 
-<p class="muted" style="margin-top:-10px">
-Fantallenatore: ${me.name}
-</p>
+  let teamName=
+    me.team_name ||
+    "Nome squadra non impostato";
 
-<b>Nome squadra:</b>
 
-<form onsubmit="event.preventDefault(); saveTeamName();">
+  el("content").innerHTML=`
 
-<input
-id="teamNameInput"
-type="text"
-value="${teamName==="Nome squadra non impostato" ? "" : teamName}"
-maxlength="30"
-placeholder="Nome della squadra"
-autocomplete="off"
->
+    <div class="grid">
 
-<button
-type="submit"
-style="width:100%;margin:5px 0 0;min-height:46px">
+      <div class="card">
 
-Salva nome squadra
+        <!-- TESTATA DASHBOARD -->
 
-</button>
+        <div style="
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          gap:15px;
+        ">
 
-</form>
+          <div style="
+            min-width:0;
+          ">
 
-<p class="muted">
-Il nome squadra comparirà nel calendario, nella classifica e negli scambi.
-</p>
+            <h2 style="
+              margin:0;
+              overflow:hidden;
+              text-overflow:ellipsis;
+            ">
+              ${teamName}
+            </h2>
 
-<p>${me.credits} crediti</p>
+            <p
+              class="muted"
+              style="
+                margin:4px 0 0;
+              "
+            >
+              Fantallenatore: ${me.name}
+            </p>
 
-</div>
+          </div>
 
-<div class="card">
 
-<h2>Punti fantasy</h2>
+          <!-- CAMPANELLA -->
 
-<b style="font-size:28px">
-${tot.toFixed(1)}
-</b>
+          <button
+            onclick="showNotifications()"
+            id="dashboardNotificationBtn"
+            style="
+              position:relative;
+              width:48px;
+              height:48px;
+              min-width:48px;
+              padding:0;
+              border-radius:14px;
+              font-size:23px;
+              display:flex;
+              align-items:center;
+              justify-content:center;
+            "
+            title="Notifiche"
+          >
 
-<p class="muted">
-Giocatori: ${playerTotal.toFixed(1)}
-<br>
-Allenatore: ${coachTotal.toFixed(1)}
-</p>
+            🔔
 
-</div>
+            <span
+              id="dashboardNotificationBadge"
+              style="
+                display:none;
+                position:absolute;
+                top:-5px;
+                right:-5px;
+                min-width:20px;
+                height:20px;
+                padding:0 5px;
+                border-radius:999px;
+                background:#ef4444;
+                color:white;
+                font-size:11px;
+                font-weight:bold;
+                line-height:20px;
+                text-align:center;
+                box-sizing:border-box;
+              "
+            >
+              0
+            </span>
 
-</div>
+          </button>
 
-<div class="card">
+        </div>
 
-<h2>Benvenuto</h2>
 
-<p class="muted">
-FantaBasket Orzi: listone, rose, formazioni,
-scambi, punteggi e classifica.
-</p>
+        <br>
 
-</div>
 
-`;
+        <b>Nome squadra:</b>
+
+
+        <form
+          onsubmit="event.preventDefault(); saveTeamName();"
+        >
+
+          <input
+            id="teamNameInput"
+            type="text"
+            value="${
+              teamName==="Nome squadra non impostato"
+                ? ""
+                : teamName
+            }"
+            maxlength="30"
+            placeholder="Nome della squadra"
+            autocomplete="off"
+          >
+
+
+          <button
+            type="submit"
+            style="
+              width:100%;
+              margin:5px 0 0;
+              min-height:46px;
+            "
+          >
+            Salva nome squadra
+          </button>
+
+        </form>
+
+
+        <p class="muted">
+          Il nome squadra comparirà nel calendario,
+          nella classifica e negli scambi.
+        </p>
+
+
+        <p>
+          ${me.credits} crediti
+        </p>
+
+      </div>
+
+
+      <div class="card">
+
+        <h2>Punti fantasy</h2>
+
+        <b style="font-size:28px">
+          ${tot.toFixed(1)}
+        </b>
+
+        <p class="muted">
+          Giocatori: ${playerTotal.toFixed(1)}
+          <br>
+          Allenatore: ${coachTotal.toFixed(1)}
+        </p>
+
+      </div>
+
+    </div>
+
+
+    <div class="card">
+
+      <h2>Benvenuto</h2>
+
+      <p class="muted">
+        FantaBasket Orzi: listone, rose, formazioni,
+        scambi, punteggi e classifica.
+      </p>
+
+    </div>
+
+  `;
+
+
+  // Aggiorna subito il numero delle notifiche
+  updateDashboardNotification();
+
+
+  // Aggiornamento automatico ogni 5 secondi
+  if(window.notificationInterval)
+    clearInterval(window.notificationInterval);
+
+  window.notificationInterval=
+    setInterval(
+      updateDashboardNotification,
+      5000
+    );
 
 }
+async function updateDashboardNotification(){
 
+  if(!me?.id)
+    return;
+
+
+  let r=await db
+    .from("notifications")
+    .select(
+      "id",
+      {count:"exact",head:true}
+    )
+    .eq("manager_id",me.id)
+    .eq("read",false);
+
+
+  if(r.error){
+    console.error(
+      "Errore notifiche:",
+      r.error
+    );
+    return;
+  }
+
+
+  let badge=
+    el("dashboardNotificationBadge");
+
+
+  if(!badge)
+    return;
+
+
+  let count=
+    r.count||0;
+
+
+  if(count>0){
+
+    badge.style.display="block";
+
+    badge.textContent=
+      count>99
+        ? "99+"
+        : count;
+
+  }else{
+
+    badge.style.display="none";
+
+  }
+
+}
 
 async function saveTeamName(){
 
