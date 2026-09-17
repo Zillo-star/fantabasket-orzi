@@ -938,7 +938,69 @@ async function boot(){
 
 }
 async function logout(){await db.auth.signOut();location.reload()}
-function nav(){let a=[["home","Dashboard"],["players","Listone"],["roster","Rose"],["lineup","Formazione"],["trades","Scambi"],["calendar","Calendario"],["standings","Classifica"]];if(me.is_admin)a.push(["admin","Admin"]);el("nav").innerHTML=a.map(x=>`<button onclick="${x[0]}()">${x[1]}</button>`).join("")}
+function nav(){
+
+  let a=[
+    ["home","Dashboard"],
+    ["players","Listone"],
+    ["roster","Rose"],
+    ["lineup","Formazione"],
+    ["trades","Scambi"],
+    ["calendar","Calendario"],
+    ["standings","Classifica"]
+  ];
+
+  if(me.is_admin)
+    a.push(["admin","Admin"]);
+
+
+  el("nav").innerHTML=
+
+    a.map(x=>`
+      <button onclick="${x[0]}()">
+        ${x[1]}
+      </button>
+    `).join("")
+
+    +
+
+    `
+      <button
+        onclick="showNotifications()"
+        id="notificationBtn"
+        style="
+          position:relative;
+          white-space:nowrap;
+        "
+      >
+        🔔
+        <span
+          id="notificationBadge"
+          style="
+            display:none;
+            position:absolute;
+            top:2px;
+            right:2px;
+            min-width:17px;
+            height:17px;
+            padding:0 4px;
+            border-radius:999px;
+            background:#ef4444;
+            color:white;
+            font-size:10px;
+            font-weight:bold;
+            line-height:17px;
+            text-align:center;
+          "
+        >
+          0
+        </span>
+      </button>
+    `;
+
+  loadNotificationCount();
+
+}
 async function home(){
 
 let r=await db.from("fantasy_scores")
