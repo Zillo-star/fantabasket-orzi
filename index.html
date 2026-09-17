@@ -1001,6 +1001,262 @@ function nav(){
   loadNotificationCount();
 
 }
+async function loadNotificationCount(){
+
+  if(!me?.id)
+    return;
+
+
+  let r=await db
+    .from("notifications")
+    .select("id", {count:"exact", head:true})
+    .eq("manager_id",me.id)
+    .eq("read",false);
+
+
+  if(r.error){
+    console.error(
+      "Errore notifiche:",
+      r.error
+    );
+    return;
+  }
+
+
+  let badge=
+    el("notificationBadge");
+
+  if(!badge)
+    return;
+
+
+  let count=r.count||0;
+
+
+  if(count>0){
+
+    badge.style.display="block";
+
+    badge.textContent=
+      count>99
+        ? "99+"
+        : count;
+
+  }else{
+
+    badge.style.display="none";
+
+  }
+
+}
+async function showNotifications(){
+
+  let r=await db
+    .from("notifications")
+    .select("*")
+    .eq("manager_id",me.id)
+    .order("created_at",{ascending:false})
+    .limit(30);
+
+
+  if(r.error)
+    return message(
+      r.error.message,
+      "err"
+    );
+
+
+  let notifications=
+    r.data||[];
+
+
+  el("content").innerHTML=`
+
+    <div class="card">
+
+      <div style="
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        gap:10px;
+        margin-bottom:18px;
+      ">
+
+        <h2 style="margin:0">
+          🔔 Notifiche
+        </h2>
+
+        ${
+          notifications.some(x=>!x.read)
+          ? `
+            <button
+              onclick="markAllNotificationsRead()"
+            >
+              Segna tutte come lette
+            </button>
+          `
+          : ""
+        }
+
+      </div>
+
+
+      ${
+        notifications.length===0
+
+        ? `
+          <div class="muted">
+            Nessuna notifica.
+          </div>
+        `
+
+        :
+
+        notifications.map(x=>`
+
+          <div
+            onclick="markNotificationRead('${x.id}')"
+            style="
+              padding:14px;
+              margin-bottom:10px;
+              border-radius:12px;
+              background:${x.read ? "rgba(255,255,255,.03)" : "rgba(59,130,246,.10)"};
+              border:1px solid ${x.read ? "rgba(255,255,255,.06)" : "rgba(59,130,246,.25)"};
+              cursor:pointer;
+            "
+          >
+
+            <div style="
+              display:flex;
+              justify-content:space-between;
+              align-items:flex-start;
+              gap:10px;
+            ">
+
+              <div>
+
+                <b>
+                  ${x.title}
+                </b>
+
+                <div
+                  class="muted"
+                  style="
+                    margin-top:5px;
+                    line-height:1.4;
+                  "
+                >
+                  ${x.message}
+                </div>
+
+              </div>
+
+
+              ${
+                !x.read
+                ? `
+                  <span
+                    style="
+                      width:8px;
+                      height:8px;
+                      border-radius:50%;
+                      background:#3b82f6;
+                      flex-shrink:0;
+                      margin-top:5px;
+                    "
+                  ></span>
+                `
+                : ""
+              }
+
+            </div>
+
+            <div
+              class="muted"
+              style="
+                font-size:11px;
+                margin-top:8px;
+              "
+            >
+              ${formatNotificationDate(x.created_at)}
+            </div>
+
+          </div>
+
+        `).join("")
+
+      }
+
+    </div>
+
+  `;
+
+}
+async function markNotificationRead(id){
+
+  let x=await db
+    .from("notifications")
+    .update({
+      read:true
+    })
+    .eq("id",id)
+    .eq("manager_id",me.id);
+
+
+  if(x.error)
+    return message(
+      x.error.message,
+      "err"
+    );
+
+
+  loadNotificationCount();
+
+  showNotifications();
+
+}
+async function markAllNotificationsRead(){
+
+  let x=await db
+    .from("notifications")
+    .update({
+      read:true
+    })
+    .eq("manager_id",me.id)
+    .eq("read",false);
+
+
+  if(x.error)
+    return message(
+      x.error.message,
+      "err"
+    );
+
+
+  loadNotificationCount();
+
+  showNotifications();
+
+}
+function formatNotificationDate(date){
+
+  if(!date)
+    return "";
+
+  let d=new Date(date);
+
+  return d.toLocaleString(
+    "it-IT",
+    {
+      day:"2-digit",
+      month:"2-digit",
+      year:"numeric",
+      hour:"2-digit",
+      minute:"2-digit"
+    }
+  );
+
+}
 async function home(){
 
 let r=await db.from("fantasy_scores")
