@@ -4810,21 +4810,16 @@ async function loadTradePlayers(){
 async function checkTradeRoles(){
 
   let offered=
-    [...document.querySelectorAll(
-      ".tradeOfferedSelect"
-    )]
-    .map(x=>x.value)
-    .filter(Boolean);
+    [...document.querySelectorAll(".tradeOfferedSelect")]
+      .map(x=>x.value)
+      .filter(Boolean);
 
   let requested=
-    [...document.querySelectorAll(
-      ".tradeRequestedSelect"
-    )]
-    .map(x=>x.value)
-    .filter(Boolean);
+    [...document.querySelectorAll(".tradeRequestedSelect")]
+      .map(x=>x.value)
+      .filter(Boolean);
 
-  let box=
-    el("tradeRoleCheck");
+  let box=el("tradeRoleCheck");
 
   if(!box)
     return;
@@ -4834,66 +4829,94 @@ async function checkTradeRoles(){
     requested.length===0
   ){
 
-    box.textContent=
+    box.innerHTML=
       "Seleziona i giocatori.";
 
     return;
   }
+
+  /*
+   * STESSO NUMERO DI GIOCATORI
+   */
+
+  if(offered.length!==requested.length){
+
+    box.innerHTML=`
+      ⚠️ Devi selezionare lo stesso numero
+      di giocatori da entrambe le parti.
+    `;
+
+    return;
+  }
+
+  /*
+   * NESSUN DUPLICATO
+   */
 
   if(
     new Set(offered).size!==offered.length ||
     new Set(requested).size!==requested.length
   ){
 
-    box.innerHTML=
-      "❌ Non puoi selezionare due volte lo stesso giocatore.";
+    box.innerHTML=`
+      ❌ Non puoi selezionare due volte
+      lo stesso giocatore.
+    `;
 
     return;
   }
 
-  if(offered.length!==requested.length){
+  /*
+   * RECUPERA I GIOCATORI DELLO SCAMBIO
+   */
 
-    box.innerHTML=
-      "⚠️ Devi selezionare lo stesso numero di giocatori da entrambe le parti.";
-
-    return;
-  }
-
-  let ids=[
+  let allIds=[
     ...offered,
     ...requested
   ];
 
-  let r=await db
+  let p=await db
     .from("players")
-    .select("id,position")
-    .in("id",ids);
+    .select(`
+      id,
+      name,
+      surname,
+      position,
+      is_foreign,
+      real_team_id,
+      real_teams(name)
+    `)
+    .in("id",allIds);
 
-  if(r.error){
+  if(p.error){
 
-    box.textContent=
-      "Errore nel controllo dei ruoli.";
+    box.innerHTML=
+      "Errore nel controllo dello scambio.";
 
     return;
   }
 
-  let roles=
+  let playerMap=
     new Map(
-      (r.data||[]).map(x=>[
+      (p.data||[]).map(x=>[
         x.id,
-        x.position
+        x
       ])
     );
 
+  /*
+   * CONTROLLA RUOLI
+   */
+
   let offeredRoles=
     offered
-      .map(id=>roles.get(id))
+      .map(id=>playerMap.get(id)?.position)
       .sort()
       .join("|");
 
   let requestedRoles=
     requested
-      .map(id=>roles.get(id))
+      .map(id=>playerMap.get(id)?.position)
       .sort()
       .join("|");
 
@@ -4907,11 +4930,213 @@ async function checkTradeRoles(){
     return;
   }
 
+  /*
+   * RECUPERA LA ROSA DEL PROPONENTE
+   */
+
+  let mine=await db
+    .from("rosters")
+    .select(`
+      player_id,
+      players(
+        id,
+        name,
+        surname,
+        position,
+        is_foreign,
+        real_team_id,
+        real_teams(name)
+      )
+    `)
+    .eq("manager_id",me.id)
+    .eq("active",true);
+
+  if(mine.error){
+
+    box.innerHTML=
+      "Errore nel controllo della tua rosa.";
+
+    return;
+  }
+
+  /*
+   * RECUPERA LA ROSA DEL DESTINATARIO
+   */
+
+  let receiverId=
+    el("tradeReceiver")?.value;
+
+  if(!receiverId){
+
+    box.innerHTML=
+      "Seleziona prima il fantallenatore.";
+
+    return;
+  }
+
+  let theirs=await db
+    .from("rosters")
+    .select(`
+      player_id,
+      players(
+        id,
+        name,
+        surname,
+        position,
+        is_foreign,
+        real_team_id,
+        real_teams(name)
+      )
+    `)
+    .eq("manager_id",receiverId)
+    .eq("active",true);
+
+  if(theirs.error){
+
+    box.innerHTML=
+      "Errore nel controllo della rosa dell'altro fantallenatore.";
+
+    return;
+  }
+
+  /*
+   * CREA LE ROSE DOPO LO SCAMBIO
+   */
+
+  let myAfter=
+    (mine.data||[])
+      .map(x=>x.players)
+      .filter(Boolean)
+      .filter(
+        p=>!offered.includes(p.id)
+      )
+      .concat(
+        requested
+          .map(id=>playerMap.get(id))
+          .filter(Boolean)
+      );
+
+  let theirAfter=
+    (theirs.data||[])
+      .map(x=>x.players)
+      .filter(Boolean)
+      .filter(
+        p=>!requested.includes(p.id)
+      )
+      .concat(
+        offered
+          .map(id=>playerMap.get(id))
+          .filter(Boolean)
+      );
+
+  /*
+   * FUNZIONE CONTROLLO ROSA
+   */
+
+  function validateRoster(players){
+
+    /*
+     * STRANIERI
+     */
+
+    let foreigners=
+      players.filter(
+        p=>p.is_foreign===true
+      ).length;
+
+    if(foreigners>1){
+
+      return {
+        ok:false,
+        message:
+          "avrebbe più di 1 straniero"
+      };
+
+    }
+
+    /*
+     * MASSIMO 2 DELLA STESSA SQUADRA
+     */
+
+    let teams={};
+
+    for(let p of players){
+
+      if(!p.real_team_id)
+        continue;
+
+      teams[p.real_team_id]=
+        (teams[p.real_team_id]||0)+1;
+
+      if(teams[p.real_team_id]>2){
+
+        return {
+          ok:false,
+          message:
+            "avrebbe più di 2 giocatori della stessa squadra"
+        };
+
+      }
+
+    }
+
+    return {
+      ok:true
+    };
+
+  }
+
+  /*
+   * CONTROLLO TUA ROSA
+   */
+
+  let myCheck=
+    validateRoster(myAfter);
+
+  if(!myCheck.ok){
+
+    box.innerHTML=`
+      ❌ <b>Scambio non valido per la tua rosa.</b><br>
+      ${myCheck.message}.
+    `;
+
+    return;
+  }
+
+  /*
+   * CONTROLLO ROSA AVVERSARIA
+   */
+
+  let theirCheck=
+    validateRoster(theirAfter);
+
+  if(!theirCheck.ok){
+
+    box.innerHTML=`
+      ❌ <b>Scambio non valido per la rosa dell'altro fantallenatore.</b><br>
+      ${theirCheck.message}.
+    `;
+
+    return;
+  }
+
+  /*
+   * TUTTO OK
+   */
+
   box.innerHTML=`
     ✅ <b>Composizione valida.</b><br>
-    ${offered.map(id=>roles.get(id)).join(" + ")}
+    ${offered
+      .map(id=>playerMap.get(id)?.position)
+      .join(" + ")}
     ↔
-    ${requested.map(id=>roles.get(id)).join(" + ")}
+    ${requested
+      .map(id=>playerMap.get(id)?.position)
+      .join(" + ")}
+    <br>
+    <span class="muted">
+      Nessun vincolo di stranieri o squadra violato.
+    </span>
   `;
 
 }
