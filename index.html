@@ -1957,7 +1957,18 @@ async function roster(){
 
             <div>
 
-              ${rosa.map((x,index)=>{
+              ${[...rosa].sort((a,b)=>{
+  const ordine={G:1,A:2,C:3};
+
+  const ruoloA=ordine[a.players?.position]||99;
+  const ruoloB=ordine[b.players?.position]||99;
+
+  if(ruoloA!==ruoloB)
+    return ruoloA-ruoloB;
+
+  return Number(b.purchase_price||0)-Number(a.purchase_price||0);
+
+}).map(x=>{
 
                 let logo=
                   x.players?.real_teams?.logo_url || "";
