@@ -2019,49 +2019,35 @@ async function roster(){
                     }
 
 
-                    <!-- INFO GIOCATORE -->
+<!-- INFO GIOCATORE -->
 
-                    <div style="
-                      flex:1;
-                      min-width:0;
-                    ">
+<div style="
+  flex:1;
+  min-width:0;
+">
 
-                      <b>
-                        ${x.players?.name||"Giocatore"}
-                      </b>
+  <b style="
+    color:${x.players?.is_foreign ? "#fbbf24" : "inherit"};
+  ">
+    ${x.players?.name||"Giocatore"}
+  </b>
 
-                      <div class="muted" style="
-                        font-size:13px;
-                        line-height:1.35;
-                      ">
+  <div
+    class="${x.players?.is_foreign ? "" : "muted"}"
+    style="
+      font-size:13px;
+      line-height:1.35;
+      color:${x.players?.is_foreign ? "#fbbf24" : ""};
+    "
+  >
 
-                        ${position}
-                        ·
-                        ${team}
-
-                        ${
-  x.players?.is_foreign
-
-  ?
-
-  `
+    ${position}
     ·
-    <span style="
-      color:#fbbf24;
-      font-weight:bold;
-    ">
-      Straniero
-    </span>
-  `
+    ${team}
 
-  :
+  </div>
 
-  ""
-}
-
-                      </div>
-
-                    </div>
+</div>
 
 
                     <!-- PREZZO -->
