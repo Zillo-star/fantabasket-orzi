@@ -4738,77 +4738,305 @@ async function trade(){
   let receiverId=
     el("tradeReceiver")?.value;
 
-  let offeredPlayerId=
-    el("tradeOffered")?.value;
-
-  let requestedPlayerId=
-    el("tradeRequested")?.value;
-
-
   if(!receiverId)
     return message(
-      "Seleziona il fantallenatore.",
+      "Seleziona un fantallenatore.",
       "err"
     );
 
+  let offeredIds=
+    [...document.querySelectorAll(
+      ".tradeOfferedSelect"
+    )]
+    .map(x=>x.value)
+    .filter(Boolean);
 
-  if(!offeredPlayerId)
+  let requestedIds=
+    [...document.querySelectorAll(
+      ".tradeRequestedSelect"
+    )]
+    .map(x=>x.value)
+    .filter(Boolean);
+
+  if(!offeredIds.length || !requestedIds.length)
     return message(
-      "Seleziona il giocatore che vuoi offrire.",
+      "Seleziona tutti i giocatori dello scambio.",
       "err"
     );
 
-
-  if(!requestedPlayerId)
+  if(offeredIds.length!==requestedIds.length)
     return message(
-      "Seleziona il giocatore che vuoi ricevere.",
+      "Devi selezionare lo stesso numero di giocatori da entrambe le parti.",
       "err"
     );
 
-
-  if(offeredPlayerId===requestedPlayerId)
+  if(offeredIds.length>3)
     return message(
-      "Non puoi scambiare un giocatore con sé stesso.",
+      "Puoi scambiare al massimo 3 giocatori per parte.",
       "err"
     );
 
+  if(
+    new Set(offeredIds).size!==offeredIds.length ||
+    new Set(requestedIds).size!==requestedIds.length
+  )
+    return message(
+      "Non puoi selezionare due volte lo stesso giocatore.",
+      "err"
+    );
 
   /*
-    Recupera i nomi dei due giocatori
-    per costruire la notifica.
-  */
+   * RECUPERA TUTTI I GIOCATORI COINVOLTI
+   */
 
-  let playersData=await db
+  let allIds=[
+    ...offeredIds,
+    ...requestedIds
+  ];
+
+  let players=await db
     .from("players")
-    .select("id,name")
-    .in(
-      "id",
-      [
-        offeredPlayerId,
-        requestedPlayerId
-      ]
-    );
+    .select(`
+      id,
+      name,
+      surname,
+      position,
+      is_foreign,
+      real_team_id,
+      real_teams(name)
+    `)
+    .in("id",allIds);
 
-
-  if(playersData.error)
+  if(players.error)
     return message(
-      playersData.error.message,
+      players.error.message,
       "err"
     );
 
-
-  let offeredPlayer=
-    (playersData.data||[])
-      .find(x=>x.id===offeredPlayerId);
-
-  let requestedPlayer=
-    (playersData.data||[])
-      .find(x=>x.id===requestedPlayerId);
-
+  let playerMap=
+    new Map(
+      (players.data||[]).map(x=>[
+        x.id,
+        x
+      ])
+    );
 
   /*
-    Crea la proposta.
-  */
+   * CONTROLLA CHE TUTTI I GIOCATORI ESISTANO
+   */
+
+  if(
+    allIds.some(
+      id=>!playerMap.has(id)
+    )
+  )
+    return message(
+      "Uno dei giocatori selezionati non esiste più.",
+      "err"
+    );
+
+  /*
+   * CONTROLLA I RUOLI
+   */
+
+  let offeredRoles=
+    offeredIds
+      .map(id=>playerMap.get(id).position)
+      .sort()
+      .join("|");
+
+  let requestedRoles=
+    requestedIds
+      .map(id=>playerMap.get(id).position)
+      .sort()
+      .join("|");
+
+  if(offeredRoles!==requestedRoles)
+    return message(
+      "Lo scambio deve avere la stessa composizione di ruoli.",
+      "err"
+    );
+
+  /*
+   * RECUPERA LE ROSE ATTUALI
+   */
+
+  let mine=await db
+    .from("rosters")
+    .select(`
+      player_id,
+      players(
+        id,
+        name,
+        surname,
+        position,
+        is_foreign,
+        real_team_id
+      )
+    `)
+    .eq("manager_id",me.id)
+    .eq("active",true);
+
+  if(mine.error)
+    return message(
+      mine.error.message,
+      "err"
+    );
+
+  let theirs=await db
+    .from("rosters")
+    .select(`
+      player_id,
+      players(
+        id,
+        name,
+        surname,
+        position,
+        is_foreign,
+        real_team_id
+      )
+    `)
+    .eq("manager_id",receiverId)
+    .eq("active",true);
+
+  if(theirs.error)
+    return message(
+      theirs.error.message,
+      "err"
+    );
+
+  /*
+   * CONTROLLA CHE I GIOCATORI
+   * SIANO DAVVERO NELLE RISPETTIVE ROSE
+   */
+
+  let myIds=
+    (mine.data||[])
+      .map(x=>x.player_id);
+
+  let theirIds=
+    (theirs.data||[])
+      .map(x=>x.player_id);
+
+  if(
+    offeredIds.some(
+      id=>!myIds.includes(id)
+    )
+  )
+    return message(
+      "Puoi offrire solo giocatori presenti nella tua rosa.",
+      "err"
+    );
+
+  if(
+    requestedIds.some(
+      id=>!theirIds.includes(id)
+    )
+  )
+    return message(
+      "Puoi richiedere solo giocatori presenti nella rosa dell'altro fantallenatore.",
+      "err"
+    );
+
+  /*
+   * CREA LE ROSE RISULTANTI
+   */
+
+  let myAfter=
+    (mine.data||[])
+      .map(x=>x.players)
+      .filter(Boolean)
+      .filter(
+        p=>!offeredIds.includes(p.id)
+      )
+      .concat(
+        requestedIds
+          .map(id=>playerMap.get(id))
+      );
+
+  let theirAfter=
+    (theirs.data||[])
+      .map(x=>x.players)
+      .filter(Boolean)
+      .filter(
+        p=>!requestedIds.includes(p.id)
+      )
+      .concat(
+        offeredIds
+          .map(id=>playerMap.get(id))
+      );
+
+  /*
+   * FUNZIONE DI CONTROLLO VINCOLI
+   */
+
+  function validateRoster(players){
+
+    /*
+     * STRANIERI
+     */
+
+    let foreigners=
+      players.filter(
+        p=>p.is_foreign
+      ).length;
+
+    if(foreigners>1)
+      return "Non puoi avere più di 1 straniero.";
+
+    /*
+     * MASSIMO 2 DELLA STESSA SQUADRA
+     */
+
+    let teams={};
+
+    for(let p of players){
+
+      if(!p.real_team_id)
+        continue;
+
+      teams[p.real_team_id]=
+        (teams[p.real_team_id]||0)+1;
+
+      if(teams[p.real_team_id]>2){
+
+        let teamName=
+          p.real_teams?.name ||
+          "una stessa squadra";
+
+        return(
+          "Non puoi avere più di 2 giocatori della stessa squadra ("+
+          teamName+
+          ")."
+        );
+      }
+    }
+
+    return null;
+
+  }
+
+  let myError=
+    validateRoster(myAfter);
+
+  if(myError)
+    return message(
+      "Scambio non valido per la tua rosa: "+myError,
+      "err"
+    );
+
+  let theirError=
+    validateRoster(theirAfter);
+
+  if(theirError)
+    return message(
+      "Scambio non valido per la rosa dell'altro fantallenatore: "+theirError,
+      "err"
+    );
+
+  /*
+   * INSERISCE LA PROPOSTA
+   */
 
   let x=await db
     .from("trades")
@@ -4818,9 +5046,23 @@ async function trade(){
 
       receiver_id:receiverId,
 
-      offered_player_id:offeredPlayerId,
+      offered_player_ids:offeredIds,
 
-      requested_player_id:requestedPlayerId,
+      requested_player_ids:requestedIds,
+
+      /*
+       * Compatibilità con gli scambi vecchi 1 ↔ 1
+       */
+
+      offered_player_id:
+        offeredIds.length===1
+          ? offeredIds[0]
+          : null,
+
+      requested_player_id:
+        requestedIds.length===1
+          ? requestedIds[0]
+          : null,
 
       message:"Proposta di scambio",
 
@@ -4830,51 +5072,67 @@ async function trade(){
     .select()
     .single();
 
-
   if(x.error)
     return message(
       x.error.message,
       "err"
     );
 
-
   /*
-    Crea la notifica per il ricevente.
-  */
+   * NOTIFICA
+   */
 
-  let notification=await db
-    .from("notifications")
-    .insert({
+  let offeredNames=
+    offeredIds
+      .map(id=>{
+        let p=playerMap.get(id);
+        return p
+          ? `${p.name} ${p.surname||""}`.trim()
+          : "";
+      })
+      .join(" + ");
 
-      manager_id:receiverId,
+  let requestedNames=
+    requestedIds
+      .map(id=>{
+        let p=playerMap.get(id);
+        return p
+          ? `${p.name} ${p.surname||""}`.trim()
+          : "";
+      })
+      .join(" + ");
 
-      type:"trade_new",
+  let notification=
+    await db
+      .from("notifications")
+      .insert({
 
-      title:"🔄 Nuova proposta di scambio",
+        manager_id:receiverId,
 
-      message:
-        (me.team_name || me.name || "Un fantallenatore")
-        + " ti ha proposto uno scambio: "
-        + (offeredPlayer?.name || "Giocatore")
-        + " ↔ "
-        + (requestedPlayer?.name || "Giocatore"),
+        type:"trade_new",
 
-      trade_id:x.data.id
+        title:"🔄 Nuova proposta di scambio",
 
-    });
+        message:
+          (me.team_name || me.name || "Un fantallenatore")
+          +" ti ha proposto uno scambio: "
+          +offeredNames
+          +" ↔ "
+          +requestedNames,
 
+        trade_id:x.data.id
+
+      });
 
   if(notification.error)
     console.error(
-      "Errore creazione notifica:",
+      "Errore notifica:",
       notification.error
     );
-
 
   message(
     "✅ Proposta di scambio inviata!"
   );
-
 
   trades();
 
