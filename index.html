@@ -6525,129 +6525,108 @@ async function calendar(){
 
 
       /*
-        PRIMA DELLA DEADLINE
+        CONTENUTO FORMAZIONI
       */
 
       if(!deadlinePassed){
 
         formationSection=`
 
-          <div style="
-            display:grid;
-            grid-template-columns:1fr 1fr;
-            gap:20px;
-            margin-top:15px;
-          ">
+          <details>
 
-            <div>
+            <summary style="
+              cursor:pointer;
+              padding:8px 0;
+              font-weight:bold;
+            ">
+              👀 Vedi formazioni
+            </summary>
 
-              <h3>
+            <div style="
+              display:grid;
+              grid-template-columns:1fr 1fr;
+              gap:20px;
+              margin-top:12px;
+            ">
 
-                ${homeName}
+              <div>
 
-                <div
-                  class="muted"
-                  style="
-                    font-size:13px;
-                    font-weight:normal;
-                  "
-                >
-                  ${homeManagerSmall}
-                </div>
+                ${
+                  homeLineup
 
-              </h3>
+                    ? `
+                      <div
+                        class="muted"
+                        style="
+                          padding:10px 0;
+                          font-weight:600;
+                        "
+                      >
+                        🔒 Formazione schierata, ma non visibile
+                      </div>
+                    `
 
+                    : `
+                      <div
+                        class="muted"
+                        style="
+                          padding:10px 0;
+                          font-weight:600;
+                        "
+                      >
+                        ⏳ Formazione non ancora salvata
+                      </div>
+                    `
+                }
 
-              ${
-                homeLineup
-
-                  ? `
-                    <div
-                      class="muted"
-                      style="
-                        padding:10px 0;
-                        font-weight:600;
-                      "
-                    >
-                      🔒 Formazione schierata, ma non visibile
-                    </div>
-                  `
-
-                  : `
-                    <div
-                      class="muted"
-                      style="
-                        padding:10px 0;
-                        font-weight:600;
-                      "
-                    >
-                      ⏳ Formazione non ancora salvata
-                    </div>
-                  `
-              }
-
-            </div>
+              </div>
 
 
-            <div>
+              <div>
 
-              <h3>
+                ${
+                  awayLineup
 
-                ${awayName}
+                    ? `
+                      <div
+                        class="muted"
+                        style="
+                          padding:10px 0;
+                          font-weight:600;
+                        "
+                      >
+                        🔒 Formazione schierata, ma non visibile
+                      </div>
+                    `
 
-                <div
-                  class="muted"
-                  style="
-                    font-size:13px;
-                    font-weight:normal;
-                  "
-                >
-                  ${awayManagerSmall}
-                </div>
+                    : `
+                      <div
+                        class="muted"
+                        style="
+                          padding:10px 0;
+                          font-weight:600;
+                        "
+                      >
+                        ⏳ Formazione non ancora salvata
+                      </div>
+                    `
+                }
 
-              </h3>
-
-
-              ${
-                awayLineup
-
-                  ? `
-                    <div
-                      class="muted"
-                      style="
-                        padding:10px 0;
-                        font-weight:600;
-                      "
-                    >
-                      🔒 Formazione schierata, ma non visibile
-                    </div>
-                  `
-
-                  : `
-                    <div
-                      class="muted"
-                      style="
-                        padding:10px 0;
-                        font-weight:600;
-                      "
-                    >
-                      ⏳ Formazione non ancora salvata
-                    </div>
-                  `
-              }
+              </div>
 
             </div>
 
-          </div>
+          </details>
 
         `;
 
 
       }else{
 
-
         /*
-          DOPO LA DEADLINE
+          DOPO LA DEADLINE:
+          apriamo le formazioni senza
+          ripetere squadra e fantallenatore
         */
 
         formationSection=`
@@ -6662,7 +6641,6 @@ async function calendar(){
               👀 Vedi formazioni
             </summary>
 
-
             <div style="
               display:grid;
               grid-template-columns:1fr 1fr;
@@ -6670,25 +6648,7 @@ async function calendar(){
               margin-top:15px;
             ">
 
-
               <div>
-
-                <h3>
-
-                  ${homeName}
-
-                  <div
-                    class="muted"
-                    style="
-                      font-size:13px;
-                      font-weight:normal;
-                    "
-                  >
-                    ${homeManagerSmall}
-                  </div>
-
-                </h3>
-
 
                 ${renderLineup(
                   x.home_manager_id,
@@ -6700,30 +6660,12 @@ async function calendar(){
 
               <div>
 
-                <h3>
-
-                  ${awayName}
-
-                  <div
-                    class="muted"
-                    style="
-                      font-size:13px;
-                      font-weight:normal;
-                    "
-                  >
-                    ${awayManagerSmall}
-                  </div>
-
-                </h3>
-
-
                 ${renderLineup(
                   x.away_manager_id,
                   selectedDay
                 )}
 
               </div>
-
 
             </div>
 
