@@ -2,85 +2,228 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>FantaBasket Orzi</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
 *{
   box-sizing:border-box;
 }
 
 html{
   overflow-x:hidden;
+  scroll-behavior:smooth;
 }
 
 body{
   margin:0;
-  background:#0b1020;
+  background:
+    radial-gradient(circle at 50% -10%, #1b2948 0%, #0b1020 42%, #080d18 100%);
   color:#eef2ff;
-  font-family:system-ui,sans-serif;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   overflow-x:hidden;
-  position:relative;
+  min-height:100vh;
 }
 
+/* =========================================================
+   HEADER
+   ========================================================= */
+
 header{
-  padding:16px 22px;
-  background:rgba(17,24,44,.78);
+  padding:15px 22px;
+  background:rgba(13,20,37,.92);
+  border-bottom:1px solid rgba(255,255,255,.07);
+  box-shadow:0 6px 25px rgba(0,0,0,.20);
+
   display:flex;
   justify-content:space-between;
   align-items:center;
   gap:12px;
+
+  position:relative;
+  z-index:10;
 }
+
+header b{
+  letter-spacing:.2px;
+}
+
+/* =========================================================
+   CONTENUTO
+   ========================================================= */
 
 main{
   max-width:1100px;
   margin:auto;
-  padding:22px;
+  padding:24px 22px 40px;
 }
+
+/* =========================================================
+   CARD
+   ========================================================= */
 
 .card{
-  background:#121a30;
-  border:1px solid #293452;
-  border-radius:14px;
-  padding:18px;
+  background:rgba(18,26,48,.88);
+  border:1px solid rgba(255,255,255,.075);
+  border-radius:18px;
+  padding:19px;
   margin-bottom:16px;
+
+  box-shadow:
+    0 8px 25px rgba(0,0,0,.18),
+    inset 0 1px 0 rgba(255,255,255,.025);
+
+  transition:
+    transform .18s ease,
+    border-color .18s ease,
+    box-shadow .18s ease;
 }
 
+.card:hover{
+  border-color:rgba(255,255,255,.12);
+  box-shadow:
+    0 12px 30px rgba(0,0,0,.24),
+    inset 0 1px 0 rgba(255,255,255,.035);
+}
+
+/* =========================================================
+   TITOLI
+   ========================================================= */
+
+h1,
+h2,
+h3{
+  letter-spacing:-.3px;
+}
+
+h1{
+  font-size:28px;
+  line-height:1.15;
+  margin-top:0;
+}
+
+h2{
+  font-size:21px;
+}
+
+h3{
+  font-size:17px;
+}
+
+/* =========================================================
+   BUTTON
+   ========================================================= */
+
 button{
-  background:#4f46e5;
+  background:linear-gradient(135deg,#5b55f5,#4f46e5);
   color:white;
   border:0;
-  border-radius:9px;
-  padding:10px 14px;
+  border-radius:11px;
+  padding:10px 15px;
   font-weight:700;
   cursor:pointer;
   margin:3px;
+
+  box-shadow:
+    0 4px 12px rgba(79,70,229,.20);
+
+  transition:
+    transform .15s ease,
+    filter .15s ease,
+    box-shadow .15s ease;
+}
+
+button:hover{
+  filter:brightness(1.08);
+  transform:translateY(-1px);
+  box-shadow:
+    0 6px 16px rgba(79,70,229,.28);
+}
+
+button:active{
+  transform:translateY(0);
 }
 
 button.secondary{
-  background:#26314d;
+  background:#202b45;
+  box-shadow:none;
+}
+
+button.secondary:hover{
+  background:#293652;
 }
 
 button:disabled{
-  opacity:.5;
+  opacity:.45;
   cursor:not-allowed;
+  transform:none;
+  box-shadow:none;
 }
+
+/* =========================================================
+   INPUT / SELECT
+   ========================================================= */
 
 input,
 select{
-  background:#0d1528;
-  color:white;
-  border:1px solid #394563;
-  border-radius:8px;
-  padding:10px;
+  background:#0b1427;
+  color:#eef2ff;
+  border:1px solid #303d5a;
+  border-radius:10px;
+  padding:11px;
   width:100%;
   margin:5px 0 12px;
   min-width:0;
+
+  outline:none;
+
+  transition:
+    border-color .15s ease,
+    box-shadow .15s ease,
+    background .15s ease;
 }
+
+input:focus,
+select:focus{
+  border-color:#625cf5;
+  background:#0d172c;
+  box-shadow:0 0 0 3px rgba(79,70,229,.13);
+}
+
+/* =========================================================
+   MENU
+   ========================================================= */
 
 nav{
   display:flex;
   gap:7px;
   flex-wrap:wrap;
-  margin-bottom:18px;
+  margin-bottom:20px;
+
+  padding:5px;
+
+  background:rgba(13,20,37,.72);
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:14px;
+
+  box-shadow:0 6px 20px rgba(0,0,0,.15);
 }
+
+nav button{
+  background:transparent;
+  box-shadow:none;
+  color:#9da9c4;
+  border-radius:9px;
+  padding:9px 13px;
+  margin:0;
+}
+
+nav button:hover{
+  background:#202b45;
+  color:#fff;
+  transform:none;
+  box-shadow:none;
+}
+
+/* =========================================================
+   VARIE
+   ========================================================= */
 
 .hidden{
   display:none;
@@ -94,14 +237,26 @@ nav{
 
 table{
   width:100%;
-  border-collapse:collapse;
+  border-collapse:separate;
+  border-spacing:0;
 }
 
 td,
 th{
   text-align:left;
-  padding:8px;
-  border-bottom:1px solid #293452;
+  padding:9px;
+  border-bottom:1px solid rgba(255,255,255,.065);
+}
+
+th{
+  color:#9da9c4;
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:.4px;
+}
+
+tr:last-child td{
+  border-bottom:0;
 }
 
 .muted{
@@ -109,17 +264,18 @@ th{
 }
 
 .err{
-  background:#3b1821;
-  padding:10px;
-  border-radius:8px;
+  background:rgba(91,24,38,.65);
+  border:1px solid rgba(255,100,120,.12);
+  padding:11px;
+  border-radius:10px;
 }
 
 .ok{
-  background:#143522;
-  padding:10px;
-  border-radius:8px;
+  background:rgba(20,53,34,.65);
+  border:1px solid rgba(80,220,130,.10);
+  padding:11px;
+  border-radius:10px;
 }
-
 
 /* =========================================================
    NOME SQUADRA
@@ -161,7 +317,7 @@ th{
     font-size:15px;
   }
 
-  /* ---------- HEADER ---------- */
+  /* HEADER */
 
   header{
     width:100%;
@@ -190,8 +346,7 @@ th{
     font-size:13px;
   }
 
-
-  /* ---------- CONTENUTO ---------- */
+  /* CONTENUTO */
 
   main{
     width:100%;
@@ -203,26 +358,21 @@ th{
   .card{
     width:100%;
     max-width:100%;
-    padding:13px 12px;
-    border-radius:12px;
+    padding:14px 12px;
+    border-radius:15px;
     margin-bottom:12px;
   }
 
-
-  /* ---------- MENU ---------- */
+  /* MENU */
 
   nav{
     width:100%;
     display:flex;
     flex-wrap:nowrap;
-    gap:6px;
+    gap:5px;
     margin-bottom:14px;
-    padding:2px 0 8px;
+    padding:4px;
 
-    /*
-      Il menu può scorrere orizzontalmente.
-      La pagina invece rimane ferma.
-    */
     overflow-x:auto;
     overflow-y:hidden;
     -webkit-overflow-scrolling:touch;
@@ -237,14 +387,13 @@ th{
     flex:0 0 auto;
     width:auto;
     margin:0;
-    padding:9px 12px;
+    padding:8px 11px;
     font-size:13px;
     white-space:nowrap;
     border-radius:9px;
   }
 
-
-  /* ---------- TITOLI ---------- */
+  /* TITOLI */
 
   h1{
     font-size:22px;
@@ -261,8 +410,7 @@ th{
     line-height:1.25;
   }
 
-
-  /* ---------- INPUT / SELECT ---------- */
+  /* INPUT */
 
   input,
   select{
@@ -277,31 +425,28 @@ th{
     font-size:14px;
   }
 
-
-  /* ---------- GRID ---------- */
+  /* GRID */
 
   .grid{
     grid-template-columns:1fr !important;
     gap:10px;
   }
 
-  /* ROSE - MOBILE */
+  /* ROSE */
 
-#content .card > div[style*="display:grid"]{
-  grid-template-columns:1fr !important;
-  width:100% !important;
-}
+  #content .card > div[style*="display:grid"]{
+    grid-template-columns:1fr !important;
+    width:100% !important;
+  }
 
-#content .card > div[style*="display:grid"] > div{
-  width:100% !important;
-  min-width:0 !important;
-}
+  #content .card > div[style*="display:grid"] > div{
+    width:100% !important;
+    min-width:0 !important;
+  }
 
   /* =======================================================
-     LISTONE — MOBILE
+     LISTONE
      ======================================================= */
-  
-  /* ---------- LISTONE: SCORRIMENTO REALE ---------- */
 
   #pt{
     width:100%;
@@ -328,26 +473,26 @@ th{
     box-sizing:border-box;
   }
 
-.listone-table-wrap th:nth-child(1),
-.listone-table-wrap td:nth-child(1){
-  width:150px;
-}
+  .listone-table-wrap th:nth-child(1),
+  .listone-table-wrap td:nth-child(1){
+    width:150px;
+  }
 
-.listone-table-wrap th:nth-child(2),
-.listone-table-wrap td:nth-child(2){
-  width:55px;
-  text-align:center;
-}
+  .listone-table-wrap th:nth-child(2),
+  .listone-table-wrap td:nth-child(2){
+    width:55px;
+    text-align:center;
+  }
 
-.listone-table-wrap th:nth-child(3),
-.listone-table-wrap td:nth-child(3){
-  width:125px;
-}
+  .listone-table-wrap th:nth-child(3),
+  .listone-table-wrap td:nth-child(3){
+    width:125px;
+  }
 
-.listone-table-wrap th:nth-child(4),
-.listone-table-wrap td:nth-child(4){
-  width:180px;
-}
+  .listone-table-wrap th:nth-child(4),
+  .listone-table-wrap td:nth-child(4){
+    width:180px;
+  }
 
   #pt td:nth-child(4){
     overflow:visible;
@@ -357,19 +502,19 @@ th{
     white-space:nowrap;
   }
 
-#pt td:nth-child(5):not(:empty){
-  font-size:0;
-}
+  #pt td:nth-child(5):not(:empty){
+    font-size:0;
+  }
 
-#pt td:nth-child(5):not(:empty)::after{
-  content:"";
-}
+  #pt td:nth-child(5):not(:empty)::after{
+    content:"";
+  }
 
-/* Nome straniero in giallo */
-#pt tr:has(td:nth-child(5):not(:empty)) td:nth-child(1),
-#pt tr:has(td:nth-child(5):not(:empty)) td:nth-child(1) b{
-  color:#fbbf24 !important;
-}
+  #pt tr:has(td:nth-child(5):not(:empty)) td:nth-child(1),
+  #pt tr:has(td:nth-child(5):not(:empty)) td:nth-child(1) b{
+    color:#fbbf24 !important;
+  }
+
   #lp{
     width:100%;
     max-width:100%;
@@ -381,14 +526,6 @@ th{
     max-width:100%;
     padding:11px;
   }
-
-  /*
-     CONTENITORE SCORRIBILE DEL LISTONE
-
-     Su telefono la tabella può essere leggermente
-     più larga dello schermo e si può trascinare
-     lateralmente.
-  */
 
   .listone-table-wrap{
     width:100%;
@@ -402,10 +539,6 @@ th{
   .listone-table-wrap::-webkit-scrollbar{
     display:none;
   }
-
-  /*
-     La tabella non viene più schiacciata.
-  */
 
   .listone-table-wrap table{
     width:560px !important;
@@ -422,10 +555,6 @@ th{
     vertical-align:middle;
     overflow:hidden;
   }
-
-  /*
-     Larghezze reali della tabella mobile
-  */
 
   .listone-table-wrap th:nth-child(1),
   .listone-table-wrap td:nth-child(1){
@@ -454,10 +583,6 @@ th{
     text-align:center;
   }
 
-  /*
-     NOME GIOCATORE
-  */
-
   .listone-table-wrap td:nth-child(1){
     font-size:13px;
     line-height:1.2;
@@ -465,18 +590,10 @@ th{
     overflow-wrap:break-word;
   }
 
-  /*
-     RUOLO
-  */
-
   .listone-table-wrap td:nth-child(2){
     font-size:13px;
     font-weight:600;
   }
-
-  /*
-     SQUADRA
-  */
 
   .listone-table-wrap td:nth-child(3){
     font-size:12px;
@@ -484,14 +601,6 @@ th{
     white-space:normal;
     overflow-wrap:break-word;
   }
-
-  /*
-     STATO
-
-     Qui lasciamo spazio sufficiente per:
-     ACQUISTATO / SVINCOLATO
-     + nome della squadra fantasy.
-  */
 
   .listone-table-wrap td:nth-child(4){
     font-size:11px;
@@ -513,8 +622,7 @@ th{
     white-space:nowrap;
   }
 
-
-  /* ---------- FILTRI LISTONE ---------- */
+  /* FILTRI */
 
   #lp input,
   #lp select{
@@ -523,10 +631,7 @@ th{
     margin-top:6px;
   }
 
-
-  /* =======================================================
-     FORMAZIONE
-     ======================================================= */
+  /* FORMAZIONE */
 
   #lineup{
     width:100%;
@@ -543,8 +648,7 @@ th{
     margin-bottom:9px;
   }
 
-
-  /* ---------- DEADLINE ---------- */
+  /* DEADLINE */
 
   #deadlineBox{
     width:100%;
@@ -554,10 +658,7 @@ th{
     font-size:14px;
   }
 
-
-  /* =======================================================
-     ROSE
-     ======================================================= */
+  /* ROSE */
 
   #roster{
     width:100%;
@@ -565,10 +666,7 @@ th{
     overflow:hidden;
   }
 
-
-  /* =======================================================
-     CALENDARIO
-     ======================================================= */
+  /* CALENDARIO */
 
   #calendar{
     width:100%;
@@ -587,10 +685,7 @@ th{
     box-sizing:border-box;
   }
 
-
-  /* =======================================================
-     SCAMBI
-     ======================================================= */
+  /* SCAMBI */
 
   #trades{
     width:100%;
@@ -602,25 +697,18 @@ th{
     overflow:hidden;
   }
 
-
-  /* =======================================================
-     TESTI LUNGHI
-     ======================================================= */
+  /* TESTI */
 
   .team-name,
   .player-name{
     overflow-wrap:anywhere;
   }
 
-
-  /* immagini tonde */
-
   img[style*="border-radius:50%"]{
     flex-shrink:0;
   }
 
-
-  /* ---------- NOME SQUADRA ---------- */
+  /* NOME SQUADRA */
 
   .team-name-box{
     display:block;
@@ -643,19 +731,11 @@ th{
     font-size:15px;
   }
 
-
-  /* ---------- TABELLE GENERICHE ---------- */
-
-  /*
-     Le tabelle normali non vengono tagliate.
-     Se una tabella non è quella del Listone,
-     può scorrere internamente.
-  */
+  /* TABELLE */
 
   .card > table:not(#lp table){
     max-width:100%;
   }
-
 }
 
 
@@ -706,7 +786,7 @@ th{
     font-size:16px;
   }
 }
-</style></head><body>
+</head><body>
 <header><div><b>🏀 FantaBasket Orzi</b><div id="who" class="muted">Non autenticato</div></div><div id="authBtn"><button onclick="showAuth()">Accedi</button></div></header>
 <main><div id="msg"></div>
 <section id="auth" class="card hidden">
