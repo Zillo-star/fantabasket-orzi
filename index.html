@@ -13,17 +13,30 @@ html{
 
 body{
   margin:0;
-
-  background-color:#0b1020;
-background-image:url("https://ejzipstmvofhjsqrzvfs.supabase.co/storage/v1/object/public/brescia.png/orzi%20cinghiale.jfif");
-background-repeat:no-repeat;
-background-position:center 200px;
-background-size:500px auto;
-background-attachment:fixed;
-
+  background:#0b1020;
   color:#eef2ff;
   font-family:system-ui,sans-serif;
   overflow-x:hidden;
+  position:relative;
+}
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+
+  background-image:url("https://ejzipstmvofhjsqrzvfs.supabase.co/storage/v1/object/public/brescia.png/orzi%20cinghiale.jfif");
+  background-repeat:no-repeat;
+  background-position:center center;
+  background-size:520px auto;
+
+  opacity:.10;
+  pointer-events:none;
+  z-index:0;
+}
+header,
+main{
+  position:relative;
+  z-index:1;
 }
 
 header{
@@ -42,7 +55,7 @@ main{
 }
 
 .card{
-  background:#121a30;
+  background:rgba(18,26,48,.90);
   border:1px solid #293452;
   border-radius:14px;
   padding:18px;
