@@ -1474,107 +1474,131 @@ function renderPlayers(a){
       ${a.length} giocatori trovati
     </p>
 
-    <table>
+    <div class="listone-table-wrap">
 
-      <tr>
+      <table class="listone-compact-table">
 
-        <th>Giocatore</th>
-        <th>Ruolo</th>
-        <th>Squadra</th>
-        <th>Stato</th>
+        <thead>
+          <tr>
+            <th>Giocatore</th>
+            <th>R.</th>
+            <th>Squadra</th>
+            <th>Stato</th>
+          </tr>
+        </thead>
 
-      </tr>
+        <tbody>
+
+          ${a.map(p=>{
+
+            const playerColor =
+              p.is_foreign ? "#fbbf24" : "#fff";
+
+            const firstName =
+              (p.name||"").trim();
+
+            const surname =
+              (p.surname||"").trim();
+
+            const teamName =
+              p.real_teams?.name || "Da definire";
+
+            return `
+
+              <tr>
+
+                <!-- GIOCATORE -->
+
+                <td
+                  class="listone-player"
+                  style="color:${playerColor};"
+                >
+
+                  <span class="listone-name">
+                    ${firstName}
+                  </span>
+
+                  <strong
+                    class="listone-surname"
+                    style="color:${playerColor};"
+                  >
+                    ${surname}
+                  </strong>
+
+                </td>
 
 
-      ${a.map(p=>`
+                <!-- RUOLO -->
 
-        <tr style="color:${p.is_foreign ? "#fbbf24" : "#fff"};">
+                <td class="listone-role">
 
-<td style="color:${p.is_foreign ? "#fbbf24" : "#fff"};">
-  <b style="color:${p.is_foreign ? "#fbbf24" : "#fff"};">
-    ${p.surname||""}
-  </b>
-  ${(p.name||"").replace(p.surname||"","").trim()}
-</td>
+                  ${p.position||"—"}
 
-          <td>
-            ${p.position||"Da definire"}
-          </td>
+                </td>
 
 
-          <td>
-            ${p.real_teams?.name||"Da definire"}
-          </td>
+                <!-- SQUADRA -->
+
+                <td class="listone-team">
+
+                  ${teamName}
+
+                </td>
 
 
-          <td>
+                <!-- STATO -->
 
-            ${
-              p.status==="acquistato"
+                <td class="listone-status">
 
-              ?
+                  ${
+                    p.status==="acquistato"
 
-              `
-                <span style="
-                  display:inline-block;
-                  background:#143522;
-                  color:#86efac;
-                  border-radius:7px;
-                  padding:4px 7px;
-                  font-size:12px;
-                  font-weight:700;
-                  white-space:nowrap;
-                ">
-                  🟢 ACQUISTATO
-                </span>
+                    ?
 
-                ${
-                  p.owner?.teamName
-                  ?
-                  `
-                    <div
-                      class="muted"
-                      style="
-                        font-size:11px;
-                        margin-top:3px;
-                      "
-                    >
-                      ${p.owner.teamName}
-                    </div>
-                  `
-                  :
-                  ""
-                }
+                    `
 
-              `
+                      <span class="status-badge acquired">
+                        🟢 <span>ACQUISTATO</span>
+                      </span>
 
-              :
+                      ${
+                        p.owner?.teamName
+                        ?
+                        `
+                          <div class="listone-owner">
+                            ${p.owner.teamName}
+                          </div>
+                        `
+                        :
+                        ""
+                      }
 
-              `
+                    `
 
-                <span style="
-                  display:inline-block;
-                  background:#172554;
-                  color:#93c5fd;
-                  border-radius:7px;
-                  padding:4px 7px;
-                  font-size:12px;
-                  font-weight:700;
-                  white-space:nowrap;
-                ">
-                  🔵 SVINCOLATO
-                </span>
+                    :
 
-              `
-            }
+                    `
 
-          </td>
+                      <span class="status-badge free">
+                        🔵 <span>SVINCOLATO</span>
+                      </span>
 
-        </tr>
+                    `
+                  }
 
-      `).join("")}
+                </td>
 
-    </table>
+              </tr>
+
+            `;
+
+          }).join("")}
+
+        </tbody>
+
+      </table>
+
+    </div>
 
   `;
 
