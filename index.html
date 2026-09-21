@@ -3,788 +3,260 @@
 <title>FantaBasket Orzi</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-*{
-  box-sizing:border-box;
-}
-
-html{
-  overflow-x:hidden;
-  scroll-behavior:smooth;
-}
-
-body{
-  margin:0;
-  background:
-    radial-gradient(circle at 50% -10%, #1b2948 0%, #0b1020 42%, #080d18 100%);
-  color:#eef2ff;
-  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  overflow-x:hidden;
-  min-height:100vh;
-}
-
 /* =========================================================
-   HEADER
+   🏀 DASHBOARD — STILE APP SPORTIVA
    ========================================================= */
 
-header{
-  padding:15px 22px;
-  background:rgba(13,20,37,.92);
-  border-bottom:1px solid rgba(255,255,255,.07);
-  box-shadow:0 6px 25px rgba(0,0,0,.20);
-
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:12px;
-
+/* Sfondo del dashboard leggermente più dinamico */
+#content{
   position:relative;
-  z-index:10;
 }
 
-header b{
-  letter-spacing:.2px;
-}
+/* ---------------------------------------------------------
+   PRIME CARD DEL DASHBOARD
+   --------------------------------------------------------- */
 
-/* =========================================================
-   CONTENUTO
-   ========================================================= */
-
-main{
-  max-width:1100px;
-  margin:auto;
-  padding:24px 22px 40px;
-}
-
-/* =========================================================
-   CARD
-   ========================================================= */
-
-.card{
-  background:rgba(18,26,48,.88);
-  border:1px solid rgba(255,255,255,.075);
-  border-radius:18px;
-  padding:19px;
-  margin-bottom:16px;
-
-  box-shadow:
-    0 8px 25px rgba(0,0,0,.18),
-    inset 0 1px 0 rgba(255,255,255,.025);
-
-  transition:
-    transform .18s ease,
-    border-color .18s ease,
-    box-shadow .18s ease;
-}
-
-.card:hover{
-  border-color:rgba(255,255,255,.12);
-  box-shadow:
-    0 12px 30px rgba(0,0,0,.24),
-    inset 0 1px 0 rgba(255,255,255,.035);
-}
-
-/* =========================================================
-   TITOLI
-   ========================================================= */
-
-h1,
-h2,
-h3{
-  letter-spacing:-.3px;
-}
-
-h1{
-  font-size:28px;
-  line-height:1.15;
-  margin-top:0;
-}
-
-h2{
-  font-size:21px;
-}
-
-h3{
-  font-size:17px;
-}
-
-/* =========================================================
-   BUTTON
-   ========================================================= */
-
-button{
-  background:linear-gradient(135deg,#5b55f5,#4f46e5);
-  color:white;
-  border:0;
-  border-radius:11px;
-  padding:10px 15px;
-  font-weight:700;
-  cursor:pointer;
-  margin:3px;
-
-  box-shadow:
-    0 4px 12px rgba(79,70,229,.20);
-
-  transition:
-    transform .15s ease,
-    filter .15s ease,
-    box-shadow .15s ease;
-}
-
-button:hover{
-  filter:brightness(1.08);
-  transform:translateY(-1px);
-  box-shadow:
-    0 6px 16px rgba(79,70,229,.28);
-}
-
-button:active{
-  transform:translateY(0);
-}
-
-button.secondary{
-  background:#202b45;
-  box-shadow:none;
-}
-
-button.secondary:hover{
-  background:#293652;
-}
-
-button:disabled{
-  opacity:.45;
-  cursor:not-allowed;
-  transform:none;
-  box-shadow:none;
-}
-
-/* =========================================================
-   INPUT / SELECT
-   ========================================================= */
-
-input,
-select{
-  background:#0b1427;
-  color:#eef2ff;
-  border:1px solid #303d5a;
-  border-radius:10px;
-  padding:11px;
-  width:100%;
-  margin:5px 0 12px;
-  min-width:0;
-
-  outline:none;
-
-  transition:
-    border-color .15s ease,
-    box-shadow .15s ease,
-    background .15s ease;
-}
-
-input:focus,
-select:focus{
-  border-color:#625cf5;
-  background:#0d172c;
-  box-shadow:0 0 0 3px rgba(79,70,229,.13);
-}
-
-/* =========================================================
-   MENU
-   ========================================================= */
-
-nav{
-  display:flex;
-  gap:7px;
-  flex-wrap:wrap;
-  margin-bottom:20px;
-
-  padding:5px;
-
-  background:rgba(13,20,37,.72);
-  border:1px solid rgba(255,255,255,.06);
-  border-radius:14px;
-
-  box-shadow:0 6px 20px rgba(0,0,0,.15);
-}
-
-nav button{
-  background:transparent;
-  box-shadow:none;
-  color:#9da9c4;
-  border-radius:9px;
-  padding:9px 13px;
-  margin:0;
-}
-
-nav button:hover{
-  background:#202b45;
-  color:#fff;
-  transform:none;
-  box-shadow:none;
-}
-
-/* =========================================================
-   VARIE
-   ========================================================= */
-
-.hidden{
-  display:none;
-}
-
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+#content > .grid{
   gap:14px;
 }
 
-table{
-  width:100%;
-  border-collapse:separate;
-  border-spacing:0;
+/* Card principali */
+#content > .grid > .card{
+  position:relative;
+  overflow:hidden;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(24,35,63,.96),
+      rgba(16,24,44,.96)
+    );
+
+  border:1px solid rgba(255,255,255,.075);
+  border-radius:20px;
+
+  padding:22px;
+
+  box-shadow:
+    0 10px 30px rgba(0,0,0,.22),
+    inset 0 1px 0 rgba(255,255,255,.035);
 }
 
-td,
-th{
-  text-align:left;
-  padding:9px;
-  border-bottom:1px solid rgba(255,255,255,.065);
+/* Piccolo effetto luminoso decorativo */
+#content > .grid > .card::before{
+  content:"";
+  position:absolute;
+
+  width:180px;
+  height:180px;
+
+  right:-75px;
+  top:-80px;
+
+  background:radial-gradient(
+    circle,
+    rgba(79,70,229,.16) 0%,
+    rgba(79,70,229,0) 70%
+  );
+
+  pointer-events:none;
 }
 
-th{
-  color:#9da9c4;
-  font-size:12px;
-  text-transform:uppercase;
-  letter-spacing:.4px;
-}
-
-tr:last-child td{
-  border-bottom:0;
-}
-
-.muted{
-  color:#9da9c4;
-}
-
-.err{
-  background:rgba(91,24,38,.65);
-  border:1px solid rgba(255,100,120,.12);
-  padding:11px;
-  border-radius:10px;
-}
-
-.ok{
-  background:rgba(20,53,34,.65);
-  border:1px solid rgba(80,220,130,.10);
-  padding:11px;
-  border-radius:10px;
-}
-
-/* =========================================================
+/* ---------------------------------------------------------
    NOME SQUADRA
-   ========================================================= */
+   --------------------------------------------------------- */
 
-.team-name-box{
+#content > .grid > .card:first-child h2{
+  margin-top:0;
+  margin-bottom:5px;
+
+  font-size:22px;
+  font-weight:800;
+  letter-spacing:-.5px;
+}
+
+#content > .grid > .card:first-child .muted{
+  font-size:14px;
+  color:#8997b7;
+}
+
+/* ---------------------------------------------------------
+   INPUT NOME SQUADRA
+   --------------------------------------------------------- */
+
+#content > .grid > .card:first-child input{
+  background:rgba(7,14,28,.75);
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:11px;
+
+  padding:12px 13px;
+
+  transition:.18s ease;
+}
+
+#content > .grid > .card:first-child input:focus{
+  border-color:#625cf5;
+  box-shadow:
+    0 0 0 3px rgba(79,70,229,.12);
+}
+
+/* ---------------------------------------------------------
+   PULSANTE SALVA
+   --------------------------------------------------------- */
+
+#content > .grid > .card:first-child button{
+  width:100%;
+  margin:6px 0 0;
+
+  min-height:44px;
+
+  border-radius:11px;
+
+  background:linear-gradient(
+    135deg,
+    #635bff,
+    #4f46e5
+  );
+
+  box-shadow:
+    0 7px 18px rgba(79,70,229,.22);
+}
+
+/* ---------------------------------------------------------
+   CREDITI
+   --------------------------------------------------------- */
+
+#content > .grid > .card:first-child{
+  min-height:260px;
+}
+
+#content > .grid > .card:first-child > div:last-child{
+  margin-top:18px;
+}
+
+/* ---------------------------------------------------------
+   PUNTI FANTASY
+   --------------------------------------------------------- */
+
+#content > .grid > .card:nth-child(2){
   display:flex;
-  gap:8px;
-  align-items:center;
+  flex-direction:column;
+  justify-content:center;
+
+  min-height:260px;
 }
 
-.team-name-box input{
-  margin:5px 0 0;
+/* Titolo */
+#content > .grid > .card:nth-child(2) h2{
+  margin-top:0;
+  margin-bottom:15px;
+  font-size:18px;
+  color:#aeb9d2;
+}
+
+/* Numero punti */
+#content > .grid > .card:nth-child(2) > div{
   font-size:16px;
-  min-height:46px;
 }
 
-.team-name-box button{
-  min-height:46px;
-  margin:5px 0 0;
-  white-space:nowrap;
+/* Se il punteggio viene stampato come testo/numero */
+#content > .grid > .card:nth-child(2) strong{
+  display:block;
+
+  font-size:52px;
+  line-height:1;
+
+  font-weight:850;
+  letter-spacing:-2px;
+
+  margin:4px 0 20px;
+
+  background:linear-gradient(
+    135deg,
+    #ffffff,
+    #aeb8ff
+  );
+
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
+
+/* ---------------------------------------------------------
+   BLOCCO GIOCATORI / ALLENATORI
+   --------------------------------------------------------- */
+
+#content > .grid > .card:nth-child(2) .muted{
+  color:#8997b7;
+}
+
+/* ---------------------------------------------------------
+   BENVENUTO
+   --------------------------------------------------------- */
+
+#content > .card{
+  background:
+    linear-gradient(
+      135deg,
+      rgba(20,30,53,.90),
+      rgba(13,20,37,.90)
+    );
+
+  border:1px solid rgba(255,255,255,.065);
+  border-radius:18px;
+
+  box-shadow:
+    0 8px 24px rgba(0,0,0,.16);
+}
+
+/* Titolo benvenuto */
+#content > .card h2{
+  margin-top:0;
+  font-size:19px;
+}
+
+/* Testo */
+#content > .card .muted{
+  color:#8997b7;
+  line-height:1.6;
 }
 
 
 /* =========================================================
-   📱 MOBILE
+   📱 DASHBOARD MOBILE
    ========================================================= */
 
 @media(max-width:600px){
 
-  html{
-    overflow-x:hidden;
-  }
-
-  body{
-    width:100%;
-    max-width:100%;
-    overflow-x:hidden;
-    font-size:15px;
-  }
-
-  /* HEADER */
-
-  header{
-    width:100%;
-    padding:10px 12px;
-    gap:8px;
-    align-items:center;
-  }
-
-  header > div:first-child{
-    min-width:0;
-    flex:1;
-  }
-
-  header > div:first-child > b{
-    display:block;
-    font-size:16px;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-  }
-
-  header button{
-    flex-shrink:0;
-    white-space:nowrap;
-    padding:8px 10px;
-    font-size:13px;
-  }
-
-  /* CONTENUTO */
-
-  main{
-    width:100%;
-    max-width:none;
-    padding:10px;
-    overflow:visible;
-  }
-
-  .card{
-    width:100%;
-    max-width:100%;
-    padding:14px 12px;
-    border-radius:15px;
-    margin-bottom:12px;
-  }
-
-  /* MENU */
-
-  nav{
-    width:100%;
-    display:flex;
-    flex-wrap:nowrap;
-    gap:5px;
-    margin-bottom:14px;
-    padding:4px;
-
-    overflow-x:auto;
-    overflow-y:hidden;
-    -webkit-overflow-scrolling:touch;
-    scrollbar-width:none;
-  }
-
-  nav::-webkit-scrollbar{
-    display:none;
-  }
-
-  nav button{
-    flex:0 0 auto;
-    width:auto;
-    margin:0;
-    padding:8px 11px;
-    font-size:13px;
-    white-space:nowrap;
-    border-radius:9px;
-  }
-
-  /* TITOLI */
-
-  h1{
-    font-size:22px;
-    line-height:1.2;
-  }
-
-  h2{
-    font-size:19px;
-    line-height:1.25;
-  }
-
-  h3{
-    font-size:17px;
-    line-height:1.25;
-  }
-
-  /* INPUT */
-
-  input,
-  select{
-    width:100%;
-    max-width:100%;
-    min-height:42px;
-    font-size:16px !important;
-  }
-
-  button{
-    min-height:40px;
-    font-size:14px;
-  }
-
-  /* GRID */
-
-  .grid{
-    grid-template-columns:1fr !important;
+  #content > .grid{
     gap:10px;
   }
 
-  /* ROSE */
-
-  #content .card > div[style*="display:grid"]{
-    grid-template-columns:1fr !important;
-    width:100% !important;
+  #content > .grid > .card{
+    min-height:auto;
+    padding:17px;
+    border-radius:16px;
   }
 
-  #content .card > div[style*="display:grid"] > div{
-    width:100% !important;
-    min-width:0 !important;
+  #content > .grid > .card:first-child{
+    min-height:auto;
   }
 
-  /* =======================================================
-     LISTONE
-     ======================================================= */
-
-  #pt{
-    width:100%;
-    max-width:100%;
-    overflow-x:auto;
-    overflow-y:hidden;
-    -webkit-overflow-scrolling:touch;
-    scrollbar-width:none;
+  #content > .grid > .card:nth-child(2){
+    min-height:180px;
   }
 
-  #pt::-webkit-scrollbar{
-    display:none;
-  }
-
-  #pt table{
-    width:560px !important;
-    min-width:560px !important;
-    max-width:none !important;
-    table-layout:fixed !important;
-  }
-
-  #pt th,
-  #pt td{
-    box-sizing:border-box;
-  }
-
-  .listone-table-wrap th:nth-child(1),
-  .listone-table-wrap td:nth-child(1){
-    width:150px;
-  }
-
-  .listone-table-wrap th:nth-child(2),
-  .listone-table-wrap td:nth-child(2){
-    width:55px;
-    text-align:center;
-  }
-
-  .listone-table-wrap th:nth-child(3),
-  .listone-table-wrap td:nth-child(3){
-    width:125px;
-  }
-
-  .listone-table-wrap th:nth-child(4),
-  .listone-table-wrap td:nth-child(4){
-    width:180px;
-  }
-
-  #pt td:nth-child(4){
-    overflow:visible;
-  }
-
-  #pt td:nth-child(4) span{
-    white-space:nowrap;
-  }
-
-  #pt td:nth-child(5):not(:empty){
-    font-size:0;
-  }
-
-  #pt td:nth-child(5):not(:empty)::after{
-    content:"";
-  }
-
-  #pt tr:has(td:nth-child(5):not(:empty)) td:nth-child(1),
-  #pt tr:has(td:nth-child(5):not(:empty)) td:nth-child(1) b{
-    color:#fbbf24 !important;
-  }
-
-  #lp{
-    width:100%;
-    max-width:100%;
-    overflow:hidden;
-  }
-
-  #lp .card{
-    width:100%;
-    max-width:100%;
-    padding:11px;
-  }
-
-  .listone-table-wrap{
-    width:100%;
-    max-width:100%;
-    overflow-x:auto;
-    overflow-y:hidden;
-    -webkit-overflow-scrolling:touch;
-    scrollbar-width:none;
-  }
-
-  .listone-table-wrap::-webkit-scrollbar{
-    display:none;
-  }
-
-  .listone-table-wrap table{
-    width:560px !important;
-    min-width:560px !important;
-    max-width:none !important;
-    table-layout:fixed !important;
-    border-collapse:collapse;
-    font-size:13px;
-  }
-
-  .listone-table-wrap th,
-  .listone-table-wrap td{
-    padding:8px 6px;
-    vertical-align:middle;
-    overflow:hidden;
-  }
-
-  .listone-table-wrap th:nth-child(1),
-  .listone-table-wrap td:nth-child(1){
-    width:150px;
-  }
-
-  .listone-table-wrap th:nth-child(2),
-  .listone-table-wrap td:nth-child(2){
-    width:55px;
-    text-align:center;
-  }
-
-  .listone-table-wrap th:nth-child(3),
-  .listone-table-wrap td:nth-child(3){
-    width:125px;
-  }
-
-  .listone-table-wrap th:nth-child(4),
-  .listone-table-wrap td:nth-child(4){
-    width:180px;
-  }
-
-  .listone-table-wrap th:nth-child(5),
-  .listone-table-wrap td:nth-child(5){
-    width:50px;
-    text-align:center;
-  }
-
-  .listone-table-wrap td:nth-child(1){
-    font-size:13px;
-    line-height:1.2;
-    white-space:normal;
-    overflow-wrap:break-word;
-  }
-
-  .listone-table-wrap td:nth-child(2){
-    font-size:13px;
-    font-weight:600;
-  }
-
-  .listone-table-wrap td:nth-child(3){
-    font-size:12px;
-    line-height:1.2;
-    white-space:normal;
-    overflow-wrap:break-word;
-  }
-
-  .listone-table-wrap td:nth-child(4){
-    font-size:11px;
-    white-space:normal;
-    overflow:visible;
-  }
-
-  .listone-table-wrap td:nth-child(4) span{
-    max-width:none !important;
-  }
-
-  .listone-table-wrap td:nth-child(4) button{
-    max-width:none;
-    width:auto;
-    margin:0;
-    padding:6px 8px;
-    font-size:11px;
-    line-height:1.1;
-    white-space:nowrap;
-  }
-
-  /* FILTRI */
-
-  #lp input,
-  #lp select{
-    width:100%;
-    max-width:100%;
-    margin-top:6px;
-  }
-
-  /* FORMAZIONE */
-
-  #lineup{
-    width:100%;
-    max-width:100%;
-    overflow:hidden;
-  }
-
-  #lineup .card{
-    width:100%;
-    padding:11px;
-  }
-
-  #lp .card{
-    margin-bottom:9px;
-  }
-
-  /* DEADLINE */
-
-  #deadlineBox{
-    width:100%;
-    max-width:100%;
-    margin-top:10px;
-    padding:10px;
-    font-size:14px;
-  }
-
-  /* ROSE */
-
-  #roster{
-    width:100%;
-    max-width:100%;
-    overflow:hidden;
-  }
-
-  /* CALENDARIO */
-
-  #calendar{
-    width:100%;
-    max-width:100%;
-    overflow:hidden;
-  }
-
-  #calendar .card{
-    width:100%;
-    overflow:hidden;
-  }
-
-  #calendar details{
-    width:100%;
-    max-width:100%;
-    box-sizing:border-box;
-  }
-
-  /* SCAMBI */
-
-  #trades{
-    width:100%;
-    max-width:100%;
-    overflow:hidden;
-  }
-
-  #trades .card{
-    overflow:hidden;
-  }
-
-  /* TESTI */
-
-  .team-name,
-  .player-name{
-    overflow-wrap:anywhere;
-  }
-
-  img[style*="border-radius:50%"]{
-    flex-shrink:0;
-  }
-
-  /* NOME SQUADRA */
-
-  .team-name-box{
-    display:block;
-    width:100%;
-  }
-
-  .team-name-box input{
-    width:100%;
-    min-height:46px;
-    margin:5px 0 0;
-    font-size:16px;
-    -webkit-appearance:none;
-    appearance:none;
-  }
-
-  .team-name-box button{
-    width:100%;
-    min-height:46px;
-    margin:7px 0 0;
-    font-size:15px;
-  }
-
-  /* TABELLE */
-
-  .card > table:not(#lp table){
-    max-width:100%;
-  }
-}
-
-
-/* =========================================================
-   📱 TELEFONI MOLTO PICCOLI
-   ========================================================= */
-
-@media(max-width:380px){
-
-  main{
-    padding-left:8px;
-    padding-right:8px;
-  }
-
-  .card{
-    padding:11px 9px;
-  }
-
-  nav button{
-    padding:8px 10px;
-    font-size:12px;
-  }
-
-  h1{
+  #content > .grid > .card:first-child h2{
     font-size:20px;
   }
 
-  h2{
-    font-size:18px;
+  #content > .grid > .card:nth-child(2) strong{
+    font-size:43px;
   }
 
-  button{
-    font-size:13px;
-  }
-
-  #lp table th,
-  #lp table td{
-    padding-left:2px;
-    padding-right:2px;
-  }
-
-  #lp table td:nth-child(4) button{
-    font-size:9px;
-    padding:5px 3px;
-  }
-
-  #lp table td:nth-child(5){
-    font-size:16px;
+  #content > .card{
+    border-radius:15px;
+    padding:16px;
   }
 }
 </style></head><body>
