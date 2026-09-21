@@ -19,29 +19,6 @@ body{
   overflow-x:hidden;
   position:relative;
 }
-body::before{
-  content:"";
-  position:fixed;
-  left:50%;
-  top:50%;
-  width:520px;
-  height:520px;
-  transform:translate(-50%,-50%);
-
-  background-image:url("https://ejzipstmvofhjsqrzvfs.supabase.co/storage/v1/object/public/brescia.png/orzi%20cinghiale.jfif");
-  background-repeat:no-repeat;
-  background-position:center;
-  background-size:contain;
-
-  opacity:.07;
-  pointer-events:none;
-  z-index:0;
-}
-main,
-header{
-  position:relative;
-  z-index:1;
-}
 
 header{
   padding:16px 22px;
@@ -59,7 +36,7 @@ main{
 }
 
 .card{
-  background:rgba(18,26,48,.45);
+  background:#121a30;
   border:1px solid #293452;
   border-radius:14px;
   padding:18px;
