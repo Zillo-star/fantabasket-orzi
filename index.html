@@ -5497,6 +5497,42 @@ async function calendar(){
     let matchdayId=
       matchday.id;
 
+let manager =
+  managers[managerId];
+
+
+/*
+  FANTABOT
+  Non ha una formazione.
+  È una squadra automatica.
+*/
+
+if(manager?.is_bot){
+
+  return `
+    <div
+      style="
+        padding:12px;
+        border-radius:10px;
+        background:#171d32;
+        font-weight:700;
+      "
+    >
+      🤖 Squadra automatica
+      <div
+        class="muted"
+        style="
+          margin-top:4px;
+          font-size:12px;
+          font-weight:500;
+        "
+      >
+        Nessuna formazione da schierare
+      </div>
+    </div>
+  `;
+
+}
 
     let lineup=
       lineupMap[
