@@ -6668,44 +6668,25 @@ window.calendarSelectedDay =
           "
         >
 
-          ${
-            currentDay !== null
-              ? `
-                <option
-                  value="${currentDay}"
-                  ${
-                    selectedDay === currentDay
-                      ? "selected"
-                      : ""
-                  }
-                >
-                  Giornata ${currentDay} · attuale
-                </option>
-              `
-              : ""
-          }
+${
+  allDays
+    .map(day => `
 
+      <option
+        value="${day}"
+        ${
+          selectedDay === day
+            ? "selected"
+            : ""
+        }
+      >
+        Giornata ${day}
+        ${day === currentDay ? " · ATTUALE" : ""}
+      </option>
 
-          ${
-            archivedDays
-              .slice()
-              .sort((a,b) => b-a)
-              .map(day => `
-
-                <option
-                  value="${day}"
-                  ${
-                    selectedDay === day
-                      ? "selected"
-                      : ""
-                  }
-                >
-                  Giornata ${day}
-                </option>
-
-              `)
-              .join("")
-          }
+    `)
+    .join("")
+}
 
         </select>
 
