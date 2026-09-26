@@ -2841,7 +2841,17 @@ let r=await db.from("rosters")
   data-photo-url="${x.players.photo_url || ""}"
 >
 
-<b>${x.players.name}</b>
+<b>
+  ${
+    [
+      x.players?.name,
+      x.players?.surname
+    ]
+    .filter(Boolean)
+    .join(" ")
+    || "Giocatore"
+  }
+</b>
 · ${x.players.position}
 · ${x.players.real_teams?.name || "Squadra non disponibile"}
 
