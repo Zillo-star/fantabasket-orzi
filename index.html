@@ -2734,6 +2734,159 @@ function formatNotificationDate(date){
   );
 
 }
+async function testLivePesaroRoma(){
+
+  const url =
+    "https://fantabasket-webpont.davzil2005.workers.dev?t=" +
+    Date.now();
+
+  try{
+
+    const response = await fetch(url);
+
+    if(!response.ok)
+      throw new Error("HTTP " + response.status);
+
+    const text = await response.text();
+
+    /*
+      PRENDIAMO TUTTI GLI EVENTI
+    */
+
+    let parts = text.split("%");
+
+    let events =
+      parts
+        .filter(x => x.startsWith("i|"))
+        .map(x => ({
+          codice:
+            x.match(/#2\|([^#]+)/)?.[1] || "",
+
+          giocatore1:
+            x.match(/#3\|([^#]+)/)?.[1] || "",
+
+          giocatore2:
+            x.match(/#4\|([^#]+)/)?.[1] || "",
+
+          valore5:
+            x.match(/#5\|([^#]+)/)?.[1] || "",
+
+          valore6:
+            x.match(/#6\|([^#]+)/)?.[1] || "",
+
+          tempo:
+            x.match(/#gt\|([^#]+)/)?.[1] || "",
+
+          punteggio:
+            x.match(/#vurl\|([^#]+)/)?.[1] || ""
+        }));
+
+    /*
+      SOLO EVENTI DI BALDI
+    */
+
+    let baldi =
+      events.filter(x =>
+        x.giocatore1 === "A827505" ||
+        x.giocatore2 === "A827505"
+      );
+
+    console.log(
+      "🏀 EVENTI BALDI",
+      baldi
+    );
+
+    /*
+      MOSTRIAMOLI NELL'APP
+    */
+
+    el("content").innerHTML = `
+
+      <div class="card">
+
+        <h2>🏀 L. Baldi — dati live</h2>
+
+        <div class="muted" style="margin-bottom:15px">
+          ID Webpont: A827505
+        </div>
+
+        ${
+          baldi.length
+          ? baldi.map((x,i) => `
+
+            <div style="
+              padding:12px 0;
+              border-bottom:1px solid rgba(255,255,255,.08);
+            ">
+
+              <b>
+                Evento ${i+1}
+              </b>
+
+              <div style="margin-top:5px">
+
+                Codice:
+                <strong>${x.codice || "-"}</strong>
+
+                · Tempo:
+                ${x.tempo || "-"}
+
+              </div>
+
+              <div class="muted" style="margin-top:4px">
+
+                Giocatore 1:
+                ${x.giocatore1 || "-"}
+
+                · Giocatore 2:
+                ${x.giocatore2 || "-"}
+
+              </div>
+
+              <div class="muted">
+
+                Valori:
+                ${x.valore5 || "-"}
+                /
+                ${x.valore6 || "-"}
+
+                ${
+                  x.punteggio
+                  ? " · " + x.punteggio
+                  : ""
+                }
+
+              </div>
+
+            </div>
+
+          `).join("")
+          : `
+            <div class="muted">
+              Nessun evento trovato.
+            </div>
+          `
+        }
+
+      </div>
+
+    `;
+
+  }catch(error){
+
+    console.error(
+      "❌ LIVE:",
+      error
+    );
+
+    message(
+      "Errore dati live: " +
+      error.message,
+      "err"
+    );
+
+  }
+}
 async function testPlayerStats(playerId="A827505"){
 
   try{
