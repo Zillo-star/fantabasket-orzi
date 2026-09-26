@@ -9993,4 +9993,61 @@ async function checkPasswordRecovery(){
     await boot();
 
 })();
+
+/* =========================================================
+   TEST LIVE WEBPONT
+========================================================= */
+
+async function testWebpontLive(){
+
+  const url =
+    "https://netcasting3.webpont.com/storage/fullita3_b_404.html?t=" +
+    Date.now();
+
+  try{
+
+    console.log("🏀 Webpont: richiesta partita...");
+
+    const response =
+      await fetch(url, {
+        cache:"no-store"
+      });
+
+    console.log(
+      "Webpont status:",
+      response.status
+    );
+
+    if(!response.ok){
+      throw new Error(
+        "HTTP " + response.status
+      );
+    }
+
+    const text =
+      await response.text();
+
+    console.log(
+      "🏀 Webpont ricevuto:",
+      text.length,
+      "caratteri"
+    );
+
+    console.log(
+      "📦 Contenuto Webpont:",
+      text
+    );
+
+    return text;
+
+  }catch(error){
+
+    console.error(
+      "❌ Errore Webpont:",
+      error
+    );
+
+    return null;
+  }
+}
 </script></body></html>
