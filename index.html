@@ -1932,18 +1932,40 @@ function filterPlayers(){
         (p.name||"")
           .toLowerCase();
 
+      let surname=
+        (p.surname||"")
+          .toLowerCase();
+
+      /*
+        Nome completo.
+        Esempio:
+        name = "Mattia Da"
+        surname = "Campo"
+
+        diventa:
+        "mattia da campo"
+      */
+
+      let fullName=
+        `${name} ${surname}`
+          .replace(/\s+/g," ")
+          .trim();
+
+
       let teamName=
         (p.real_teams?.name||"")
           .toLowerCase();
 
 
       /*
-        Cerca giocatore / squadra
+        Cerca giocatore / cognome / squadra
       */
 
       if(
         q &&
         !name.includes(q) &&
+        !surname.includes(q) &&
+        !fullName.includes(q) &&
         !teamName.includes(q)
       )
         return false;
