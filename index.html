@@ -8576,15 +8576,15 @@ let currentMatchdayId =
 
 let homeLineupSaved =
   homeIsBot ||
-  savedLineups.has(
+  !!lineupMap[
     `${homeManager?.id}_${currentMatchdayId}`
-  );
+  ];
 
 let awayLineupSaved =
   awayIsBot ||
-  savedLineups.has(
+  !!lineupMap[
     `${awayManager?.id}_${currentMatchdayId}`
-  );
+  ];
 
 
 /* =========================
