@@ -6889,22 +6889,11 @@ let awayIsBot = awayManager?.is_bot === true;
 
 let formationSection = "";
 
-
-/*
-  FantaBot:
-  nessuna formazione da visualizzare
-*/
-
 if(homeIsBot || awayIsBot){
 
   formationSection = `
-
     <div class="calendar-formation"
-      style="
-        display:flex;
-        justify-content:center;
-      "
-    >
+      style="display:flex;justify-content:center;">
 
       <div style="
         width:100%;
@@ -6922,128 +6911,156 @@ if(homeIsBot || awayIsBot){
           🤖 FantaBot
         </div>
 
-        <div
-          class="muted"
-          style="
-            margin-top:3px;
-            font-size:11px;
-          "
-        >
+        <div class="muted" style="
+          margin-top:3px;
+          font-size:11px;
+        ">
           Squadra automatica · quota fissa 1 punto
         </div>
 
       </div>
 
     </div>
-
   `;
 
 }else{
 
   formationSection = `
 
-    <details class="calendar-formation">
+    <div class="calendar-formations">
 
-      <summary>
-        👀 Vedi formazioni
-      </summary>
+      <div class="calendar-formation">
 
-
-      <div class="calendar-formations">
-
-
-        <div class="calendar-formation-side">
-
-          <div class="calendar-side-title">
-            ${homeName}
-          </div>
-
-
-          ${
-            deadlinePassed
-              ? renderLineup(
-                  x.home_manager_id,
-                  selectedDay
-                )
-              : `
-                <div style="
-                  padding:10px 0;
-                ">
-
-                  <div style="
-                    font-weight:750;
-                    font-size:13px;
-                  ">
-                    🔒 Non ancora visibile
-                  </div>
-
-                  <div
-                    class="muted"
-                    style="
-                      margin-top:4px;
-                      font-size:11px;
-                    "
-                  >
-                    La formazione sarà visibile
-                    dopo la deadline.
-                  </div>
-
-                </div>
-              `
-          }
-
+        <div style="
+          font-size:12px;
+          font-weight:850;
+          margin-bottom:8px;
+        ">
+          ${homeManager?.team_name || homeManager?.name || "—"}
         </div>
 
-
-        <div class="calendar-formation-side">
-
-          <div class="calendar-side-title">
-            ${awayName}
-          </div>
-
-
-          ${
-            deadlinePassed
-              ? renderLineup(
-                  x.away_manager_id,
-                  selectedDay
-                )
-              : `
-                <div style="
-                  padding:10px 0;
-                ">
-
-                  <div style="
-                    font-weight:750;
-                    font-size:13px;
-                  ">
-                    🔒 Non ancora visibile
-                  </div>
-
-                  <div
-                    class="muted"
-                    style="
-                      margin-top:4px;
-                      font-size:11px;
-                    "
-                  >
-                    La formazione sarà visibile
-                    dopo la deadline.
-                  </div>
-
-                </div>
-              `
-          }
-
-        </div>
-
+        ${
+          deadlinePassed
+            ? (
+                homeLineupSaved
+                  ? `
+                    <button
+                      class="btn"
+                      onclick="renderLineup('${match.home_manager_id}',${match.matchday_number})"
+                    >
+                      Vedi formazione
+                    </button>
+                  `
+                  : `
+                    <div class="muted" style="
+                      padding:10px;
+                      border-radius:10px;
+                      background:rgba(255,255,255,.025);
+                      border:1px solid rgba(255,255,255,.06);
+                    ">
+                      ⚠️ Formazione non selezionata
+                    </div>
+                  `
+              )
+            : (
+                homeLineupSaved
+                  ? `
+                    <div class="muted" style="
+                      padding:10px;
+                      border-radius:10px;
+                      background:rgba(255,255,255,.025);
+                      border:1px solid rgba(255,255,255,.06);
+                    ">
+                      🔒 Formazione schierata
+                      <br>
+                      <span style="font-size:11px;">
+                        Sarà visibile dopo la chiusura della deadline.
+                      </span>
+                    </div>
+                  `
+                  : `
+                    <div class="muted" style="
+                      padding:10px;
+                      border-radius:10px;
+                      background:rgba(255,255,255,.025);
+                      border:1px solid rgba(255,255,255,.06);
+                    ">
+                      ⚠️ Formazione non ancora selezionata
+                    </div>
+                  `
+              )
+        }
 
       </div>
 
-    </details>
+
+      <div class="calendar-formation">
+
+        <div style="
+          font-size:12px;
+          font-weight:850;
+          margin-bottom:8px;
+        ">
+          ${awayManager?.team_name || awayManager?.name || "—"}
+        </div>
+
+        ${
+          deadlinePassed
+            ? (
+                awayLineupSaved
+                  ? `
+                    <button
+                      class="btn"
+                      onclick="renderLineup('${match.away_manager_id}',${match.matchday_number})"
+                    >
+                      Vedi formazione
+                    </button>
+                  `
+                  : `
+                    <div class="muted" style="
+                      padding:10px;
+                      border-radius:10px;
+                      background:rgba(255,255,255,.025);
+                      border:1px solid rgba(255,255,255,.06);
+                    ">
+                      ⚠️ Formazione non selezionata
+                    </div>
+                  `
+              )
+            : (
+                awayLineupSaved
+                  ? `
+                    <div class="muted" style="
+                      padding:10px;
+                      border-radius:10px;
+                      background:rgba(255,255,255,.025);
+                      border:1px solid rgba(255,255,255,.06);
+                    ">
+                      🔒 Formazione schierata
+                      <br>
+                      <span style="font-size:11px;">
+                        Sarà visibile dopo la chiusura della deadline.
+                      </span>
+                    </div>
+                  `
+                  : `
+                    <div class="muted" style="
+                      padding:10px;
+                      border-radius:10px;
+                      background:rgba(255,255,255,.025);
+                      border:1px solid rgba(255,255,255,.06);
+                    ">
+                      ⚠️ Formazione non ancora selezionata
+                    </div>
+                  `
+              )
+        }
+
+      </div>
+
+    </div>
 
   `;
-
 }
 
 
