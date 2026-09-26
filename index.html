@@ -5,47 +5,52 @@
 <style>
 
 /* =========================================================
-   🏀 FANTABASKET ORZI
-   SPORT / FANTASY UI
+   🏀 FANTABASKET ORZI — COMPLETE SPORT UI
    ========================================================= */
 
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=DM+Sans:wght@400;500;600;700;800&display=swap');
 
 :root{
 
-  --bg:#070a12;
-  --bg2:#0b1020;
+  --bg:#060810;
+  --bg2:#0a0f1b;
 
-  --panel:#101624;
-  --panel2:#141b2c;
-  --panel3:#192238;
+  --panel:#0f1523;
+  --panel2:#131b2d;
+  --panel3:#182238;
 
-  --white:#f7f8fc;
-  --text:#e7eaf2;
-  --muted:#7d879d;
+  --white:#f8f9fd;
+  --text:#e8ebf3;
+  --soft:#b4bdd0;
+  --muted:#717d95;
 
-  --purple:#7c5cff;
-  --purple2:#9b7cff;
-  --purple-glow:rgba(124,92,255,.28);
+  --purple:#7657ff;
+  --purple2:#967cff;
+  --purple3:#b5a2ff;
 
-  --orange:#ff8a3d;
-  --orange2:#ffad5c;
-  --orange-glow:rgba(255,138,61,.25);
+  --orange:#ff7a32;
+  --orange2:#ff9c55;
 
-  --green:#35d49a;
-  --red:#ff5573;
+  --green:#32d49a;
+  --red:#ff5271;
   --yellow:#ffd166;
+  --blue:#49a6ff;
+
+  --purpleGlow:rgba(118,87,255,.28);
+  --orangeGlow:rgba(255,122,50,.22);
 
   --border:rgba(255,255,255,.065);
 
-  --radius:18px;
-  --radius-small:11px;
+  --r1:10px;
+  --r2:14px;
+  --r3:18px;
+  --r4:24px;
 
 }
 
 
 /* =========================================================
-   RESET
+   BASE
    ========================================================= */
 
 *{
@@ -62,27 +67,6 @@ body{
   margin:0;
   min-height:100vh;
 
-  background:
-
-    radial-gradient(
-      circle at 15% -10%,
-      rgba(124,92,255,.18),
-      transparent 32%
-    ),
-
-    radial-gradient(
-      circle at 100% 20%,
-      rgba(255,138,61,.07),
-      transparent 27%
-    ),
-
-    linear-gradient(
-      180deg,
-      #070a12 0%,
-      #090d18 55%,
-      #070a12 100%
-    );
-
   color:var(--text);
 
   font-family:
@@ -94,10 +78,32 @@ body{
     sans-serif;
 
   font-size:14px;
+
   line-height:1.45;
 
+  background:
+
+    radial-gradient(
+      650px 350px at 5% -10%,
+      rgba(118,87,255,.18),
+      transparent 65%
+    ),
+
+    radial-gradient(
+      500px 300px at 100% 0%,
+      rgba(255,122,50,.08),
+      transparent 65%
+    ),
+
+    linear-gradient(
+      180deg,
+      #060810 0%,
+      #080c15 50%,
+      #060810 100%
+    );
+
   -webkit-font-smoothing:antialiased;
-  text-rendering:optimizeLegibility;
+
 }
 
 body,
@@ -118,12 +124,12 @@ img{
 }
 
 a{
-  color:#a995ff;
+  color:var(--purple3);
   text-decoration:none;
 }
 
 a:hover{
-  color:#c1b4ff;
+  color:#fff;
 }
 
 small{
@@ -132,20 +138,19 @@ small{
 
 
 /* =========================================================
-   TITOLI SPORTIVI
+   SPORT TYPOGRAPHY
    ========================================================= */
 
 h1,
 h2,
 h3,
-h4,
-strong,
-b{
+h4{
 
   font-family:
     "DM Sans",
-    system-ui,
     sans-serif;
+
+  letter-spacing:-.6px;
 
 }
 
@@ -156,36 +161,46 @@ b{
 
 header{
 
+  position:sticky;
+
+  top:0;
+
+  z-index:100;
+
   width:100%;
 
+  min-height:58px;
+
+  padding:
+    11px 22px;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:space-between;
+
+  gap:15px;
+
   background:
+
     linear-gradient(
       180deg,
-      rgba(13,18,31,.96),
-      rgba(9,13,24,.94)
+      rgba(9,13,23,.96),
+      rgba(7,10,18,.91)
     );
 
   border-bottom:
     1px solid rgba(255,255,255,.06);
 
-  padding:13px 22px;
+  backdrop-filter:
+    blur(20px);
 
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-
-  gap:15px;
-
-  position:sticky;
-  top:0;
-
-  z-index:50;
-
-  backdrop-filter:blur(18px);
-  -webkit-backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:
+    blur(20px);
 
   box-shadow:
-    0 8px 30px rgba(0,0,0,.25);
+    0 8px 35px rgba(0,0,0,.30);
 
 }
 
@@ -195,34 +210,37 @@ header > div:first-child{
 
 header b{
 
-  font-size:17px;
+  font-size:16px;
+
   font-weight:800;
 
   letter-spacing:-.5px;
 
-  color:#ffffff;
+  color:#fff;
 
 }
 
 
 /* =========================================================
-   NAV
+   NAVIGATION
    ========================================================= */
 
 nav{
 
-  width:min(
-    1180px,
-    calc(100% - 28px)
-  );
+  width:
+    min(
+      1180px,
+      calc(100% - 28px)
+    );
 
   margin:0 auto;
 
-  padding:12px 0 5px;
+  padding:
+    11px 0 5px;
 
   display:flex;
 
-  gap:7px;
+  gap:6px;
 
   flex-wrap:wrap;
 
@@ -232,20 +250,39 @@ nav button{
 
   position:relative;
 
-  background:
-    rgba(18,25,42,.82);
+  display:inline-flex;
 
-  color:#8e99b0;
+  align-items:center;
+
+  justify-content:center;
+
+  gap:6px;
+
+  min-height:34px;
+
+  padding:
+    7px 11px;
+
+  border-radius:
+    10px;
 
   border:
-    1px solid rgba(255,255,255,.055);
+    1px solid rgba(255,255,255,.045);
 
-  border-radius:12px;
+  background:
+    rgba(16,23,38,.78);
 
-  padding:8px 12px;
+  color:
+    #818ca3;
 
-  font-size:11.5px;
-  font-weight:700;
+  font-size:
+    11px;
+
+  font-weight:
+    700;
+
+  box-shadow:
+    none;
 
   transition:
     .18s ease;
@@ -254,23 +291,23 @@ nav button{
 
 nav button:hover{
 
-  color:white;
+  color:#fff;
 
   background:
     linear-gradient(
       135deg,
-      rgba(124,92,255,.20),
-      rgba(255,138,61,.08)
+      rgba(118,87,255,.20),
+      rgba(118,87,255,.08)
     );
 
   border-color:
-    rgba(124,92,255,.35);
+    rgba(118,87,255,.35);
+
+  box-shadow:
+    0 5px 18px rgba(0,0,0,.20);
 
   transform:
     translateY(-1px);
-
-  box-shadow:
-    0 5px 18px rgba(0,0,0,.2);
 
 }
 
@@ -281,15 +318,17 @@ nav button:hover{
 
 main{
 
-  width:min(
-    1180px,
-    calc(100% - 28px)
-  );
+  width:
+    min(
+      1180px,
+      calc(100% - 28px)
+    );
 
-  margin:0 auto;
+  margin:
+    0 auto;
 
   padding:
-    22px 0 50px;
+    20px 0 55px;
 
 }
 
@@ -299,7 +338,7 @@ main{
 
 
 /* =========================================================
-   CARD BASE
+   GLOBAL CARD
    ========================================================= */
 
 .card{
@@ -308,31 +347,33 @@ main{
 
   overflow:hidden;
 
-  background:
+  padding:
+    19px;
 
-    linear-gradient(
-      145deg,
-      rgba(18,25,42,.97),
-      rgba(11,16,29,.97)
-    );
+  margin-bottom:
+    14px;
+
+  border-radius:
+    var(--r3);
 
   border:
     1px solid var(--border);
 
-  border-radius:
-    var(--radius);
+  background:
 
-  padding:19px;
-
-  margin-bottom:14px;
+    linear-gradient(
+      145deg,
+      rgba(17,25,42,.97),
+      rgba(10,15,26,.97)
+    );
 
   box-shadow:
-    0 12px 35px rgba(0,0,0,.20);
+    0 12px 35px rgba(0,0,0,.23);
 
 }
 
 
-/* luce interna */
+/* top light */
 
 .card::before{
 
@@ -340,17 +381,16 @@ main{
 
   position:absolute;
 
-  width:190px;
-  height:190px;
+  width:240px;
+  height:160px;
 
   top:-120px;
-  right:-90px;
+  right:-80px;
 
   background:
-
     radial-gradient(
-      circle,
-      rgba(124,92,255,.12),
+      ellipse,
+      rgba(118,87,255,.15),
       transparent 70%
     );
 
@@ -359,7 +399,7 @@ main{
 }
 
 
-/* linea decorativa */
+/* bottom accent */
 
 .card::after{
 
@@ -367,25 +407,24 @@ main{
 
   position:absolute;
 
-  height:1px;
-
-  left:18px;
-  right:18px;
+  left:20px;
+  right:20px;
 
   bottom:0;
+
+  height:1px;
 
   background:
     linear-gradient(
       90deg,
       transparent,
-      rgba(124,92,255,.18),
+      rgba(118,87,255,.18),
       transparent
     );
 
   pointer-events:none;
 
 }
-
 
 .card h2{
 
@@ -395,7 +434,7 @@ main{
 
   font-weight:800;
 
-  letter-spacing:-.65px;
+  letter-spacing:-.7px;
 
 }
 
@@ -405,7 +444,7 @@ main{
 
   font-size:15px;
 
-  font-weight:700;
+  font-weight:750;
 
 }
 
@@ -428,66 +467,81 @@ main{
    ========================================================= */
 
 .muted{
-
-  color:
-    var(--muted);
-
+  color:var(--muted);
 }
 
 .hidden{
-
   display:none !important;
-
 }
 
 
 /* =========================================================
-   MESSAGGI
+   STATUS / POPUP STYLE
    ========================================================= */
 
 .ok,
 .err{
 
-  padding:
-    11px 13px;
+  position:relative;
 
-  border-radius:
-    12px;
+  display:flex;
+
+  align-items:center;
+
+  gap:10px;
+
+  padding:
+    12px 14px;
 
   margin-bottom:
-    10px;
+    11px;
+
+  border-radius:
+    13px;
 
   font-size:
     13px;
 
   font-weight:
-    600;
+    700;
+
+  backdrop-filter:
+    blur(12px);
+
+  box-shadow:
+    0 8px 25px rgba(0,0,0,.18);
 
 }
 
 .ok{
 
+  color:#72e8bc;
+
   background:
-    rgba(53,212,154,.09);
+    linear-gradient(
+      135deg,
+      rgba(50,212,154,.13),
+      rgba(50,212,154,.045)
+    );
 
   border:
-    1px solid rgba(53,212,154,.22);
-
-  color:
-    #73e8bb;
+    1px solid rgba(50,212,154,.25);
 
 }
 
 .err{
 
+  color:#ff9bad;
+
   background:
-    rgba(255,85,115,.09);
+    linear-gradient(
+      135deg,
+      rgba(255,82,113,.13),
+      rgba(255,82,113,.045)
+    );
 
   border:
-    1px solid rgba(255,85,115,.22);
-
-  color:
-    #ff9aad;
+    1px solid rgba(255,82,113,.25);
 
 }
 
@@ -503,23 +557,26 @@ label{
   margin:
     13px 0 6px;
 
+  color:
+    #929db3;
+
   font-size:
-    11px;
+    10px;
 
   font-weight:
-    700;
+    800;
+
+  text-transform:
+    uppercase;
 
   letter-spacing:
-    .35px;
-
-  color:
-    #98a3ba;
+    .65px;
 
 }
 
 
 /* =========================================================
-   INPUT
+   INPUT / SELECT
    ========================================================= */
 
 input,
@@ -527,22 +584,23 @@ select{
 
   width:100%;
 
-  min-height:42px;
+  min-height:
+    42px;
 
   padding:
     10px 12px;
+
+  color:
+    #f5f7fc;
+
+  background:
+    #090e19;
 
   border:
     1px solid rgba(255,255,255,.07);
 
   border-radius:
     11px;
-
-  background:
-    #0a0f1c;
-
-  color:
-    var(--white);
 
   font-size:
     13px;
@@ -553,10 +611,7 @@ select{
 }
 
 input::placeholder{
-
-  color:
-    #5e687e;
-
+  color:#566177;
 }
 
 input:hover,
@@ -571,42 +626,53 @@ input:focus,
 select:focus{
 
   border-color:
-    rgba(124,92,255,.75);
-
-  background:
-    #0c1221;
+    rgba(118,87,255,.80);
 
   box-shadow:
     0 0 0 3px
-    rgba(124,92,255,.12);
+    rgba(118,87,255,.12),
+
+    0 0 20px
+    rgba(118,87,255,.05);
+
+  background:
+    #0b1120;
 
 }
 
 
 /* =========================================================
-   BUTTON
+   BUTTONS
    ========================================================= */
 
 button{
 
+  position:relative;
+
+  overflow:hidden;
+
+  min-height:
+    38px;
+
   padding:
-    10px 14px;
+    9px 14px;
 
   border-radius:
     11px;
+
+  color:#fff;
 
   background:
 
     linear-gradient(
       135deg,
-      var(--purple2),
-      var(--purple)
+      #9178ff 0%,
+      #6b4fff 55%,
+      #573df0 100%
     );
 
-  color:white;
-
   font-size:
-    12.5px;
+    12px;
 
   font-weight:
     800;
@@ -615,11 +681,44 @@ button{
     .05px;
 
   box-shadow:
-    0 7px 20px
-    rgba(124,92,255,.20);
+    0 7px 22px
+    rgba(118,87,255,.22);
 
   transition:
-    .17s ease;
+    transform .16s ease,
+    filter .16s ease,
+    box-shadow .16s ease;
+
+}
+
+button::before{
+
+  content:"";
+
+  position:absolute;
+
+  inset:0;
+
+  background:
+    linear-gradient(
+      110deg,
+      transparent 25%,
+      rgba(255,255,255,.12) 50%,
+      transparent 75%
+    );
+
+  transform:
+    translateX(-100%);
+
+  transition:
+    transform .5s ease;
+
+}
+
+button:hover::before{
+
+  transform:
+    translateX(100%);
 
 }
 
@@ -629,11 +728,11 @@ button:hover{
     translateY(-1px);
 
   filter:
-    brightness(1.09);
+    brightness(1.08);
 
   box-shadow:
-    0 9px 24px
-    rgba(124,92,255,.28);
+    0 9px 28px
+    rgba(118,87,255,.30);
 
 }
 
@@ -646,31 +745,28 @@ button:active{
 
 button.secondary{
 
+  color:#c7cfdf;
+
   background:
     linear-gradient(
       135deg,
-      #1b253a,
-      #151e31
+      #1a2439,
+      #131c2e
     );
 
   border:
-    1px solid rgba(255,255,255,.07);
+    1px solid rgba(255,255,255,.065);
 
-  color:
-    #c7d0e2;
-
-  box-shadow:
-    none;
+  box-shadow:none;
 
 }
 
 button.secondary:hover{
 
+  color:#fff;
+
   background:
     #202b43;
-
-  border-color:
-    rgba(255,255,255,.12);
 
 }
 
@@ -693,16 +789,16 @@ table{
 
 th{
 
-  text-align:left;
-
   padding:
     10px 8px;
+
+  text-align:left;
 
   color:
     #68748b;
 
   font-size:
-    10px;
+    9px;
 
   font-weight:
     800;
@@ -711,7 +807,7 @@ th{
     uppercase;
 
   letter-spacing:
-    .7px;
+    .8px;
 
   border-bottom:
     1px solid rgba(255,255,255,.07);
@@ -721,10 +817,10 @@ th{
 td{
 
   padding:
-    10px 8px;
+    11px 8px;
 
   color:
-    #dce2ed;
+    #dce2ec;
 
   border-bottom:
     1px solid rgba(255,255,255,.045);
@@ -737,15 +833,12 @@ td{
 table tr:hover td{
 
   background:
-    rgba(124,92,255,.025);
+    rgba(118,87,255,.035);
 
 }
 
 table b{
-
-  color:
-    #f7f8fc;
-
+  color:#fff;
 }
 
 
@@ -754,62 +847,55 @@ table b{
    ========================================================= */
 
 #content{
-
   position:relative;
-
 }
 
-
-/* dashboard cards */
-
 #content > .grid{
-
   gap:14px;
-
 }
 
 #content > .grid > .card{
 
-  min-height:250px;
+  min-height:
+    250px;
 
   padding:
     23px;
 
   border-radius:
-    21px;
+    var(--r4);
 
   background:
 
     linear-gradient(
       145deg,
-      rgba(20,29,49,.98),
-      rgba(10,15,27,.98)
+      rgba(19,28,47,.98),
+      rgba(9,14,25,.98)
     );
 
   box-shadow:
-
-    0 15px 42px
-    rgba(0,0,0,.24);
+    0 18px 45px
+    rgba(0,0,0,.25);
 
 }
 
 
 /* =========================================================
-   DASHBOARD — CARD SQUADRA
+   DASHBOARD — SQUADRA
    ========================================================= */
 
 #content > .grid > .card:first-child{
 
   border-top:
-    1px solid rgba(124,92,255,.22);
+    1px solid
+    rgba(118,87,255,.28);
 
 }
 
 #content > .grid > .card:first-child h2{
 
-  margin-top:0;
-
-  margin-bottom:5px;
+  margin:
+    0 0 4px;
 
   font-size:
     25px;
@@ -825,23 +911,17 @@ table b{
 #content > .grid > .card:first-child .muted{
 
   color:
-    #7f8ba3;
+    #7d889e;
 
   font-size:
     13px;
 
 }
 
-
-/* input squadra */
-
 #content > .grid > .card:first-child input{
 
   background:
-    rgba(5,9,18,.85);
-
-  border:
-    1px solid rgba(255,255,255,.075);
+    rgba(5,9,17,.9);
 
   border-radius:
     12px;
@@ -851,32 +931,16 @@ table b{
 
 }
 
-
-/* bottone */
-
 #content > .grid > .card:first-child button{
 
   width:
     100%;
 
   min-height:
-    44px;
+    45px;
 
-  margin:
-    6px 0 0;
-
-  background:
-
-    linear-gradient(
-      135deg,
-      #8c6cff,
-      #6247f0
-    );
-
-  box-shadow:
-
-    0 8px 25px
-    rgba(124,92,255,.25);
+  margin-top:
+    6px;
 
 }
 
@@ -887,8 +951,7 @@ table b{
 
 #content > .grid > .card:nth-child(2){
 
-  display:
-    flex;
+  display:flex;
 
   flex-direction:
     column;
@@ -897,24 +960,30 @@ table b{
     center;
 
   border-top:
-    1px solid rgba(255,138,61,.22);
+    1px solid
+    rgba(255,122,50,.30);
 
 }
 
 #content > .grid > .card:nth-child(2) h2{
 
-  margin-top:0;
-
-  margin-bottom:10px;
-
-  font-size:
-    15px;
-
-  font-weight:
-    700;
+  margin:
+    0 0 8px;
 
   color:
-    #9aa5bc;
+    #a0aabe;
+
+  font-size:
+    14px;
+
+  font-weight:
+    800;
+
+  text-transform:
+    uppercase;
+
+  letter-spacing:
+    .8px;
 
 }
 
@@ -922,15 +991,18 @@ table b{
 
   display:block;
 
+  margin:
+    5px 0 17px;
+
   font-family:
     "Barlow Condensed",
     sans-serif;
 
   font-size:
-    66px;
+    70px;
 
   line-height:
-    .9;
+    .85;
 
   font-weight:
     900;
@@ -938,16 +1010,13 @@ table b{
   letter-spacing:
     -1px;
 
-  margin:
-    7px 0 20px;
-
   background:
 
     linear-gradient(
-      135deg,
-      #ffffff 15%,
-      #a58aff 55%,
-      #ff9a50 100%
+      120deg,
+      #fff 0%,
+      #bcaeff 40%,
+      #ff9c55 100%
     );
 
   -webkit-background-clip:
@@ -964,7 +1033,7 @@ table b{
 #content > .grid > .card:nth-child(2) .muted{
 
   color:
-    #78849b;
+    #727e95;
 
 }
 
@@ -980,11 +1049,8 @@ table b{
     linear-gradient(
       135deg,
       rgba(17,25,43,.95),
-      rgba(10,15,27,.95)
+      rgba(9,14,25,.95)
     );
-
-  border-radius:
-    19px;
 
 }
 
@@ -1003,7 +1069,7 @@ table b{
 #content > .card .muted{
 
   color:
-    #7e899f;
+    #7b869c;
 
   line-height:
     1.65;
@@ -1017,25 +1083,27 @@ table b{
 
 .calendar-match{
 
-  border:
-    1px solid rgba(255,255,255,.065);
+  position:relative;
+
+  padding:
+    16px;
 
   border-radius:
     18px;
 
-  padding:
-    16px;
+  border:
+    1px solid rgba(255,255,255,.06);
 
   background:
 
     linear-gradient(
       145deg,
-      rgba(20,29,48,.95),
-      rgba(12,18,31,.95)
+      rgba(20,29,48,.96),
+      rgba(11,16,28,.96)
     );
 
   box-shadow:
-    0 8px 26px rgba(0,0,0,.18);
+    0 10px 30px rgba(0,0,0,.20);
 
   transition:
     .18s ease;
@@ -1045,10 +1113,14 @@ table b{
 .calendar-match:hover{
 
   border-color:
-    rgba(124,92,255,.20);
+    rgba(118,87,255,.25);
 
   transform:
-    translateY(-1px);
+    translateY(-2px);
+
+  box-shadow:
+    0 14px 35px
+    rgba(0,0,0,.27);
 
 }
 
@@ -1070,221 +1142,42 @@ table b{
 
 
 /* =========================================================
-   MOBILE
+   FORMATION / PLAYER PILLS
    ========================================================= */
 
-@media(max-width:700px){
+#content b{
 
-  body{
-
-    font-size:
-      13px;
-
-  }
-
-  header{
-
-    padding:
-      11px 14px;
-
-  }
-
-  header b{
-
-    font-size:
-      14px;
-
-  }
-
-  main{
-
-    width:
-      calc(100% - 18px);
-
-    padding:
-      15px 0 35px;
-
-  }
-
-  nav{
-
-    width:
-      calc(100% - 18px);
-
-    gap:
-      5px;
-
-    padding-top:
-      9px;
-
-  }
-
-  nav button{
-
-    padding:
-      7px 9px;
-
-    font-size:
-      10.5px;
-
-    border-radius:
-      9px;
-
-  }
-
-  .card{
-
-    padding:
-      15px;
-
-    border-radius:
-      15px;
-
-  }
-
-  .card h2{
-
-    font-size:
-      18px;
-
-  }
-
-  input,
-  select{
-
-    min-height:
-      40px;
-
-  }
-
-  button{
-
-    padding:
-      9px 12px;
-
-  }
-
-  th,
-  td{
-
-    padding:
-      8px 6px;
-
-  }
-
-
-  /* dashboard */
-
-  #content > .grid{
-
-    gap:
-      10px;
-
-  }
-
-  #content > .grid > .card{
-
-    min-height:
-      auto;
-
-    padding:
-      17px;
-
-    border-radius:
-      17px;
-
-  }
-
-  #content > .grid > .card:first-child{
-
-    min-height:
-      auto;
-
-  }
-
-  #content > .grid > .card:first-child h2{
-
-    font-size:
-      21px;
-
-  }
-
-  #content > .grid > .card:nth-child(2){
-
-    min-height:
-      190px;
-
-  }
-
-  #content > .grid > .card:nth-child(2) strong{
-
-    font-size:
-      54px;
-
-  }
-
-  #content > .card{
-
-    border-radius:
-      16px;
-
-    padding:
-      16px;
-
-  }
-
-
-  /* calendario */
-
-  .calendar-formations{
-
-    grid-template-columns:
-      1fr;
-
-    gap:
-      10px;
-
-  }
+  font-weight:
+    750;
 
 }
 
 
 /* =========================================================
-   TELEFONI MOLTO PICCOLI
+   SPECIAL COLOR STATES
    ========================================================= */
 
-@media(max-width:400px){
+[style*="color:#fbbf24"],
+[style*="color: #fbbf24"]{
 
-  nav button{
+  color:
+    var(--yellow) !important;
 
-    padding:
-      6px 8px;
+}
 
-    font-size:
-      10px;
+[style*="color:#22c55e"],
+[style*="color: #22c55e"]{
 
-  }
+  color:
+    var(--green) !important;
 
-  main{
+}
 
-    width:
-      calc(100% - 14px);
+[style*="color:#ef4444"],
+[style*="color: #ef4444"]{
 
-  }
-
-  nav{
-
-    width:
-      calc(100% - 14px);
-
-  }
-
-  .card{
-
-    padding:
-      13px;
-
-  }
+  color:
+    var(--red) !important;
 
 }
 
@@ -1313,7 +1206,7 @@ table b{
 ::-webkit-scrollbar-thumb{
 
   background:
-    rgba(124,92,255,.28);
+    rgba(118,87,255,.30);
 
   border-radius:
     20px;
@@ -1323,7 +1216,198 @@ table b{
 ::-webkit-scrollbar-thumb:hover{
 
   background:
-    rgba(124,92,255,.48);
+    rgba(118,87,255,.55);
+
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media(max-width:700px){
+
+  body{
+    font-size:13px;
+  }
+
+  header{
+
+    min-height:
+      54px;
+
+    padding:
+      10px 13px;
+
+  }
+
+  header b{
+    font-size:14px;
+  }
+
+  main{
+
+    width:
+      calc(100% - 14px);
+
+    padding:
+      14px 0 35px;
+
+  }
+
+  nav{
+
+    width:
+      calc(100% - 14px);
+
+    padding:
+      8px 0 4px;
+
+    gap:
+      5px;
+
+  }
+
+  nav button{
+
+    min-height:
+      32px;
+
+    padding:
+      6px 9px;
+
+    font-size:
+      10px;
+
+    border-radius:
+      9px;
+
+  }
+
+  .card{
+
+    padding:
+      15px;
+
+    border-radius:
+      16px;
+
+    margin-bottom:
+      10px;
+
+  }
+
+  .card h2{
+    font-size:18px;
+  }
+
+  input,
+  select{
+    min-height:40px;
+  }
+
+  button{
+    min-height:37px;
+    padding:9px 11px;
+  }
+
+  th,
+  td{
+    padding:8px 6px;
+  }
+
+
+  /* DASHBOARD */
+
+  #content > .grid{
+
+    gap:
+      10px;
+
+  }
+
+  #content > .grid > .card{
+
+    min-height:
+      auto;
+
+    padding:
+      17px;
+
+    border-radius:
+      18px;
+
+  }
+
+  #content > .grid > .card:first-child h2{
+
+    font-size:
+      21px;
+
+  }
+
+  #content > .grid > .card:nth-child(2){
+
+    min-height:
+      190px;
+
+  }
+
+  #content > .grid > .card:nth-child(2) strong{
+
+    font-size:
+      57px;
+
+  }
+
+  #content > .card{
+
+    border-radius:
+      16px;
+
+    padding:
+      16px;
+
+  }
+
+
+  /* CALENDARIO */
+
+  .calendar-formations{
+
+    grid-template-columns:
+      1fr;
+
+    gap:
+      10px;
+
+  }
+
+}
+
+
+/* =========================================================
+   SMALL PHONES
+   ========================================================= */
+
+@media(max-width:400px){
+
+  nav button{
+
+    padding:
+      6px 7px;
+
+    font-size:
+      9.5px;
+
+  }
+
+  .card{
+
+    padding:
+      13px;
+
+  }
 
 }
 
