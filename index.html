@@ -2441,11 +2441,19 @@ async function roster(){
   min-width:0;
 ">
 
-  <b style="
-    color:${x.players?.is_foreign ? "#fbbf24" : "inherit"};
-  ">
-    ${x.players?.name||"Giocatore"}
-  </b>
+<b style="
+  color:${x.players?.is_foreign ? "#fbbf24" : "inherit"};
+">
+  ${
+    [
+      x.players?.name,
+      x.players?.surname
+    ]
+    .filter(Boolean)
+    .join(" ")
+    || "Giocatore"
+  }
+</b>
 
   <div
     class="${x.players?.is_foreign ? "" : "muted"}"
