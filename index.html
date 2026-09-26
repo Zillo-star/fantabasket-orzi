@@ -3,45 +3,46 @@
 <title>FantaBasket Orzi</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
+
 /* =========================================================
-   🏀 FANTABASKET ORZI — MODERN SPORT UI
+   🏀 FANTABASKET ORZI
+   SPORT / FANTASY UI
    ========================================================= */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap');
 
 :root{
-  --bg:#080d19;
-  --bg-soft:#0d1424;
-  --surface:#111a2d;
-  --surface-2:#151f35;
-  --surface-3:#19243d;
 
-  --text:#f4f7ff;
-  --text-soft:#c5cee2;
-  --muted:#7f8ba5;
+  --bg:#070a12;
+  --bg2:#0b1020;
 
-  --border:rgba(255,255,255,.075);
-  --border-soft:rgba(255,255,255,.045);
+  --panel:#101624;
+  --panel2:#141b2c;
+  --panel3:#192238;
 
-  --primary:#6366f1;
-  --primary-2:#7c6cff;
-  --primary-soft:rgba(99,102,241,.14);
+  --white:#f7f8fc;
+  --text:#e7eaf2;
+  --muted:#7d879d;
 
-  --success:#34d399;
-  --warning:#fbbf24;
-  --danger:#fb7185;
+  --purple:#7c5cff;
+  --purple2:#9b7cff;
+  --purple-glow:rgba(124,92,255,.28);
 
-  --radius-sm:10px;
-  --radius-md:14px;
-  --radius-lg:18px;
-  --radius-xl:22px;
+  --orange:#ff8a3d;
+  --orange2:#ffad5c;
+  --orange-glow:rgba(255,138,61,.25);
 
-  --shadow:
-    0 12px 35px rgba(0,0,0,.20);
+  --green:#35d49a;
+  --red:#ff5573;
+  --yellow:#ffd166;
 
-  --shadow-soft:
-    0 6px 20px rgba(0,0,0,.14);
+  --border:rgba(255,255,255,.065);
+
+  --radius:18px;
+  --radius-small:11px;
+
 }
+
 
 /* =========================================================
    RESET
@@ -57,21 +58,35 @@ html{
 }
 
 body{
+
   margin:0;
   min-height:100vh;
 
   background:
+
     radial-gradient(
-      circle at 50% -10%,
-      rgba(99,102,241,.10),
-      transparent 35%
+      circle at 15% -10%,
+      rgba(124,92,255,.18),
+      transparent 32%
     ),
-    var(--bg);
+
+    radial-gradient(
+      circle at 100% 20%,
+      rgba(255,138,61,.07),
+      transparent 27%
+    ),
+
+    linear-gradient(
+      180deg,
+      #070a12 0%,
+      #090d18 55%,
+      #070a12 100%
+    );
 
   color:var(--text);
 
   font-family:
-    Inter,
+    "DM Sans",
     system-ui,
     -apple-system,
     BlinkMacSystemFont,
@@ -79,7 +94,7 @@ body{
     sans-serif;
 
   font-size:14px;
-  line-height:1.5;
+  line-height:1.45;
 
   -webkit-font-smoothing:antialiased;
   text-rendering:optimizeLegibility;
@@ -93,12 +108,6 @@ textarea{
   font-family:inherit;
 }
 
-button,
-input,
-select{
-  outline:none;
-}
-
 button{
   border:0;
   cursor:pointer;
@@ -109,50 +118,75 @@ img{
 }
 
 a{
-  color:#a5b4fc;
+  color:#a995ff;
   text-decoration:none;
 }
 
 a:hover{
-  text-decoration:underline;
+  color:#c1b4ff;
 }
 
 small{
   font-size:11px;
 }
 
+
+/* =========================================================
+   TITOLI SPORTIVI
+   ========================================================= */
+
+h1,
+h2,
+h3,
+h4,
+strong,
+b{
+
+  font-family:
+    "DM Sans",
+    system-ui,
+    sans-serif;
+
+}
+
+
 /* =========================================================
    HEADER
    ========================================================= */
 
 header{
+
   width:100%;
 
   background:
     linear-gradient(
       180deg,
-      rgba(17,26,45,.97),
-      rgba(12,19,34,.96)
+      rgba(13,18,31,.96),
+      rgba(9,13,24,.94)
     );
 
-  border-bottom:1px solid var(--border);
+  border-bottom:
+    1px solid rgba(255,255,255,.06);
 
   padding:13px 22px;
 
   display:flex;
   align-items:center;
   justify-content:space-between;
-  gap:18px;
+
+  gap:15px;
 
   position:sticky;
   top:0;
+
   z-index:50;
 
   backdrop-filter:blur(18px);
   -webkit-backdrop-filter:blur(18px);
 
   box-shadow:
-    0 5px 25px rgba(0,0,0,.16);
+    0 8px 30px rgba(0,0,0,.25);
+
 }
 
 header > div:first-child{
@@ -160,173 +194,252 @@ header > div:first-child{
 }
 
 header b{
-  font-size:16px;
-  font-weight:850;
-  letter-spacing:-.35px;
+
+  font-size:17px;
+  font-weight:800;
+
+  letter-spacing:-.5px;
+
+  color:#ffffff;
+
 }
 
+
 /* =========================================================
-   NAVIGAZIONE
+   NAV
    ========================================================= */
 
 nav{
-  width:min(1180px, calc(100% - 28px));
+
+  width:min(
+    1180px,
+    calc(100% - 28px)
+  );
 
   margin:0 auto;
-  padding:12px 0 4px;
+
+  padding:12px 0 5px;
 
   display:flex;
-  gap:6px;
+
+  gap:7px;
+
   flex-wrap:wrap;
+
 }
 
 nav button{
+
   position:relative;
 
-  background:rgba(20,30,51,.78);
+  background:
+    rgba(18,25,42,.82);
 
-  color:#aeb9d0;
+  color:#8e99b0;
 
-  border:1px solid rgba(255,255,255,.055);
+  border:
+    1px solid rgba(255,255,255,.055);
 
-  border-radius:11px;
+  border-radius:12px;
 
   padding:8px 12px;
 
   font-size:11.5px;
-  font-weight:750;
-
-  letter-spacing:.05px;
+  font-weight:700;
 
   transition:
-    background .18s ease,
-    color .18s ease,
-    border-color .18s ease,
-    transform .18s ease,
-    box-shadow .18s ease;
+    .18s ease;
+
 }
 
 nav button:hover{
-  background:#1a2640;
-  color:#f4f7ff;
 
-  border-color:rgba(255,255,255,.10);
+  color:white;
 
-  transform:translateY(-1px);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(124,92,255,.20),
+      rgba(255,138,61,.08)
+    );
+
+  border-color:
+    rgba(124,92,255,.35);
+
+  transform:
+    translateY(-1px);
 
   box-shadow:
-    0 5px 14px rgba(0,0,0,.16);
+    0 5px 18px rgba(0,0,0,.2);
+
 }
 
-nav button:active{
-  transform:translateY(0);
-}
 
 /* =========================================================
    MAIN
    ========================================================= */
 
 main{
-  width:min(1180px, calc(100% - 28px));
+
+  width:min(
+    1180px,
+    calc(100% - 28px)
+  );
 
   margin:0 auto;
 
-  padding:22px 0 45px;
+  padding:
+    22px 0 50px;
+
 }
 
 #msg{
   margin-bottom:12px;
 }
 
+
 /* =========================================================
-   CARD
+   CARD BASE
    ========================================================= */
 
 .card{
+
   position:relative;
+
   overflow:hidden;
 
   background:
+
     linear-gradient(
       145deg,
-      rgba(18,28,48,.96),
-      rgba(13,21,37,.96)
+      rgba(18,25,42,.97),
+      rgba(11,16,29,.97)
     );
 
-  border:1px solid var(--border);
+  border:
+    1px solid var(--border);
 
-  border-radius:var(--radius-lg);
+  border-radius:
+    var(--radius);
 
   padding:19px;
 
   margin-bottom:14px;
 
-  box-shadow:var(--shadow-soft);
+  box-shadow:
+    0 12px 35px rgba(0,0,0,.20);
 
-  transition:
-    border-color .18s ease,
-    transform .18s ease,
-    box-shadow .18s ease;
 }
 
-.card h2,
-.card h3{
-  margin-top:0;
-}
 
-.card h2{
-  font-size:19px;
-  font-weight:800;
-  letter-spacing:-.45px;
-}
+/* luce interna */
 
-.card h3{
-  font-size:15px;
-  font-weight:750;
-}
+.card::before{
 
-/* leggerissimo riflesso */
-.card::after{
   content:"";
 
   position:absolute;
 
-  width:170px;
-  height:170px;
+  width:190px;
+  height:190px;
 
-  top:-110px;
-  right:-80px;
+  top:-120px;
+  right:-90px;
 
   background:
+
     radial-gradient(
       circle,
-      rgba(99,102,241,.09),
-      transparent 68%
+      rgba(124,92,255,.12),
+      transparent 70%
     );
 
   pointer-events:none;
+
 }
+
+
+/* linea decorativa */
+
+.card::after{
+
+  content:"";
+
+  position:absolute;
+
+  height:1px;
+
+  left:18px;
+  right:18px;
+
+  bottom:0;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(124,92,255,.18),
+      transparent
+    );
+
+  pointer-events:none;
+
+}
+
+
+.card h2{
+
+  margin-top:0;
+
+  font-size:20px;
+
+  font-weight:800;
+
+  letter-spacing:-.65px;
+
+}
+
+.card h3{
+
+  margin-top:0;
+
+  font-size:15px;
+
+  font-weight:700;
+
+}
+
 
 /* =========================================================
    GRID
    ========================================================= */
 
 .grid{
+
   display:grid;
+
   gap:14px;
+
 }
 
+
 /* =========================================================
-   TESTI
+   TEXT
    ========================================================= */
 
 .muted{
-  color:var(--muted);
+
+  color:
+    var(--muted);
+
 }
 
 .hidden{
+
   display:none !important;
+
 }
+
 
 /* =========================================================
    MESSAGGI
@@ -334,515 +447,627 @@ main{
 
 .ok,
 .err{
-  padding:11px 13px;
 
-  border-radius:12px;
+  padding:
+    11px 13px;
 
-  margin-bottom:10px;
+  border-radius:
+    12px;
 
-  font-size:13px;
-  font-weight:600;
+  margin-bottom:
+    10px;
+
+  font-size:
+    13px;
+
+  font-weight:
+    600;
+
 }
 
 .ok{
-  background:rgba(52,211,153,.09);
-  border:1px solid rgba(52,211,153,.20);
-  color:#7ee7be;
+
+  background:
+    rgba(53,212,154,.09);
+
+  border:
+    1px solid rgba(53,212,154,.22);
+
+  color:
+    #73e8bb;
+
 }
 
 .err{
-  background:rgba(251,113,133,.09);
-  border:1px solid rgba(251,113,133,.20);
-  color:#fda4af;
+
+  background:
+    rgba(255,85,115,.09);
+
+  border:
+    1px solid rgba(255,85,115,.22);
+
+  color:
+    #ff9aad;
+
 }
+
 
 /* =========================================================
    LABEL
    ========================================================= */
 
 label{
+
   display:block;
 
-  margin:13px 0 6px;
+  margin:
+    13px 0 6px;
 
-  font-size:11px;
-  font-weight:750;
+  font-size:
+    11px;
 
-  letter-spacing:.2px;
+  font-weight:
+    700;
 
-  color:#aeb9d0;
+  letter-spacing:
+    .35px;
+
+  color:
+    #98a3ba;
+
 }
 
+
 /* =========================================================
-   INPUT / SELECT
+   INPUT
    ========================================================= */
 
 input,
 select{
+
   width:100%;
 
-  min-height:41px;
+  min-height:42px;
 
-  padding:9px 12px;
+  padding:
+    10px 12px;
 
-  border-radius:11px;
+  border:
+    1px solid rgba(255,255,255,.07);
 
-  border:1px solid rgba(255,255,255,.075);
+  border-radius:
+    11px;
 
   background:
-    linear-gradient(
-      180deg,
-      rgba(9,16,30,.92),
-      rgba(11,19,34,.92)
-    );
+    #0a0f1c;
 
-  color:#f4f7ff;
+  color:
+    var(--white);
 
-  font-size:13px;
+  font-size:
+    13px;
 
   transition:
-    border-color .18s ease,
-    box-shadow .18s ease,
-    background .18s ease;
+    .18s ease;
+
 }
 
 input::placeholder{
-  color:#66738d;
+
+  color:
+    #5e687e;
+
 }
 
 input:hover,
 select:hover{
-  border-color:rgba(255,255,255,.12);
+
+  border-color:
+    rgba(255,255,255,.12);
+
 }
 
 input:focus,
 select:focus{
-  border-color:rgba(99,102,241,.72);
 
-  background:#0c1528;
+  border-color:
+    rgba(124,92,255,.75);
+
+  background:
+    #0c1221;
 
   box-shadow:
-    0 0 0 3px rgba(99,102,241,.11);
+    0 0 0 3px
+    rgba(124,92,255,.12);
+
 }
 
+
 /* =========================================================
-   BUTTONS
+   BUTTON
    ========================================================= */
 
 button{
+
+  padding:
+    10px 14px;
+
+  border-radius:
+    11px;
+
   background:
+
     linear-gradient(
       135deg,
-      var(--primary-2),
-      var(--primary)
+      var(--purple2),
+      var(--purple)
     );
 
-  color:#fff;
+  color:white;
 
-  border-radius:11px;
+  font-size:
+    12.5px;
 
-  padding:10px 14px;
+  font-weight:
+    800;
 
-  font-size:12.5px;
-  font-weight:800;
-
-  letter-spacing:.05px;
+  letter-spacing:
+    .05px;
 
   box-shadow:
-    0 6px 16px rgba(79,70,229,.18);
+    0 7px 20px
+    rgba(124,92,255,.20);
 
   transition:
-    transform .16s ease,
-    filter .16s ease,
-    box-shadow .16s ease;
+    .17s ease;
+
 }
 
 button:hover{
-  filter:brightness(1.08);
 
-  transform:translateY(-1px);
+  transform:
+    translateY(-1px);
+
+  filter:
+    brightness(1.09);
 
   box-shadow:
-    0 8px 20px rgba(79,70,229,.24);
+    0 9px 24px
+    rgba(124,92,255,.28);
+
 }
 
 button:active{
-  transform:translateY(0);
+
+  transform:
+    translateY(0);
+
 }
 
 button.secondary{
+
   background:
     linear-gradient(
-      180deg,
-      #1a263f,
-      #162139
+      135deg,
+      #1b253a,
+      #151e31
     );
 
-  border:1px solid rgba(255,255,255,.075);
+  border:
+    1px solid rgba(255,255,255,.07);
 
-  color:#dbe3f5;
+  color:
+    #c7d0e2;
 
-  box-shadow:none;
+  box-shadow:
+    none;
+
 }
 
 button.secondary:hover{
-  background:#202d49;
+
+  background:
+    #202b43;
+
+  border-color:
+    rgba(255,255,255,.12);
+
 }
+
 
 /* =========================================================
    TABLE
    ========================================================= */
 
 table{
+
   width:100%;
-  border-collapse:separate;
-  border-spacing:0;
+
+  border-collapse:
+    separate;
+
+  border-spacing:
+    0;
+
 }
 
 th{
+
   text-align:left;
 
-  font-size:10px;
+  padding:
+    10px 8px;
 
-  text-transform:uppercase;
+  color:
+    #68748b;
 
-  letter-spacing:.65px;
+  font-size:
+    10px;
 
-  color:#74819b;
+  font-weight:
+    800;
 
-  padding:10px 9px;
+  text-transform:
+    uppercase;
 
-  border-bottom:1px solid rgba(255,255,255,.075);
+  letter-spacing:
+    .7px;
 
-  font-weight:800;
+  border-bottom:
+    1px solid rgba(255,255,255,.07);
+
 }
 
 td{
-  padding:11px 9px;
 
-  border-bottom:1px solid rgba(255,255,255,.045);
+  padding:
+    10px 8px;
 
-  vertical-align:middle;
+  color:
+    #dce2ed;
 
-  color:#dce3f3;
-}
+  border-bottom:
+    1px solid rgba(255,255,255,.045);
 
-tbody tr,
-table tr{
-  transition:background .15s ease;
+  vertical-align:
+    middle;
+
 }
 
 table tr:hover td{
-  background:rgba(255,255,255,.018);
+
+  background:
+    rgba(124,92,255,.025);
+
 }
 
 table b{
-  color:#f4f7ff;
+
+  color:
+    #f7f8fc;
+
 }
+
 
 /* =========================================================
    DASHBOARD
    ========================================================= */
 
 #content{
+
   position:relative;
+
 }
 
+
+/* dashboard cards */
+
 #content > .grid{
+
   gap:14px;
+
 }
 
 #content > .grid > .card{
-  position:relative;
-  overflow:hidden;
+
+  min-height:250px;
+
+  padding:
+    23px;
+
+  border-radius:
+    21px;
 
   background:
+
     linear-gradient(
       145deg,
-      rgba(22,34,59,.97),
-      rgba(14,23,41,.97)
-    );
-
-  border:1px solid rgba(255,255,255,.075);
-
-  border-radius:var(--radius-xl);
-
-  padding:22px;
-
-  box-shadow:
-    0 14px 38px rgba(0,0,0,.22),
-    inset 0 1px 0 rgba(255,255,255,.025);
-}
-
-/* glow dashboard */
-#content > .grid > .card::before{
-  content:"";
-
-  position:absolute;
-
-  width:230px;
-  height:230px;
-
-  right:-110px;
-  top:-120px;
-
-  background:
-    radial-gradient(
-      circle,
-      rgba(99,102,241,.15),
-      transparent 68%
-    );
-
-  pointer-events:none;
-}
-
-/* =========================================================
-   DASHBOARD — NOME SQUADRA
-   ========================================================= */
-
-#content > .grid > .card:first-child h2{
-  margin-top:0;
-  margin-bottom:5px;
-
-  font-size:23px;
-  line-height:1.15;
-
-  font-weight:850;
-
-  letter-spacing:-.7px;
-}
-
-#content > .grid > .card:first-child .muted{
-  font-size:13px;
-  color:#8794ae;
-}
-
-/* =========================================================
-   DASHBOARD — INPUT
-   ========================================================= */
-
-#content > .grid > .card:first-child input{
-  background:rgba(6,13,27,.78);
-
-  border:1px solid rgba(255,255,255,.08);
-
-  border-radius:12px;
-
-  padding:12px 13px;
-
-  transition:.18s ease;
-}
-
-#content > .grid > .card:first-child input:focus{
-  border-color:#7069ff;
-
-  box-shadow:
-    0 0 0 3px rgba(99,102,241,.12);
-}
-
-/* =========================================================
-   DASHBOARD — SALVA
-   ========================================================= */
-
-#content > .grid > .card:first-child button{
-  width:100%;
-
-  margin:6px 0 0;
-
-  min-height:44px;
-
-  border-radius:12px;
-
-  background:
-    linear-gradient(
-      135deg,
-      #7169ff,
-      #554be8
+      rgba(20,29,49,.98),
+      rgba(10,15,27,.98)
     );
 
   box-shadow:
-    0 8px 20px rgba(79,70,229,.23);
+
+    0 15px 42px
+    rgba(0,0,0,.24);
+
 }
 
+
 /* =========================================================
-   DASHBOARD — CREDITI
+   DASHBOARD — CARD SQUADRA
    ========================================================= */
 
 #content > .grid > .card:first-child{
-  min-height:260px;
+
+  border-top:
+    1px solid rgba(124,92,255,.22);
+
 }
 
-#content > .grid > .card:first-child > div:last-child{
-  margin-top:18px;
+#content > .grid > .card:first-child h2{
+
+  margin-top:0;
+
+  margin-bottom:5px;
+
+  font-size:
+    25px;
+
+  font-weight:
+    800;
+
+  letter-spacing:
+    -1px;
+
 }
+
+#content > .grid > .card:first-child .muted{
+
+  color:
+    #7f8ba3;
+
+  font-size:
+    13px;
+
+}
+
+
+/* input squadra */
+
+#content > .grid > .card:first-child input{
+
+  background:
+    rgba(5,9,18,.85);
+
+  border:
+    1px solid rgba(255,255,255,.075);
+
+  border-radius:
+    12px;
+
+  padding:
+    12px 13px;
+
+}
+
+
+/* bottone */
+
+#content > .grid > .card:first-child button{
+
+  width:
+    100%;
+
+  min-height:
+    44px;
+
+  margin:
+    6px 0 0;
+
+  background:
+
+    linear-gradient(
+      135deg,
+      #8c6cff,
+      #6247f0
+    );
+
+  box-shadow:
+
+    0 8px 25px
+    rgba(124,92,255,.25);
+
+}
+
 
 /* =========================================================
-   DASHBOARD — PUNTI FANTASY
+   DASHBOARD — PUNTI
    ========================================================= */
 
 #content > .grid > .card:nth-child(2){
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
 
-  min-height:260px;
+  display:
+    flex;
+
+  flex-direction:
+    column;
+
+  justify-content:
+    center;
+
+  border-top:
+    1px solid rgba(255,138,61,.22);
+
 }
 
 #content > .grid > .card:nth-child(2) h2{
+
   margin-top:0;
-  margin-bottom:13px;
 
-  font-size:15px;
+  margin-bottom:10px;
 
-  font-weight:750;
+  font-size:
+    15px;
 
-  color:#aab5cd;
-}
+  font-weight:
+    700;
 
-#content > .grid > .card:nth-child(2) > div{
-  font-size:16px;
+  color:
+    #9aa5bc;
+
 }
 
 #content > .grid > .card:nth-child(2) strong{
+
   display:block;
 
-  font-size:55px;
+  font-family:
+    "Barlow Condensed",
+    sans-serif;
 
-  line-height:1;
+  font-size:
+    66px;
 
-  font-weight:850;
+  line-height:
+    .9;
 
-  letter-spacing:-2.5px;
+  font-weight:
+    900;
 
-  margin:5px 0 20px;
+  letter-spacing:
+    -1px;
+
+  margin:
+    7px 0 20px;
 
   background:
+
     linear-gradient(
       135deg,
-      #ffffff,
-      #a9b2ff
+      #ffffff 15%,
+      #a58aff 55%,
+      #ff9a50 100%
     );
 
-  -webkit-background-clip:text;
-  background-clip:text;
+  -webkit-background-clip:
+    text;
 
-  color:transparent;
+  background-clip:
+    text;
+
+  color:
+    transparent;
+
 }
 
 #content > .grid > .card:nth-child(2) .muted{
-  color:#8794ae;
+
+  color:
+    #78849b;
+
 }
+
 
 /* =========================================================
    DASHBOARD — BENVENUTO
    ========================================================= */
 
 #content > .card{
+
   background:
+
     linear-gradient(
       135deg,
-      rgba(19,30,52,.94),
-      rgba(13,21,37,.94)
+      rgba(17,25,43,.95),
+      rgba(10,15,27,.95)
     );
 
-  border:1px solid rgba(255,255,255,.065);
+  border-radius:
+    19px;
 
-  border-radius:var(--radius-lg);
-
-  box-shadow:
-    0 9px 27px rgba(0,0,0,.17);
 }
 
 #content > .card h2{
+
   margin-top:0;
 
-  font-size:19px;
+  font-size:
+    20px;
 
-  font-weight:800;
+  font-weight:
+    800;
 
-  letter-spacing:-.4px;
 }
 
 #content > .card .muted{
-  color:#8794ae;
 
-  line-height:1.65;
+  color:
+    #7e899f;
+
+  line-height:
+    1.65;
+
 }
+
 
 /* =========================================================
    CALENDARIO
    ========================================================= */
 
 .calendar-match{
-  border:1px solid rgba(255,255,255,.075);
 
-  border-radius:18px;
+  border:
+    1px solid rgba(255,255,255,.065);
 
-  padding:16px;
+  border-radius:
+    18px;
+
+  padding:
+    16px;
 
   background:
+
     linear-gradient(
       145deg,
-      rgba(255,255,255,.045),
-      rgba(255,255,255,.015)
+      rgba(20,29,48,.95),
+      rgba(12,18,31,.95)
     );
 
   box-shadow:
-    0 8px 24px rgba(0,0,0,.16);
+    0 8px 26px rgba(0,0,0,.18);
 
   transition:
-    border-color .18s ease,
-    transform .18s ease;
+    .18s ease;
+
 }
 
 .calendar-match:hover{
-  border-color:rgba(255,255,255,.11);
 
-  transform:translateY(-1px);
+  border-color:
+    rgba(124,92,255,.20);
+
+  transform:
+    translateY(-1px);
+
 }
 
 .calendar-formations{
+
   display:grid;
 
   grid-template-columns:
     minmax(0,1fr)
     minmax(0,1fr);
 
-  gap:18px;
+  gap:
+    18px;
 
-  margin-top:14px;
-}
-
-@media(max-width:600px){
-
-  .calendar-formations{
-    grid-template-columns:1fr;
-    gap:10px;
-  }
+  margin-top:
+    14px;
 
 }
 
-/* =========================================================
-   SCROLLBAR
-   ========================================================= */
-
-::-webkit-scrollbar{
-  width:8px;
-  height:8px;
-}
-
-::-webkit-scrollbar-track{
-  background:transparent;
-}
-
-::-webkit-scrollbar-thumb{
-  background:rgba(255,255,255,.13);
-  border-radius:20px;
-}
-
-::-webkit-scrollbar-thumb:hover{
-  background:rgba(255,255,255,.20);
-}
 
 /* =========================================================
    MOBILE
@@ -851,138 +1076,257 @@ table b{
 @media(max-width:700px){
 
   body{
-    font-size:13px;
+
+    font-size:
+      13px;
+
   }
 
   header{
-    padding:11px 14px;
 
-    gap:10px;
+    padding:
+      11px 14px;
+
   }
 
   header b{
-    font-size:14px;
+
+    font-size:
+      14px;
+
   }
 
   main{
-    width:calc(100% - 20px);
+
+    width:
+      calc(100% - 18px);
 
     padding:
-      15px
-      0
-      35px;
+      15px 0 35px;
+
   }
 
   nav{
-    width:calc(100% - 20px);
 
-    gap:5px;
+    width:
+      calc(100% - 18px);
 
-    padding-top:9px;
+    gap:
+      5px;
+
+    padding-top:
+      9px;
+
   }
 
   nav button{
-    padding:7px 9px;
 
-    font-size:10.5px;
+    padding:
+      7px 9px;
 
-    border-radius:9px;
+    font-size:
+      10.5px;
+
+    border-radius:
+      9px;
+
   }
 
   .card{
-    padding:15px;
 
-    border-radius:15px;
+    padding:
+      15px;
 
-    margin-bottom:11px;
+    border-radius:
+      15px;
+
   }
 
   .card h2{
-    font-size:18px;
+
+    font-size:
+      18px;
+
   }
 
   input,
   select{
-    min-height:40px;
 
-    font-size:13px;
+    min-height:
+      40px;
+
   }
 
   button{
-    padding:9px 12px;
 
-    font-size:12px;
-  }
+    padding:
+      9px 12px;
 
-  table{
-    font-size:12px;
   }
 
   th,
   td{
-    padding:8px 6px;
+
+    padding:
+      8px 6px;
+
   }
 
+
+  /* dashboard */
+
   #content > .grid{
-    gap:10px;
+
+    gap:
+      10px;
+
   }
 
   #content > .grid > .card{
-    min-height:auto;
 
-    padding:17px;
+    min-height:
+      auto;
 
-    border-radius:16px;
+    padding:
+      17px;
+
+    border-radius:
+      17px;
+
   }
 
   #content > .grid > .card:first-child{
-    min-height:auto;
-  }
 
-  #content > .grid > .card:nth-child(2){
-    min-height:180px;
+    min-height:
+      auto;
+
   }
 
   #content > .grid > .card:first-child h2{
-    font-size:20px;
+
+    font-size:
+      21px;
+
+  }
+
+  #content > .grid > .card:nth-child(2){
+
+    min-height:
+      190px;
+
   }
 
   #content > .grid > .card:nth-child(2) strong{
-    font-size:44px;
+
+    font-size:
+      54px;
+
   }
 
   #content > .card{
-    border-radius:15px;
 
-    padding:16px;
+    border-radius:
+      16px;
+
+    padding:
+      16px;
+
+  }
+
+
+  /* calendario */
+
+  .calendar-formations{
+
+    grid-template-columns:
+      1fr;
+
+    gap:
+      10px;
+
   }
 
 }
 
+
 /* =========================================================
-   VERY SMALL PHONES
+   TELEFONI MOLTO PICCOLI
    ========================================================= */
 
 @media(max-width:400px){
 
   nav button{
-    padding:6px 8px;
-    font-size:10px;
+
+    padding:
+      6px 8px;
+
+    font-size:
+      10px;
+
   }
 
   main{
-    width:calc(100% - 14px);
+
+    width:
+      calc(100% - 14px);
+
   }
 
   nav{
-    width:calc(100% - 14px);
+
+    width:
+      calc(100% - 14px);
+
   }
 
   .card{
-    padding:13px;
+
+    padding:
+      13px;
+
   }
 
 }
+
+
+/* =========================================================
+   SCROLLBAR
+   ========================================================= */
+
+::-webkit-scrollbar{
+
+  width:
+    7px;
+
+  height:
+    7px;
+
+}
+
+::-webkit-scrollbar-track{
+
+  background:
+    transparent;
+
+}
+
+::-webkit-scrollbar-thumb{
+
+  background:
+    rgba(124,92,255,.28);
+
+  border-radius:
+    20px;
+
+}
+
+::-webkit-scrollbar-thumb:hover{
+
+  background:
+    rgba(124,92,255,.48);
+
+}
+
 </style></head><body>
 <header><div><b>🏀 FantaBasket Orzi</b><div id="who" class="muted">Non autenticato</div></div><div id="authBtn"><button onclick="showAuth()">Accedi</button></div></header>
 <main><div id="msg"></div>
