@@ -6913,35 +6913,232 @@ let awayLineupSaved =
 if(homeIsBot || awayIsBot){
 
   formationSection = `
-    <div class="calendar-formation"
-      style="display:flex;justify-content:center;">
 
-      <div style="
-        width:100%;
-        padding:10px 12px;
-        border-radius:11px;
-        background:rgba(255,255,255,.025);
-        border:1px solid rgba(255,255,255,.06);
-        text-align:center;
-      ">
+    <div class="calendar-formations">
+
+      <!-- =====================
+           CASA
+      ====================== -->
+
+      <div class="calendar-formation">
 
         <div style="
           font-size:12px;
           font-weight:850;
+          margin-bottom:8px;
         ">
-          🤖 FantaBot
+          ${homeManager?.team_name || homeManager?.name || "—"}
         </div>
 
-        <div class="muted" style="
-          margin-top:3px;
-          font-size:11px;
+        ${
+          homeIsBot
+
+            ? `
+              <div style="
+                padding:10px 12px;
+                border-radius:11px;
+                background:rgba(255,255,255,.025);
+                border:1px solid rgba(255,255,255,.06);
+                text-align:center;
+              ">
+
+                <div style="
+                  font-size:12px;
+                  font-weight:850;
+                ">
+                  🤖 FantaBot
+                </div>
+
+                <div class="muted" style="
+                  margin-top:3px;
+                  font-size:11px;
+                ">
+                  Squadra automatica · quota fissa 1 punto
+                </div>
+
+              </div>
+            `
+
+            : (
+
+                deadlinePassed
+
+                  ? (
+                      homeLineupSaved
+
+                        ? `
+                          <button
+                            class="btn"
+                            onclick="
+                              renderLineup(
+                                '${homeManager.id}',
+                                ${selectedDay}
+                              )
+                            "
+                          >
+                            Vedi formazione
+                          </button>
+                        `
+
+                        : `
+                          <div class="muted" style="
+                            padding:10px;
+                            border-radius:10px;
+                            background:rgba(255,255,255,.025);
+                            border:1px solid rgba(255,255,255,.06);
+                          ">
+                            ⚠️ Formazione non selezionata
+                          </div>
+                        `
+                    )
+
+                  : (
+                      homeLineupSaved
+
+                        ? `
+                          <div class="muted" style="
+                            padding:10px;
+                            border-radius:10px;
+                            background:rgba(255,255,255,.025);
+                            border:1px solid rgba(255,255,255,.06);
+                          ">
+                            🔒 Formazione schierata
+                            <br>
+                            <span style="font-size:11px;">
+                              Sarà visibile dopo la chiusura della deadline.
+                            </span>
+                          </div>
+                        `
+
+                        : `
+                          <div class="muted" style="
+                            padding:10px;
+                            border-radius:10px;
+                            background:rgba(255,255,255,.025);
+                            border:1px solid rgba(255,255,255,.06);
+                          ">
+                            ⚠️ Formazione non ancora selezionata
+                          </div>
+                        `
+                    )
+              )
+        }
+
+      </div>
+
+
+      <!-- =====================
+           TRASFERTA
+      ====================== -->
+
+      <div class="calendar-formation">
+
+        <div style="
+          font-size:12px;
+          font-weight:850;
+          margin-bottom:8px;
         ">
-          Squadra automatica · quota fissa 1 punto
+          ${awayManager?.team_name || awayManager?.name || "—"}
         </div>
+
+        ${
+          awayIsBot
+
+            ? `
+              <div style="
+                padding:10px 12px;
+                border-radius:11px;
+                background:rgba(255,255,255,.025);
+                border:1px solid rgba(255,255,255,.06);
+                text-align:center;
+              ">
+
+                <div style="
+                  font-size:12px;
+                  font-weight:850;
+                ">
+                  🤖 FantaBot
+                </div>
+
+                <div class="muted" style="
+                  margin-top:3px;
+                  font-size:11px;
+                ">
+                  Squadra automatica · quota fissa 1 punto
+                </div>
+
+              </div>
+            `
+
+            : (
+
+                deadlinePassed
+
+                  ? (
+                      awayLineupSaved
+
+                        ? `
+                          <button
+                            class="btn"
+                            onclick="
+                              renderLineup(
+                                '${awayManager.id}',
+                                ${selectedDay}
+                              )
+                            "
+                          >
+                            Vedi formazione
+                          </button>
+                        `
+
+                        : `
+                          <div class="muted" style="
+                            padding:10px;
+                            border-radius:10px;
+                            background:rgba(255,255,255,.025);
+                            border:1px solid rgba(255,255,255,.06);
+                          ">
+                            ⚠️ Formazione non selezionata
+                          </div>
+                        `
+                    )
+
+                  : (
+                      awayLineupSaved
+
+                        ? `
+                          <div class="muted" style="
+                            padding:10px;
+                            border-radius:10px;
+                            background:rgba(255,255,255,.025);
+                            border:1px solid rgba(255,255,255,.06);
+                          ">
+                            🔒 Formazione schierata
+                            <br>
+                            <span style="font-size:11px;">
+                              Sarà visibile dopo la chiusura della deadline.
+                            </span>
+                          </div>
+                        `
+
+                        : `
+                          <div class="muted" style="
+                            padding:10px;
+                            border-radius:10px;
+                            background:rgba(255,255,255,.025);
+                            border:1px solid rgba(255,255,255,.06);
+                          ">
+                            ⚠️ Formazione non ancora selezionata
+                          </div>
+                        `
+                    )
+              )
+        }
 
       </div>
 
     </div>
+
   `;
 
 }else{
@@ -6949,8 +7146,6 @@ if(homeIsBot || awayIsBot){
   formationSection = `
 
     <div class="calendar-formations">
-
-      <!-- CASA -->
 
       <div class="calendar-formation">
 
@@ -6966,7 +7161,6 @@ if(homeIsBot || awayIsBot){
           deadlinePassed
 
             ? (
-
                 homeLineupSaved
 
                   ? `
@@ -7030,8 +7224,6 @@ if(homeIsBot || awayIsBot){
       </div>
 
 
-      <!-- TRASFERTA -->
-
       <div class="calendar-formation">
 
         <div style="
@@ -7046,7 +7238,6 @@ if(homeIsBot || awayIsBot){
           deadlinePassed
 
             ? (
-
                 awayLineupSaved
 
                   ? `
