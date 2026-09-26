@@ -2734,6 +2734,106 @@ function formatNotificationDate(date){
   );
 
 }
+async function testLivePesaroRoma(){
+
+  const url =
+    "https://fantabasket-webpont.davzil2005.workers.dev?t=" +
+    Date.now();
+
+  try{
+
+    const response = await fetch(url);
+
+    if(!response.ok)
+      throw new Error("HTTP " + response.status);
+
+    const text = await response.text();
+
+    const start = text.indexOf('"p":');
+    const end = text.indexOf('"players":', start);
+
+    if(start === -1 || end === -1)
+      throw new Error("Blocco giocatori non trovato");
+
+    const block =
+      text.slice(start, end);
+
+    const players =
+      block
+        .match(/A[A-Z0-9]+\|[^#]+/g)
+        ?.map(x => {
+
+          let parts = x.split("|");
+          let data = parts[1].split(":");
+
+          return {
+            id: parts[0],
+            starter: data[0] === "1",
+            number: data[1],
+            name: data[2]
+              .replace(/&nbsp;/g," "),
+            seconds: Number(data[3]),
+            team: data[4] === "1"
+              ? "Pesaro"
+              : "Roma"
+          };
+
+        }) || [];
+
+    console.log(
+      "🏀 PESARO-ROMA LIVE",
+      players
+    );
+
+    el("content").innerHTML = `
+      <div class="card">
+
+        <h2>🏀 Pesaro – Roma</h2>
+
+        <div class="muted" style="margin-bottom:15px">
+          Dati live Webpont
+        </div>
+
+        ${players.map(p => `
+
+          <div style="
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding:10px 0;
+            border-bottom:1px solid rgba(255,255,255,.08);
+          ">
+
+            <div>
+              <b>${p.name}</b>
+              <div class="muted">
+                ${p.team} · #${p.number}
+                ${p.starter ? " · Titolare" : ""}
+              </div>
+            </div>
+
+            <b>
+              ${Math.floor(p.seconds / 60)}:${String(p.seconds % 60).padStart(2,"0")}
+            </b>
+
+          </div>
+
+        `).join("")}
+
+      </div>
+    `;
+
+  }catch(error){
+
+    console.error("❌ LIVE:",error);
+
+    message(
+      "Errore dati live: " + error.message,
+      "err"
+    );
+
+  }
+}
 async function home(){
 
   let r=await db
