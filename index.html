@@ -6840,6 +6840,18 @@ ${
 
       }
 
+let homeLineupSaved =
+  homeManager?.is_bot === true ||
+  savedLineups.has(
+    `${match.home_manager_id}_${matchday?.id}`
+  );
+
+let awayLineupSaved =
+  awayManager?.is_bot === true ||
+  savedLineups.has(
+    `${match.away_manager_id}_${matchday?.id}`
+  );
+
 
 /* =========================
    FORMAZIONI
