@@ -1,6 +1,6 @@
 <!doctype html><html lang="it"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FantaBasket Orzi TEST</title>
+<title>FantaBasket Orzi</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 /* =========================================================
@@ -5709,6 +5709,33 @@ async function calendar(){
 
   if(md.error)
     return message(md.error.message,"err");
+
+/* =========================
+   FORMAZIONI SALVATE
+========================= */
+
+let lineupsForDay = await db
+  .from("lineups")
+  .select(`
+    manager_id,
+    matchday_id
+  `)
+  .in(
+    "matchday_id",
+    (md.data || []).map(x => x.id)
+  );
+
+if(lineupsForDay.error)
+  return message(
+    lineupsForDay.error.message,
+    "err"
+  );
+
+let savedLineups = new Set(
+  (lineupsForDay.data || []).map(x =>
+    `${x.manager_id}_${x.matchday_id}`
+  )
+);
 
 
   let matchdays = {};
