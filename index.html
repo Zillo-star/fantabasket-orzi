@@ -1755,14 +1755,46 @@ function renderPlayers(a){
             const playerColor =
               p.is_foreign ? "#fbbf24" : "#fff";
 
-            const firstName =
+            const rawName =
               (p.name||"").trim();
 
-            const surname =
+            const rawSurname =
               (p.surname||"").trim();
 
             const teamName =
               p.real_teams?.name || "Da definire";
+
+
+            /* =========================
+               NOME + COGNOME
+            ========================= */
+
+            let firstName = rawName;
+            let surname = rawSurname;
+
+            /*
+              Se il cognome è già presente
+              alla fine del campo name,
+              non lo ripetiamo.
+            */
+
+            if(
+              surname &&
+              firstName.toLowerCase().endsWith(
+                " " + surname.toLowerCase()
+              )
+            ){
+
+              firstName =
+                firstName
+                  .slice(
+                    0,
+                    firstName.length - surname.length
+                  )
+                  .trim();
+
+            }
+
 
             return `
 
@@ -1779,12 +1811,20 @@ function renderPlayers(a){
                     ${firstName}
                   </span>
 
-                  <strong
-                    class="listone-surname"
-                    style="color:${playerColor};"
-                  >
-                    ${surname}
-                  </strong>
+                  ${
+                    surname
+                    ?
+                    `
+                      <strong
+                        class="listone-surname"
+                        style="color:${playerColor};"
+                      >
+                        ${surname}
+                      </strong>
+                    `
+                    :
+                    ""
+                  }
 
                 </td>
 
