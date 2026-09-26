@@ -7746,9 +7746,30 @@ let deadlinePassed = true;
 
 if(matchday.lineup_deadline){
 
-  deadlinePassed =
-    new Date() >=
-    parseLocalDeadline(matchday.lineup_deadline);
+  let deadlineString =
+    String(matchday.lineup_deadline);
+
+  let match =
+    deadlineString.match(
+      /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/
+    );
+
+  if(match){
+
+    let deadlineDate =
+      new Date(
+        Number(match[1]),
+        Number(match[2]) - 1,
+        Number(match[3]),
+        Number(match[4]),
+        Number(match[5]),
+        Number(match[6] || 0)
+      );
+
+    deadlinePassed =
+      new Date() >= deadlineDate;
+
+  }
 
 }
 
