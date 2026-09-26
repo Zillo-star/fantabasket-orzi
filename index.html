@@ -2749,86 +2749,139 @@ async function testLivePesaroRoma(){
 
     const text = await response.text();
 
-    const start = text.indexOf('"p":');
-    const end = text.indexOf('"players":', start);
+    /*
+      PRENDIAMO TUTTI GLI EVENTI
+    */
 
-    if(start === -1 || end === -1)
-      throw new Error("Blocco giocatori non trovato");
+    let parts = text.split("%");
 
-    const block =
-      text.slice(start, end);
+    let events =
+      parts
+        .filter(x => x.startsWith("i|"))
+        .map(x => ({
+          codice:
+            x.match(/#2\|([^#]+)/)?.[1] || "",
 
-    const players =
-      block
-        .match(/A[A-Z0-9]+\|[^#]+/g)
-        ?.map(x => {
+          giocatore1:
+            x.match(/#3\|([^#]+)/)?.[1] || "",
 
-          let parts = x.split("|");
-          let data = parts[1].split(":");
+          giocatore2:
+            x.match(/#4\|([^#]+)/)?.[1] || "",
 
-          return {
-            id: parts[0],
-            starter: data[0] === "1",
-            number: data[1],
-            name: data[2]
-              .replace(/&nbsp;/g," "),
-            seconds: Number(data[3]),
-            team: data[4] === "1"
-              ? "Pesaro"
-              : "Roma"
-          };
+          valore5:
+            x.match(/#5\|([^#]+)/)?.[1] || "",
 
-        }) || [];
+          valore6:
+            x.match(/#6\|([^#]+)/)?.[1] || "",
+
+          tempo:
+            x.match(/#gt\|([^#]+)/)?.[1] || "",
+
+          punteggio:
+            x.match(/#vurl\|([^#]+)/)?.[1] || ""
+        }));
+
+    /*
+      SOLO EVENTI DI BALDI
+    */
+
+    let baldi =
+      events.filter(x =>
+        x.giocatore1 === "A827505" ||
+        x.giocatore2 === "A827505"
+      );
 
     console.log(
-      "🏀 PESARO-ROMA LIVE",
-      players
+      "🏀 EVENTI BALDI",
+      baldi
     );
 
+    /*
+      MOSTRIAMOLI NELL'APP
+    */
+
     el("content").innerHTML = `
+
       <div class="card">
 
-        <h2>🏀 Pesaro – Roma</h2>
+        <h2>🏀 L. Baldi — dati live</h2>
 
         <div class="muted" style="margin-bottom:15px">
-          Dati live Webpont
+          ID Webpont: A827505
         </div>
 
-        ${players.map(p => `
+        ${
+          baldi.length
+          ? baldi.map((x,i) => `
 
-          <div style="
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            padding:10px 0;
-            border-bottom:1px solid rgba(255,255,255,.08);
-          ">
+            <div style="
+              padding:12px 0;
+              border-bottom:1px solid rgba(255,255,255,.08);
+            ">
 
-            <div>
-              <b>${p.name}</b>
-              <div class="muted">
-                ${p.team} · #${p.number}
-                ${p.starter ? " · Titolare" : ""}
+              <b>
+                Evento ${i+1}
+              </b>
+
+              <div style="margin-top:5px">
+
+                Codice:
+                <strong>${x.codice || "-"}</strong>
+
+                · Tempo:
+                ${x.tempo || "-"}
+
               </div>
+
+              <div class="muted" style="margin-top:4px">
+
+                Giocatore 1:
+                ${x.giocatore1 || "-"}
+
+                · Giocatore 2:
+                ${x.giocatore2 || "-"}
+
+              </div>
+
+              <div class="muted">
+
+                Valori:
+                ${x.valore5 || "-"}
+                /
+                ${x.valore6 || "-"}
+
+                ${
+                  x.punteggio
+                  ? " · " + x.punteggio
+                  : ""
+                }
+
+              </div>
+
             </div>
 
-            <b>
-              ${Math.floor(p.seconds / 60)}:${String(p.seconds % 60).padStart(2,"0")}
-            </b>
-
-          </div>
-
-        `).join("")}
+          `).join("")
+          : `
+            <div class="muted">
+              Nessun evento trovato.
+            </div>
+          `
+        }
 
       </div>
+
     `;
 
   }catch(error){
 
-    console.error("❌ LIVE:",error);
+    console.error(
+      "❌ LIVE:",
+      error
+    );
 
     message(
-      "Errore dati live: " + error.message,
+      "Errore dati live: " +
+      error.message,
       "err"
     );
 
