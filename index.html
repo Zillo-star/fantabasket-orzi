@@ -6872,10 +6872,35 @@ ${
    FORMAZIONI
 ========================= */
 
-let homeIsBot = homeManager?.is_bot === true;
-let awayIsBot = awayManager?.is_bot === true;
+let homeIsBot =
+  homeManager?.is_bot === true;
+
+let awayIsBot =
+  awayManager?.is_bot === true;
 
 let formationSection = "";
+
+
+/* =========================
+   FORMAZIONI SALVATE
+========================= */
+
+let homeLineupSaved =
+  homeIsBot ||
+  savedLineups.has(
+    `${homeManager?.id}_${selectedDay}`
+  );
+
+let awayLineupSaved =
+  awayIsBot ||
+  savedLineups.has(
+    `${awayManager?.id}_${selectedDay}`
+  );
+
+
+/* =========================
+   FANTABOT
+========================= */
 
 if(homeIsBot || awayIsBot){
 
@@ -6917,6 +6942,8 @@ if(homeIsBot || awayIsBot){
 
     <div class="calendar-formations">
 
+      <!-- CASA -->
+
       <div class="calendar-formation">
 
         <div style="
@@ -6929,16 +6956,25 @@ if(homeIsBot || awayIsBot){
 
         ${
           deadlinePassed
+
             ? (
+
                 homeLineupSaved
+
                   ? `
                     <button
                       class="btn"
-                      onclick="renderLineup('${match.home_manager_id}',${match.matchday_number})"
+                      onclick="
+                        renderLineup(
+                          '${homeManager.id}',
+                          ${selectedDay}
+                        )
+                      "
                     >
                       Vedi formazione
                     </button>
                   `
+
                   : `
                     <div class="muted" style="
                       padding:10px;
@@ -6950,8 +6986,11 @@ if(homeIsBot || awayIsBot){
                     </div>
                   `
               )
+
             : (
+
                 homeLineupSaved
+
                   ? `
                     <div class="muted" style="
                       padding:10px;
@@ -6966,6 +7005,7 @@ if(homeIsBot || awayIsBot){
                       </span>
                     </div>
                   `
+
                   : `
                     <div class="muted" style="
                       padding:10px;
@@ -6982,6 +7022,8 @@ if(homeIsBot || awayIsBot){
       </div>
 
 
+      <!-- TRASFERTA -->
+
       <div class="calendar-formation">
 
         <div style="
@@ -6994,16 +7036,25 @@ if(homeIsBot || awayIsBot){
 
         ${
           deadlinePassed
+
             ? (
+
                 awayLineupSaved
+
                   ? `
                     <button
                       class="btn"
-                      onclick="renderLineup('${match.away_manager_id}',${match.matchday_number})"
+                      onclick="
+                        renderLineup(
+                          '${awayManager.id}',
+                          ${selectedDay}
+                        )
+                      "
                     >
                       Vedi formazione
                     </button>
                   `
+
                   : `
                     <div class="muted" style="
                       padding:10px;
@@ -7015,8 +7066,11 @@ if(homeIsBot || awayIsBot){
                     </div>
                   `
               )
+
             : (
+
                 awayLineupSaved
+
                   ? `
                     <div class="muted" style="
                       padding:10px;
@@ -7031,6 +7085,7 @@ if(homeIsBot || awayIsBot){
                       </span>
                     </div>
                   `
+
                   : `
                     <div class="muted" style="
                       padding:10px;
