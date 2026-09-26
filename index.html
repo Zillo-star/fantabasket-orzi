@@ -2734,31 +2734,76 @@ function formatNotificationDate(date){
   );
 
 }
-async function testLivePesaroRoma(){
-
-  const url =
-    "https://fantabasket-webpont.davzil2005.workers.dev?t=" +
-    Date.now();
+async function testPlayerStats(playerId="A827505"){
 
   try{
 
-    const response = await fetch(url);
+    const response = await fetch(
+      "https://fantabasket-webpont.davzil2005.workers.dev?t=" +
+      Date.now()
+    );
 
     if(!response.ok)
       throw new Error("HTTP " + response.status);
 
     const text = await response.text();
 
-    /*
-      PRENDIAMO TUTTI GLI EVENTI
-    */
+    /* =========================
+       MINUTAGGIO
+    ========================= */
 
-    let parts = text.split("%");
+    const pStart = text.indexOf('"p":');
+    const pEnd = text.indexOf('"players":',pStart);
+
+    if(pStart === -1 || pEnd === -1)
+      throw new Error("Blocco giocatori non trovato");
+
+    const pBlock =
+      text.slice(pStart,pEnd);
+
+    const pMatch =
+      pBlock.match(
+        new RegExp(
+          playerId +
+          "\\|[^#]*#"
+        )
+      );
+
+    let seconds = 0;
+
+    const allPlayers =
+      pBlock.match(/A[A-Z0-9]+\|[^#]+/g) || [];
+
+    const playerData =
+      allPlayers.find(x =>
+        x.startsWith(playerId + "|")
+      );
+
+    if(playerData){
+
+      let parts =
+        playerData.split("|");
+
+      let data =
+        parts[1].split(":");
+
+      seconds =
+        Number(data[3]) || 0;
+
+    }
+
+    /* =========================
+       EVENTI
+    ========================= */
 
     let events =
-      parts
+      text
+        .split("%")
         .filter(x => x.startsWith("i|"))
         .map(x => ({
+
+          raw:x,
+
           codice:
             x.match(/#2\|([^#]+)/)?.[1] || "",
 
@@ -2774,98 +2819,108 @@ async function testLivePesaroRoma(){
           valore6:
             x.match(/#6\|([^#]+)/)?.[1] || "",
 
+          valore7:
+            x.match(/#7\|([^#]+)/)?.[1] || "",
+
           tempo:
             x.match(/#gt\|([^#]+)/)?.[1] || "",
 
-          punteggio:
+          vurl:
             x.match(/#vurl\|([^#]+)/)?.[1] || ""
+
         }));
 
-    /*
-      SOLO EVENTI DI BALDI
-    */
-
-    let baldi =
+    let playerEvents =
       events.filter(x =>
-        x.giocatore1 === "A827505" ||
-        x.giocatore2 === "A827505"
+        x.giocatore1 === playerId ||
+        x.giocatore2 === playerId
       );
 
     console.log(
-      "🏀 EVENTI BALDI",
-      baldi
+      "🏀 EVENTI PLAYER",
+      playerId,
+      playerEvents
     );
 
-    /*
-      MOSTRIAMOLI NELL'APP
-    */
+    /* =========================
+       VISUALIZZAZIONE
+    ========================= */
 
     el("content").innerHTML = `
 
       <div class="card">
 
-        <h2>🏀 L. Baldi — dati live</h2>
+        <h2>🏀 Test statistiche live</h2>
 
-        <div class="muted" style="margin-bottom:15px">
-          ID Webpont: A827505
+        <div style="
+          margin-bottom:20px;
+          padding:14px;
+          border-radius:12px;
+          background:rgba(255,255,255,.05);
+        ">
+
+          <b>Giocatore:</b> ${playerId}
+
+          <br>
+
+          <b>Minuti:</b>
+          ${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,"0")}
+
         </div>
 
+        <h3>Eventi ricevuti</h3>
+
         ${
-          baldi.length
-          ? baldi.map((x,i) => `
+          playerEvents.length
+          ?
+          playerEvents.map((x,i)=>`
 
             <div style="
               padding:12px 0;
               border-bottom:1px solid rgba(255,255,255,.08);
             ">
 
-              <b>
-                Evento ${i+1}
-              </b>
+              <div style="
+                display:flex;
+                justify-content:space-between;
+                gap:10px;
+              ">
 
-              <div style="margin-top:5px">
+                <b>
+                  Evento ${i+1}
+                </b>
 
-                Codice:
-                <strong>${x.codice || "-"}</strong>
-
-                · Tempo:
-                ${x.tempo || "-"}
-
-              </div>
-
-              <div class="muted" style="margin-top:4px">
-
-                Giocatore 1:
-                ${x.giocatore1 || "-"}
-
-                · Giocatore 2:
-                ${x.giocatore2 || "-"}
+                <span style="
+                  color:#fbbf24;
+                  font-weight:700;
+                ">
+                  ${x.codice}
+                </span>
 
               </div>
 
-              <div class="muted">
+              <div class="muted" style="
+                margin-top:6px;
+                line-height:1.6;
+              ">
 
-                Valori:
-                ${x.valore5 || "-"}
-                /
-                ${x.valore6 || "-"}
-
-                ${
-                  x.punteggio
-                  ? " · " + x.punteggio
-                  : ""
-                }
+                giocatore1: ${x.giocatore1}<br>
+                giocatore2: ${x.giocatore2}<br>
+                valore5: ${x.valore5}<br>
+                valore6: ${x.valore6}<br>
+                valore7: ${x.valore7}<br>
+                tempo: ${x.tempo}<br>
+                punteggio: ${x.vurl || "-"}
 
               </div>
 
             </div>
 
           `).join("")
-          : `
-            <div class="muted">
-              Nessun evento trovato.
-            </div>
-          `
+          :
+          `<div class="muted">
+            Nessun evento trovato.
+          </div>`
         }
 
       </div>
@@ -2875,17 +2930,18 @@ async function testLivePesaroRoma(){
   }catch(error){
 
     console.error(
-      "❌ LIVE:",
+      "❌ TEST STATISTICHE:",
       error
     );
 
     message(
-      "Errore dati live: " +
+      "Errore statistiche: " +
       error.message,
       "err"
     );
 
   }
+
 }
 async function home(){
 
