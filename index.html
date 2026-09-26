@@ -6885,16 +6885,24 @@ let formationSection = "";
    FORMAZIONI SALVATE
 ========================= */
 
+let currentMatchday =
+  (md.data || []).find(
+    x => Number(x.number) === Number(selectedDay)
+  );
+
+let currentMatchdayId =
+  currentMatchday?.id;
+
 let homeLineupSaved =
   homeIsBot ||
   savedLineups.has(
-    `${homeManager?.id}_${selectedDay}`
+    `${homeManager?.id}_${currentMatchdayId}`
   );
 
 let awayLineupSaved =
   awayIsBot ||
   savedLineups.has(
-    `${awayManager?.id}_${selectedDay}`
+    `${awayManager?.id}_${currentMatchdayId}`
   );
 
 
