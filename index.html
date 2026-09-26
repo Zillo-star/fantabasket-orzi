@@ -7752,6 +7752,42 @@ if(matchday.lineup_deadline){
 
 }
 
+/* =========================
+   AUTO AGGIORNAMENTO DEADLINE
+========================= */
+
+if(
+  matchday.lineup_deadline &&
+  !deadlinePassed
+){
+
+  let deadlineTime =
+    parseLocalDeadline(
+      matchday.lineup_deadline
+    ).getTime();
+
+  let now =
+    Date.now();
+
+  let delay =
+    deadlineTime - now + 500;
+
+  if(delay > 0){
+
+    clearTimeout(
+      window.calendarDeadlineTimer
+    );
+
+    window.calendarDeadlineTimer =
+      setTimeout(() => {
+
+        calendar();
+
+      }, delay);
+
+  }
+
+}
 
     if(!deadlinePassed){
 
