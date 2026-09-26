@@ -6411,109 +6411,168 @@ async function calendar(){
          FORMAZIONI
       ========================= */
 
-      let formationSection = `
-
-        <details class="calendar-formation">
-
-          <summary>
-            👀 Vedi formazioni
-          </summary>
+      let homeIsBot = homeManager?.is_bot === true;
+let awayIsBot = awayManager?.is_bot === true;
 
 
-          <div class="calendar-formations">
+let formationSection = "";
 
 
-            <div class="calendar-formation-side">
+/*
+  FantaBot:
+  nessuna formazione da visualizzare
+*/
 
-              <div class="calendar-side-title">
-                ${homeName}
-              </div>
+if(homeIsBot || awayIsBot){
 
+  formationSection = `
 
-              ${
-                deadlinePassed
-                  ? renderLineup(
-                      x.home_manager_id,
-                      selectedDay
-                    )
-                  : `
-                    <div style="
-                      padding:10px 0;
-                    ">
+    <div class="calendar-formation"
+      style="
+        display:flex;
+        justify-content:center;
+      "
+    >
 
-                      <div style="
-                        font-weight:750;
-                        font-size:13px;
-                      ">
-                        🔒 Non ancora visibile
-                      </div>
+      <div style="
+        width:100%;
+        padding:10px 12px;
+        border-radius:11px;
+        background:rgba(255,255,255,.025);
+        border:1px solid rgba(255,255,255,.06);
+        text-align:center;
+      ">
 
-                      <div
-                        class="muted"
-                        style="
-                          margin-top:4px;
-                          font-size:11px;
-                        "
-                      >
-                        La formazione sarà visibile
-                        dopo la deadline.
-                      </div>
+        <div style="
+          font-size:12px;
+          font-weight:850;
+        ">
+          🤖 FantaBot
+        </div>
 
-                    </div>
-                  `
-              }
+        <div
+          class="muted"
+          style="
+            margin-top:3px;
+            font-size:11px;
+          "
+        >
+          Squadra automatica · quota fissa 70
+        </div>
 
-            </div>
+      </div>
 
+    </div>
 
-            <div class="calendar-formation-side">
+  `;
 
-              <div class="calendar-side-title">
-                ${awayName}
-              </div>
+}else{
 
+  formationSection = `
 
-              ${
-                deadlinePassed
-                  ? renderLineup(
-                      x.away_manager_id,
-                      selectedDay
-                    )
-                  : `
-                    <div style="
-                      padding:10px 0;
-                    ">
+    <details class="calendar-formation">
 
-                      <div style="
-                        font-weight:750;
-                        font-size:13px;
-                      ">
-                        🔒 Non ancora visibile
-                      </div>
-
-                      <div
-                        class="muted"
-                        style="
-                          margin-top:4px;
-                          font-size:11px;
-                        "
-                      >
-                        La formazione sarà visibile
-                        dopo la deadline.
-                      </div>
-
-                    </div>
-                  `
-              }
-
-            </div>
+      <summary>
+        👀 Vedi formazioni
+      </summary>
 
 
+      <div class="calendar-formations">
+
+
+        <div class="calendar-formation-side">
+
+          <div class="calendar-side-title">
+            ${homeName}
           </div>
 
-        </details>
 
-      `;
+          ${
+            deadlinePassed
+              ? renderLineup(
+                  x.home_manager_id,
+                  selectedDay
+                )
+              : `
+                <div style="
+                  padding:10px 0;
+                ">
+
+                  <div style="
+                    font-weight:750;
+                    font-size:13px;
+                  ">
+                    🔒 Non ancora visibile
+                  </div>
+
+                  <div
+                    class="muted"
+                    style="
+                      margin-top:4px;
+                      font-size:11px;
+                    "
+                  >
+                    La formazione sarà visibile
+                    dopo la deadline.
+                  </div>
+
+                </div>
+              `
+          }
+
+        </div>
+
+
+        <div class="calendar-formation-side">
+
+          <div class="calendar-side-title">
+            ${awayName}
+          </div>
+
+
+          ${
+            deadlinePassed
+              ? renderLineup(
+                  x.away_manager_id,
+                  selectedDay
+                )
+              : `
+                <div style="
+                  padding:10px 0;
+                ">
+
+                  <div style="
+                    font-weight:750;
+                    font-size:13px;
+                  ">
+                    🔒 Non ancora visibile
+                  </div>
+
+                  <div
+                    class="muted"
+                    style="
+                      margin-top:4px;
+                      font-size:11px;
+                    "
+                  >
+                    La formazione sarà visibile
+                    dopo la deadline.
+                  </div>
+
+                </div>
+              `
+          }
+
+        </div>
+
+
+      </div>
+
+    </details>
+
+  `;
+
+}
 
 
       /* =========================
