@@ -1411,6 +1411,556 @@ table b{
 
 }
 
+/* =========================================================
+   🏀 FANTABASKET ORZI — PASS 2
+   APP ICONS + SPORT UI
+   ========================================================= */
+
+
+/* =========================================================
+   NAV — ICONS
+   ========================================================= */
+
+nav button{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+}
+
+
+/* Dashboard */
+nav button:nth-child(1)::before{
+  content:"⌂";
+  font-size:15px;
+  line-height:1;
+  font-weight:800;
+}
+
+/* Listone */
+nav button:nth-child(2)::before{
+  content:"🏀";
+  font-size:12px;
+  line-height:1;
+}
+
+/* Rose */
+nav button:nth-child(3)::before{
+  content:"♟";
+  font-size:14px;
+  line-height:1;
+}
+
+/* Formazione */
+nav button:nth-child(4)::before{
+  content:"▦";
+  font-size:14px;
+  line-height:1;
+}
+
+/* Scambi */
+nav button:nth-child(5)::before{
+  content:"⇄";
+  font-size:16px;
+  line-height:1;
+  font-weight:800;
+}
+
+/* Calendario */
+nav button:nth-child(6)::before{
+  content:"▣";
+  font-size:14px;
+  line-height:1;
+}
+
+/* Classifica */
+nav button:nth-child(7)::before{
+  content:"♛";
+  font-size:14px;
+  line-height:1;
+}
+
+/* Admin */
+nav button:nth-child(8)::before{
+  content:"⚙";
+  font-size:13px;
+  line-height:1;
+}
+
+
+/* =========================================================
+   NAV — COLORI ICONA AL PASSAGGIO
+   ========================================================= */
+
+nav button:hover::before{
+
+  filter:
+    drop-shadow(
+      0 0 5px
+      rgba(150,124,255,.65)
+    );
+
+}
+
+
+/* =========================================================
+   NAV — PRIMO ELEMENTO PIÙ IMPORTANTE
+   ========================================================= */
+
+nav button:first-child{
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(118,87,255,.20),
+      rgba(118,87,255,.07)
+    );
+
+  border-color:
+    rgba(118,87,255,.20);
+
+  color:
+    #bcaeff;
+
+}
+
+
+/* =========================================================
+   SEPARATORE VISIVO NAV
+   ========================================================= */
+
+nav::after{
+
+  content:"";
+
+  width:1px;
+
+  height:20px;
+
+  margin:
+    0 2px;
+
+  background:
+    rgba(255,255,255,.07);
+
+  align-self:center;
+
+}
+
+
+/* =========================================================
+   DASHBOARD — PICCOLI ACCENTI
+   ========================================================= */
+
+/* Card squadra */
+
+#content > .grid > .card:first-child{
+
+  isolation:isolate;
+
+}
+
+#content > .grid > .card:first-child::after{
+
+  content:"TEAM";
+
+  position:absolute;
+
+  right:22px;
+  top:21px;
+
+  padding:
+    5px 8px;
+
+  border-radius:
+    7px;
+
+  background:
+    rgba(118,87,255,.11);
+
+  border:
+    1px solid rgba(118,87,255,.16);
+
+  color:
+    #8874e8;
+
+  font-size:
+    8px;
+
+  font-weight:
+    900;
+
+  letter-spacing:
+    1px;
+
+  z-index:2;
+
+}
+
+
+/* Card punti */
+
+#content > .grid > .card:nth-child(2){
+
+  isolation:isolate;
+
+}
+
+#content > .grid > .card:nth-child(2)::after{
+
+  content:"FANTASY";
+
+  position:absolute;
+
+  right:22px;
+  top:21px;
+
+  padding:
+    5px 8px;
+
+  border-radius:
+    7px;
+
+  background:
+    rgba(255,122,50,.10);
+
+  border:
+    1px solid rgba(255,122,50,.17);
+
+  color:
+    #e58a59;
+
+  font-size:
+    8px;
+
+  font-weight:
+    900;
+
+  letter-spacing:
+    1px;
+
+  z-index:2;
+
+}
+
+
+/* =========================================================
+   DASHBOARD — LINEA COLORATA
+   ========================================================= */
+
+#content > .grid > .card:first-child > *{
+  position:relative;
+  z-index:2;
+}
+
+#content > .grid > .card:nth-child(2) > *{
+  position:relative;
+  z-index:2;
+}
+
+
+/* =========================================================
+   DASHBOARD — CREDITI / VALORI NUMERICI
+   ========================================================= */
+
+#content > .grid strong{
+
+  font-weight:
+    800;
+
+}
+
+
+/* =========================================================
+   BADGE GENERICI
+   ========================================================= */
+
+#content [style*="border-radius:10px"],
+#content [style*="border-radius: 10px"]{
+
+  transition:
+    .16s ease;
+
+}
+
+
+/* =========================================================
+   STATO ACQUISTATO
+   ========================================================= */
+
+#content [style*="background:#22c55e"],
+#content [style*="background: #22c55e"]{
+
+  border-radius:
+    8px !important;
+
+  box-shadow:
+    0 0 12px
+    rgba(34,197,94,.08);
+
+}
+
+
+/* =========================================================
+   STATO SVINCOLATO
+   ========================================================= */
+
+#content [style*="background:#ef4444"],
+#content [style*="background: #ef4444"]{
+
+  border-radius:
+    8px !important;
+
+}
+
+
+/* =========================================================
+   STELLA STRANIERO
+   ========================================================= */
+
+#content [style*="#fbbf24"]{
+
+  text-shadow:
+    0 0 8px
+    rgba(251,191,36,.35);
+
+}
+
+
+/* =========================================================
+   TITOLI DELLE SEZIONI
+   ========================================================= */
+
+#content h2{
+
+  position:relative;
+
+}
+
+#content h2::after{
+
+  content:"";
+
+  display:block;
+
+  width:32px;
+
+  height:3px;
+
+  margin-top:8px;
+
+  border-radius:
+    10px;
+
+  background:
+    linear-gradient(
+      90deg,
+      var(--purple),
+      var(--orange)
+    );
+
+}
+
+
+/* =========================================================
+   TABELLE — HEADER PIÙ MODERNO
+   ========================================================= */
+
+table th{
+
+  background:
+    rgba(255,255,255,.012);
+
+}
+
+table tr:last-child td{
+
+  border-bottom:
+    0;
+
+}
+
+
+/* =========================================================
+   FORM / FILTRI
+   ========================================================= */
+
+input,
+select{
+
+  box-shadow:
+    inset
+    0 1px 0
+    rgba(255,255,255,.015);
+
+}
+
+
+/* =========================================================
+   CALENDARIO — MATCH PIÙ SPORTIVO
+   ========================================================= */
+
+.calendar-match{
+
+  position:relative;
+
+  overflow:hidden;
+
+}
+
+.calendar-match::before{
+
+  content:"";
+
+  position:absolute;
+
+  left:0;
+  top:0;
+  bottom:0;
+
+  width:3px;
+
+  background:
+    linear-gradient(
+      180deg,
+      var(--purple),
+      var(--orange)
+    );
+
+  opacity:.75;
+
+}
+
+
+/* =========================================================
+   BOT / AUTOMATICO
+   ========================================================= */
+
+.calendar-match [style*="FantaBot"]{
+
+  color:
+    #b9aaff !important;
+
+}
+
+
+/* =========================================================
+   BOTTONI "VEDI FORMAZIONE"
+   ========================================================= */
+
+button{
+
+  letter-spacing:
+    .1px;
+
+}
+
+
+/* =========================================================
+   HOVER CARD
+   ========================================================= */
+
+.card{
+
+  transition:
+    transform .18s ease,
+    border-color .18s ease,
+    box-shadow .18s ease;
+
+}
+
+.card:hover{
+
+  border-color:
+    rgba(118,87,255,.13);
+
+  box-shadow:
+    0 15px 42px
+    rgba(0,0,0,.27);
+
+}
+
+
+/* =========================================================
+   SCHEDE / BADGE — PILL
+   ========================================================= */
+
+#content span{
+
+  border-radius:
+    7px;
+
+}
+
+
+/* =========================================================
+   MOBILE NAV
+   ========================================================= */
+
+@media(max-width:700px){
+
+  nav{
+
+    overflow-x:auto;
+
+    flex-wrap:nowrap;
+
+    scrollbar-width:none;
+
+    padding-bottom:
+      7px;
+
+  }
+
+  nav::-webkit-scrollbar{
+    display:none;
+  }
+
+  nav button{
+
+    flex:
+      0 0 auto;
+
+    white-space:
+      nowrap;
+
+  }
+
+  nav::after{
+    display:none;
+  }
+
+  #content > .grid > .card:first-child::after,
+  #content > .grid > .card:nth-child(2)::after{
+
+    right:
+      16px;
+
+    top:
+      16px;
+
+  }
+
+}
+
+
+/* =========================================================
+   MOBILE — TITOLI
+   ========================================================= */
+
+@media(max-width:400px){
+
+  #content h2::after{
+
+    width:
+      26px;
+
+    height:
+      2px;
+
+  }
+
+}
 </style></head><body>
 <header><div><b>🏀 FantaBasket Orzi</b><div id="who" class="muted">Non autenticato</div></div><div id="authBtn"><button onclick="showAuth()">Accedi</button></div></header>
 <main><div id="msg"></div>
