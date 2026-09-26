@@ -6468,6 +6468,63 @@ if(homeIsBot || awayIsBot){
 
 }else{
 
+let homeIsBot = homeManager?.is_bot === true;
+let awayIsBot = awayManager?.is_bot === true;
+
+
+let formationSection = "";
+
+
+/*
+  FantaBot:
+  nessuna formazione da visualizzare
+*/
+
+if(homeIsBot || awayIsBot){
+
+  formationSection = `
+
+    <div class="calendar-formation"
+      style="
+        display:flex;
+        justify-content:center;
+      "
+    >
+
+      <div style="
+        width:100%;
+        padding:10px 12px;
+        border-radius:11px;
+        background:rgba(255,255,255,.025);
+        border:1px solid rgba(255,255,255,.06);
+        text-align:center;
+      ">
+
+        <div style="
+          font-size:12px;
+          font-weight:850;
+        ">
+          🤖 FantaBot
+        </div>
+
+        <div
+          class="muted"
+          style="
+            margin-top:3px;
+            font-size:11px;
+          "
+        >
+          Squadra automatica · quota fissa 70
+        </div>
+
+      </div>
+
+    </div>
+
+  `;
+
+}else{
+
   formationSection = `
 
     <details class="calendar-formation">
@@ -6571,6 +6628,8 @@ if(homeIsBot || awayIsBot){
     </details>
 
   `;
+
+}
 
 }
 
