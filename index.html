@@ -8194,8 +8194,132 @@ let deadlineText =
     return html;
 
   }
-   
-window.renderLineup = renderLineup;
+
+
+  /* =========================
+     APERTURA FORMAZIONE
+  ========================= */
+
+  window.renderLineup = function(managerId,dayNumber){
+
+    let formationHtml =
+      renderLineup(
+        managerId,
+        dayNumber
+      );
+
+    let manager =
+      managers[managerId];
+
+    let managerName =
+      manager?.team_name ||
+      manager?.name ||
+      "Formazione";
+
+    let modal =
+      document.createElement("div");
+
+    modal.id =
+      "calendarLineupModal";
+
+    modal.style.cssText = `
+      position:fixed;
+      inset:0;
+      z-index:9999;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+      background:rgba(0,0,0,.72);
+      backdrop-filter:blur(8px);
+    `;
+
+    modal.innerHTML = `
+
+      <div
+        style="
+          width:min(560px,100%);
+          max-height:90vh;
+          overflow:auto;
+          background:#11182c;
+          border:1px solid rgba(255,255,255,.10);
+          border-radius:20px;
+          box-shadow:0 25px 80px rgba(0,0,0,.5);
+          padding:18px;
+        "
+        onclick="event.stopPropagation()"
+      >
+
+        <div style="
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:12px;
+          margin-bottom:16px;
+        ">
+
+          <div>
+
+            <div style="
+              font-size:11px;
+              font-weight:900;
+              text-transform:uppercase;
+              letter-spacing:.5px;
+              color:#a5b4fc;
+              margin-bottom:3px;
+            ">
+              FORMAZIONE
+            </div>
+
+            <div style="
+              font-size:20px;
+              font-weight:900;
+            ">
+              ${managerName}
+            </div>
+
+          </div>
+
+          <button
+            type="button"
+            onclick="
+              document
+                .getElementById('calendarLineupModal')
+                ?.remove()
+            "
+            style="
+              width:36px;
+              height:36px;
+              border:0;
+              border-radius:10px;
+              background:rgba(255,255,255,.07);
+              color:#fff;
+              font-size:20px;
+              cursor:pointer;
+            "
+          >
+            ×
+          </button>
+
+        </div>
+
+        ${formationHtml}
+
+      </div>
+
+    `;
+
+    modal.addEventListener(
+      "click",
+      function(){
+        modal.remove();
+      }
+    );
+
+    document.body.appendChild(modal);
+
+  };
+
 
   /* =========================
      PARTITE SELEZIONATE
