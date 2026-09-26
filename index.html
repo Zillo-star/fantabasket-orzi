@@ -5775,48 +5775,46 @@ async function calendar(){
   }
 
 
-  /* =========================
-     GIORNATE ARCHIVIATE
-  ========================= */
+/* =========================
+   GIORNATE
+========================= */
 
-  let archivedDays = allDays.filter(
-    day => day < currentDay
+let archivedDays =
+  allDays.filter(day => day < currentDay);
+
+let futureDays =
+  allDays.filter(day => day > currentDay);
+
+
+/* =========================
+   GIORNATA SELEZIONATA
+========================= */
+
+let selectedDay =
+  Number(
+    window.calendarSelectedDay || currentDay
   );
 
 
-  /* =========================
-     GIORNATA SELEZIONATA
-  ========================= */
+/*
+  Sono selezionabili anche le giornate future.
 
-  let selectedDay =
-    Number(
-      window.calendarSelectedDay || currentDay
-    );
+  Se non esiste una giornata precedentemente
+  selezionata, viene usata quella attuale.
+*/
 
+if(
+  !allDays.includes(selectedDay) ||
+  selectedDay === 0
+){
 
-  if(
-    currentDay !== null &&
-    selectedDay > currentDay
-  ){
+  selectedDay = currentDay;
 
-    selectedDay = currentDay;
-
-  }
+}
 
 
-  if(
-    !allDays.includes(selectedDay) ||
-    selectedDay === 0
-  ){
-
-    selectedDay = currentDay;
-
-  }
-
-
-  window.calendarSelectedDay =
-    selectedDay;
-
+window.calendarSelectedDay =
+  selectedDay;
 
   /* =========================
      LINEUP
