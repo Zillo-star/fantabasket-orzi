@@ -2908,21 +2908,8 @@ async function testPlayerStats(playerId="A827505"){
     const pStart = text.indexOf('"p":');
     const pEnd = text.indexOf('"players":',pStart);
 
-    if(pStart === -1 || pEnd === -1)
-      throw new Error("Blocco giocatori non trovato");
-
     const pBlock =
       text.slice(pStart,pEnd);
-
-    const pMatch =
-      pBlock.match(
-        new RegExp(
-          playerId +
-          "\\|[^#]*#"
-        )
-      );
-
-    let seconds = 0;
 
     const allPlayers =
       pBlock.match(/A[A-Z0-9]+\|[^#]+/g) || [];
@@ -2932,13 +2919,12 @@ async function testPlayerStats(playerId="A827505"){
         x.startsWith(playerId + "|")
       );
 
+    let seconds = 0;
+
     if(playerData){
 
-      let parts =
-        playerData.split("|");
-
-      let data =
-        parts[1].split(":");
+      const data =
+        playerData.split("|")[1].split(":");
 
       seconds =
         Number(data[3]) || 0;
@@ -2946,135 +2932,175 @@ async function testPlayerStats(playerId="A827505"){
     }
 
     /* =========================
-       EVENTI
+       EVENTI RAW
     ========================= */
 
-    let events =
+    const events =
       text
         .split("%")
         .filter(x => x.startsWith("i|"))
-        .map(x => ({
+        .map(x => {
 
-          raw:x,
+          const get =
+            key =>
+              x.match(
+                new RegExp(
+                  "#" + key + "\\|([^#]*)"
+                )
+              )?.[1] || "";
 
-          codice:
-            x.match(/#2\|([^#]+)/)?.[1] || "",
+          return {
 
-          giocatore1:
-            x.match(/#3\|([^#]+)/)?.[1] || "",
+            codice:get("2"),
 
-          giocatore2:
-            x.match(/#4\|([^#]+)/)?.[1] || "",
+            giocatore1:get("3"),
 
-          valore5:
-            x.match(/#5\|([^#]+)/)?.[1] || "",
+            giocatore2:get("4"),
 
-          valore6:
-            x.match(/#6\|([^#]+)/)?.[1] || "",
+            valore5:get("5"),
 
-          valore7:
-            x.match(/#7\|([^#]+)/)?.[1] || "",
+            valore6:get("6"),
 
-          tempo:
-            x.match(/#gt\|([^#]+)/)?.[1] || "",
+            valore7:get("7"),
 
-          vurl:
-            x.match(/#vurl\|([^#]+)/)?.[1] || ""
+            tempo:get("gt"),
 
-        }));
+            k:get("k"),
 
-    let playerEvents =
+            ss:get("ss"),
+
+            vurl:get("vurl"),
+
+            raw:x
+
+          };
+
+        });
+
+    const playerEvents =
       events.filter(x =>
         x.giocatore1 === playerId ||
         x.giocatore2 === playerId
       );
 
     console.log(
-      "🏀 EVENTI PLAYER",
-      playerId,
+      "🏀 EVENTI COMPLETI",
       playerEvents
     );
 
     /* =========================
-       VISUALIZZAZIONE
+       RENDER
     ========================= */
 
     el("content").innerHTML = `
 
       <div class="card">
 
-        <h2>🏀 Test statistiche live</h2>
+        <h2>🏀 ${playerId} — analisi live</h2>
 
         <div style="
-          margin-bottom:20px;
           padding:14px;
+          margin-bottom:18px;
           border-radius:12px;
           background:rgba(255,255,255,.05);
         ">
 
-          <b>Giocatore:</b> ${playerId}
+          <b>Minutaggio:</b>
+          ${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,"0")}
 
           <br>
 
-          <b>Minuti:</b>
-          ${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,"0")}
+          <b>Eventi:</b>
+          ${playerEvents.length}
 
         </div>
 
-        <h3>Eventi ricevuti</h3>
+        ${playerEvents.map((x,i)=>`
 
-        ${
-          playerEvents.length
-          ?
-          playerEvents.map((x,i)=>`
+          <div style="
+            padding:14px 0;
+            border-bottom:1px solid rgba(255,255,255,.08);
+          ">
 
             <div style="
-              padding:12px 0;
-              border-bottom:1px solid rgba(255,255,255,.08);
+              display:flex;
+              justify-content:space-between;
+              align-items:center;
             ">
 
-              <div style="
-                display:flex;
-                justify-content:space-between;
-                gap:10px;
+              <b>
+                Evento ${i+1}
+              </b>
+
+              <b style="
+                color:#fbbf24;
+                font-size:18px;
               ">
+                ${x.codice}
+              </b>
 
-                <b>
-                  Evento ${i+1}
-                </b>
+            </div>
 
-                <span style="
-                  color:#fbbf24;
-                  font-weight:700;
-                ">
-                  ${x.codice}
-                </span>
+            <div style="
+              margin-top:8px;
+              font-size:14px;
+              line-height:1.7;
+            ">
 
+              <div>
+                <b>G1:</b> ${x.giocatore1 || "-"}
               </div>
 
-              <div class="muted" style="
-                margin-top:6px;
-                line-height:1.6;
-              ">
+              <div>
+                <b>G2:</b> ${x.giocatore2 || "-"}
+              </div>
 
-                giocatore1: ${x.giocatore1}<br>
-                giocatore2: ${x.giocatore2}<br>
-                valore5: ${x.valore5}<br>
-                valore6: ${x.valore6}<br>
-                valore7: ${x.valore7}<br>
-                tempo: ${x.tempo}<br>
-                punteggio: ${x.vurl || "-"}
+              <div>
+                <b>V5:</b> ${x.valore5 || "-"}
+                &nbsp;&nbsp;
+                <b>V6:</b> ${x.valore6 || "-"}
+                &nbsp;&nbsp;
+                <b>V7:</b> ${x.valore7 || "-"}
+              </div>
 
+              <div>
+                <b>GT:</b> ${x.tempo || "-"}
+              </div>
+
+              <div>
+                <b>K:</b> ${x.k || "-"}
+              </div>
+
+              <div>
+                <b>SS:</b> ${x.ss || "-"}
+              </div>
+
+              <div>
+                <b>VURL:</b> ${x.vurl || "-"}
               </div>
 
             </div>
 
-          `).join("")
-          :
-          `<div class="muted">
-            Nessun evento trovato.
-          </div>`
-        }
+            <details style="margin-top:8px">
+
+              <summary class="muted">
+                Dati raw
+              </summary>
+
+              <div style="
+                margin-top:8px;
+                font-size:11px;
+                word-break:break-all;
+                opacity:.7;
+              ">
+                ${x.raw}
+              </div>
+
+            </details>
+
+          </div>
+
+        `).join("")}
 
       </div>
 
@@ -3083,13 +3109,12 @@ async function testPlayerStats(playerId="A827505"){
   }catch(error){
 
     console.error(
-      "❌ TEST STATISTICHE:",
+      "❌ TEST:",
       error
     );
 
     message(
-      "Errore statistiche: " +
-      error.message,
+      "Errore: " + error.message,
       "err"
     );
 
