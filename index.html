@@ -8602,1228 +8602,954 @@ window.calendarSelectedDay =
 
 function renderLineup(managerId,dayNumber){
 
-  let manager =
-    managers[managerId];
+  let manager = managers[managerId];
+  if(!manager) return `<div style="padding:20px;text-align:center">Manager non trovato.</div>`;
 
-  let matchday =
-    matchdays[Number(dayNumber)];
-
-  if(!matchday){
-
-    return `
-      <div class="muted">
-        Giornata non trovata.
-      </div>
-    `;
-
-  }
-
-  /* =========================
-     DEADLINE
-  ========================= */
-
-  let deadlinePassed = true;
-
-  if(matchday.lineup_deadline){
-
-    let deadlineString =
-      String(matchday.lineup_deadline);
-
-    let match =
-      deadlineString.match(
-        /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/
-      );
-
-    if(match){
-
-      let deadlineDate =
-        new Date(
-          Number(match[1]),
-          Number(match[2]) - 1,
-          Number(match[3]),
-          Number(match[4]),
-          Number(match[5]),
-          Number(match[6] || 0)
-        );
-
-      deadlinePassed =
-        new Date() >= deadlineDate;
-
-    }
-
-  }
-
-
-  if(!deadlinePassed){
-
-    let deadlineText =
-      parseLocalDeadline(matchday.lineup_deadline)
-        .toLocaleString(
-          "it-IT",
-          {
-            day:"2-digit",
-            month:"2-digit",
-            hour:"2-digit",
-            minute:"2-digit"
-          }
-        );
-
+  // FantaBot
+  if(manager.is_bot){
     return `
       <div style="
-        padding:16px;
-        border-radius:14px;
-        background:rgba(255,255,255,.035);
-        border:1px solid rgba(255,255,255,.07);
+        padding:28px 18px;
+        text-align:center;
+        color:#fff;
+        background:#11182c;
+        border-radius:18px;
+        border:1px solid rgba(255,255,255,.08);
       ">
-
+        <div style="font-size:38px;margin-bottom:8px">🤖</div>
+        <div style="font-size:20px;font-weight:800">FantaBot</div>
+        <div style="font-size:13px;color:#9ca3af;margin-top:5px">
+          Formazione automatica
+        </div>
         <div style="
-          font-weight:850;
-          font-size:14px;
+          margin-top:18px;
+          font-size:28px;
+          font-weight:900;
+          color:#a78bfa;
         ">
-          🔒 Formazione non ancora visibile
+          1.0
         </div>
-
-        <div
-          class="muted"
-          style="
-            margin-top:6px;
-            font-size:12px;
-          "
-        >
-          Visibile dopo la deadline
-          del ${deadlineText}.
-        </div>
-
       </div>
     `;
-
   }
 
+  let matchday = matchdays[Number(dayNumber)];
+  if(!matchday){
+    return `<div style="padding:20px;text-align:center">Giornata non trovata.</div>`;
+  }
 
-  /* =========================
-     TROVA LA PARTITA
-  ========================= */
+  let matchdayId = matchday.id;
 
-  let match =
-    matches.find(x =>
-      Number(x.matchday_number) === Number(dayNumber) &&
+  // ------------------------------------------------------------
+  // DEADLINE
+  // ------------------------------------------------------------
+
+  let deadline = matchday.lineup_deadline
+    ? new Date(matchday.lineup_deadline)
+    : null;
+
+  if(deadline && new Date() < deadline){
+    return `
+      <div style="
+        padding:30px 18px;
+        text-align:center;
+        color:#fff;
+        background:#11182c;
+        border-radius:18px;
+        border:1px solid rgba(255,255,255,.08);
+      ">
+        <div style="font-size:38px;margin-bottom:10px">🔒</div>
+
+        <div style="
+          font-size:19px;
+          font-weight:800;
+          margin-bottom:7px;
+        ">
+          Formazione non ancora visibile
+        </div>
+
+        <div style="
+          color:#9ca3af;
+          font-size:13px;
+          line-height:1.5;
+        ">
+          Sarà visibile alla chiusura della deadline.
+        </div>
+      </div>
+    `;
+  }
+
+  // ------------------------------------------------------------
+  // TROVA PARTITA DEL MANAGER
+  // ------------------------------------------------------------
+
+  let match = null;
+
+  if(typeof leagueMatches !== "undefined" && Array.isArray(leagueMatches)){
+    match = leagueMatches.find(m =>
+      Number(m.matchday_number) === Number(dayNumber) &&
       (
-        x.home_manager_id === managerId ||
-        x.away_manager_id === managerId
+        m.home_manager_id === managerId ||
+        m.away_manager_id === managerId
       )
     );
-
-
-  if(!match){
-
-    return `
-      <div class="muted">
-        Partita non trovata.
-      </div>
-    `;
-
   }
 
+  let opponentId = null;
 
-  let homeManager =
-    managers[match.home_manager_id];
+  if(match){
+    opponentId =
+      match.home_manager_id === managerId
+        ? match.away_manager_id
+        : match.home_manager_id;
+  }
 
-  let awayManager =
-    managers[match.away_manager_id];
+  let opponent = opponentId ? managers[opponentId] : null;
 
+  // ------------------------------------------------------------
+  // LINEUPS
+  // ------------------------------------------------------------
 
-  let homeId =
-    match.home_manager_id;
+  let myLineup =
+    lineupMap[managerId + "_" + matchdayId] || null;
 
-  let awayId =
-    match.away_manager_id;
+  let opponentLineup =
+    opponentId
+      ? lineupMap[opponentId + "_" + matchdayId] || null
+      : null;
 
+  // ------------------------------------------------------------
+  // PLAYERS
+  // ------------------------------------------------------------
 
-  /* =========================
-     CREA FORMAZIONE
-  ========================= */
+  let myPlayers = myLineup
+    ? lineupPlayers.filter(x => x.lineup_id === myLineup.id)
+    : [];
 
-  function getFormation(managerId){
+  let opponentPlayers = opponentLineup
+    ? lineupPlayers.filter(x => x.lineup_id === opponentLineup.id)
+    : [];
 
-    let manager =
-      managers[managerId];
+  // ------------------------------------------------------------
+  // POSIZIONE / RUOLO
+  // ------------------------------------------------------------
 
-    if(manager?.is_bot){
+  function getPlayerData(lp){
 
-      return {
-        bot:true,
-        starters:[],
-        sixth:[],
-        bench:[],
-        out:[]
-      };
-
-    }
-
-
-    let lineup =
-      lineupMap[
-        managerId + "_" + matchday.id
-      ];
-
-
-    if(!lineup){
-
-      return {
-        bot:false,
-        saved:false,
-        starters:[],
-        sixth:[],
-        bench:[],
-        out:[]
-      };
-
-    }
-
-
-    let lp =
-      lineupPlayers.filter(
-        x => x.lineup_id === lineup.id
-      );
-
-
-    let starters=[];
-    let sixth=[];
-    let bench=[];
-    let out=[];
-
-
-    lp.forEach(x => {
-
-      let player =
-        players[x.player_id];
-
-      if(!player)
-        return;
-
-
-      let item={
-        ...x,
-        player
-      };
-
-
-      if(x.role === "starter")
-        starters.push(item);
-
-      else if(x.role === "sixth")
-        sixth.push(item);
-
-      else if(x.role === "bench")
-        bench.push(item);
-
-      else
-        out.push(item);
-
-    });
-
+    let p = players.find(x => x.id === lp.player_id);
 
     return {
-      bot:false,
-      saved:true,
-      starters,
-      sixth,
-      bench,
-      out
+      ...lp,
+      player:p || null,
+      name:p?.name || lp.name || "",
+      surname:p?.surname || lp.surname || "",
+      position:p?.position || lp.position || "",
+      photo_url:p?.photo_url || null,
+      real_team_id:p?.real_team_id || null
     };
-
   }
 
+  myPlayers = myPlayers.map(getPlayerData);
+  opponentPlayers = opponentPlayers.map(getPlayerData);
 
-  let homeFormation =
-    getFormation(homeId);
+  // ------------------------------------------------------------
+  // SCORE
+  // ------------------------------------------------------------
 
-  let awayFormation =
-    getFormation(awayId);
+  function getScore(managerId,playerId){
 
+    let key =
+      managerId + "_" +
+      matchdayId + "_" +
+      playerId;
 
-  /* =========================
-     NOME
-  ========================= */
+    let value = scoreMap[key];
 
-  function teamName(manager){
+    if(value === undefined || value === null || value === ""){
+      return null;
+    }
 
-    return (
-      manager?.team_name ||
-      manager?.name ||
-      "—"
+    return Number(value).toFixed(1);
+  }
+
+  // ------------------------------------------------------------
+  // PLAYER CARD
+  // ------------------------------------------------------------
+
+  function playerCard(x,side){
+
+    let score = getScore(
+      x.managerId,
+      x.player_id
     );
 
-  }
+    let isCaptain =
+      x.captain === true ||
+      x.is_captain === true;
 
-
-  function managerName(manager){
-
-    return manager?.name || "";
-
-  }
-
-
-  /* =========================
-     PEDINA GIOCATORE
-  ========================= */
-
-  function playerCard(x){
-
-    let player =
-      x.player;
-
-
-    let score =
-      scoreMap[
-        x.managerId +
-        "_" +
-        matchday.id +
-        "_" +
-        x.player_id
-      ];
-
-
-    let captain =
-      x.captain === true;
-
-
-    let scoreText =
-      score !== undefined &&
-      score !== null
-        ? `
-          <div style="
-            margin-top:3px;
-            font-size:12px;
-            font-weight:900;
-            color:#c4b5fd;
-          ">
-            ${score}
-          </div>
-        `
-        : "";
-
-
-    let captainBadge =
-      captain
-        ? `
-          <span style="
-            position:absolute;
-            top:-7px;
-            right:-7px;
-            width:20px;
-            height:20px;
-            border-radius:50%;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            background:#f59e0b;
-            font-size:11px;
-            box-shadow:0 3px 10px rgba(0,0,0,.35);
-          ">
-            👑
-          </span>
-        `
-        : "";
-
+    let role =
+      String(x.position || "").toUpperCase();
 
     let firstName =
-      player.name || "";
+      String(x.name || "").trim();
 
     let surname =
-      player.surname || "";
+      String(x.surname || "").trim();
 
+    let displayName =
+      surname || firstName;
 
-    let fullName =
-      [firstName,surname]
-        .filter(Boolean)
-        .join(" ");
+    let team =
+      x.player?.real_team_id
+        ? realTeams.find(t => t.id === x.player.real_team_id)
+        : null;
 
+    let logo =
+      team?.logo_url || null;
 
     return `
-      <div style="
-        position:relative;
-        min-width:74px;
-        max-width:94px;
-        padding:7px 6px;
-        border-radius:12px;
-        background:
-          linear-gradient(
-            145deg,
-            rgba(255,255,255,.10),
-            rgba(255,255,255,.035)
-          );
-        border:1px solid ${
-          captain
-            ? "rgba(245,158,11,.65)"
-            : "rgba(255,255,255,.12)"
-        };
-        box-shadow:
-          0 5px 14px rgba(0,0,0,.25);
-        text-align:center;
-        backdrop-filter:blur(4px);
-      ">
+      <div class="fb-lineup-player"
+           style="
+             position:relative;
+             width:100%;
+             min-width:0;
+             display:flex;
+             flex-direction:column;
+             align-items:center;
+             justify-content:center;
+             padding:7px 4px 6px;
+             border-radius:12px;
+             background:
+               linear-gradient(
+                 180deg,
+                 rgba(255,255,255,.10),
+                 rgba(255,255,255,.045)
+               );
+             border:1px solid rgba(255,255,255,.13);
+             box-shadow:
+               0 5px 12px rgba(0,0,0,.24);
+             color:#fff;
+             overflow:hidden;
+           ">
 
-        ${captainBadge}
+        ${
+          isCaptain
+          ? `
+            <div style="
+              position:absolute;
+              top:3px;
+              right:4px;
+              font-size:11px;
+              line-height:1;
+            ">👑</div>
+          `
+          : ""
+        }
 
         <div style="
-          width:34px;
-          height:34px;
-          margin:0 auto 4px;
+          width:26px;
+          height:26px;
           border-radius:50%;
           display:flex;
           align-items:center;
           justify-content:center;
-          background:rgba(99,102,241,.18);
-          border:1px solid rgba(165,180,252,.22);
-          font-size:17px;
+          margin-bottom:3px;
+          background:
+            ${
+              logo
+              ? `rgba(255,255,255,.9)`
+              : `linear-gradient(135deg,#7c3aed,#4f46e5)`
+            };
+          overflow:hidden;
+          flex-shrink:0;
         ">
-          🏀
+          ${
+            logo
+            ? `
+              <img
+                src="${logo}"
+                style="
+                  width:21px;
+                  height:21px;
+                  object-fit:contain;
+                "
+              >
+            `
+            : `
+              <span style="font-size:13px">🏀</span>
+            `
+          }
         </div>
 
         <div style="
+          width:100%;
+          text-align:center;
           font-size:10px;
-          font-weight:850;
-          line-height:1.12;
+          line-height:1.1;
+          font-weight:800;
+          white-space:nowrap;
           overflow:hidden;
           text-overflow:ellipsis;
-          white-space:nowrap;
-        "
-        title="${fullName}">
-          ${firstName}
+          padding:0 2px;
+        ">
+          ${displayName}
+        </div>
+
+        <div style="
+          margin-top:2px;
+          font-size:8px;
+          line-height:1;
+          font-weight:700;
+          color:#9ca3af;
+        ">
+          ${role}
         </div>
 
         ${
-          surname
-            ? `
-              <div style="
-                font-size:9px;
-                opacity:.68;
-                line-height:1.1;
-                overflow:hidden;
-                text-overflow:ellipsis;
-                white-space:nowrap;
-              ">
-                ${surname}
-              </div>
-            `
-            : ""
+          score !== null
+          ? `
+            <div style="
+              margin-top:4px;
+              font-size:13px;
+              line-height:1;
+              font-weight:900;
+              color:#c4b5fd;
+            ">
+              ${score}
+            </div>
+          `
+          : `
+            <div style="
+              margin-top:4px;
+              font-size:10px;
+              line-height:1;
+              color:#6b7280;
+            ">
+              —
+            </div>
+          `
         }
-
-        ${
-          player.position
-            ? `
-              <div style="
-                margin-top:2px;
-                font-size:8px;
-                font-weight:800;
-                opacity:.5;
-              ">
-                ${player.position}
-              </div>
-            `
-            : ""
-        }
-
-        ${scoreText}
 
       </div>
     `;
-
   }
 
+  // ------------------------------------------------------------
+  // PREPARA I 5 TITOLARI
+  // ------------------------------------------------------------
 
-  /* =========================
-     POSIZIONAMENTO TITOLARI
-  ========================= */
+  function prepareStarters(list,managerId){
 
-  function courtStarters(list,side){
+    let starters = list.filter(x =>
+      x.role === "starter" ||
+      x.lineup_role === "starter" ||
+      x.starter === true
+    );
 
-    if(!list.length)
-      return "";
+    starters = starters.map(x => ({
+      ...x,
+      managerId
+    }));
 
+    let guards = starters.filter(x =>
+      String(x.position).toUpperCase().startsWith("G")
+    );
 
-    let prepared =
-      list.map(x => ({
-        ...x,
-        managerId:
-          side === "home"
-            ? homeId
-            : awayId
-      }));
+    let forwards = starters.filter(x =>
+      String(x.position).toUpperCase().startsWith("A")
+    );
 
+    let centers = starters.filter(x =>
+      String(x.position).toUpperCase().startsWith("C")
+    );
 
-    /*
-      Ordine visivo:
+    return {
+      guards,
+      forwards,
+      centers,
+      starters
+    };
+  }
 
-      G = zona esterna
-      A = zona intermedia
-      C = zona canestro
-    */
+  // ------------------------------------------------------------
+  // FORMAZIONE AUTOMATICA IN BASE AI RUOLI
+  // ------------------------------------------------------------
 
-    let guards =
-      prepared.filter(
-        x => String(x.player.position || "").toUpperCase() === "G"
-      );
+  function detectFormation(list){
 
-    let forwards =
-      prepared.filter(
-        x => String(x.player.position || "").toUpperCase() === "A"
-      );
+    let g = list.filter(x =>
+      String(x.position).toUpperCase().startsWith("G")
+    ).length;
 
-    let centers =
-      prepared.filter(
-        x => String(x.player.position || "").toUpperCase() === "C"
-      );
+    let a = list.filter(x =>
+      String(x.position).toUpperCase().startsWith("A")
+    ).length;
 
+    let c = list.filter(x =>
+      String(x.position).toUpperCase().startsWith("C")
+    ).length;
 
-    let ordered = [
-      ...guards,
-      ...forwards,
-      ...centers
-    ];
+    return `${g}-${a}-${c}`;
+  }
 
+  // ------------------------------------------------------------
+  // CAMPO: POSIZIONAMENTO A GRIGLIA
+  // ------------------------------------------------------------
 
-    /*
-      Se per qualche motivo i ruoli non bastano,
-      utilizziamo comunque tutti i 5 titolari.
-    */
+  function courtHalf(list,managerId,side){
 
-    if(ordered.length < prepared.length){
+    let data = prepareStarters(list,managerId);
 
-      prepared.forEach(x => {
-
-        if(!ordered.includes(x))
-          ordered.push(x);
-
-      });
-
+    if(data.starters.length === 0){
+      return `
+        <div style="
+          height:100%;
+          min-height:220px;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          color:rgba(255,255,255,.45);
+          font-size:13px;
+          text-align:center;
+        ">
+          Nessuna formazione inserita
+        </div>
+      `;
     }
 
+    let formation = detectFormation(data.starters);
 
-    let positions;
+    let rows = [];
 
+    // 3G-1A-1C
+    if(formation === "3-1-1"){
 
-    if(ordered.length >= 5){
+      rows = [
+        data.centers,
+        data.forwards,
+        data.guards
+      ];
 
-      positions = [
-        {left:"18%",top:"8%"},
-        {left:"62%",top:"8%"},
-        {left:"8%",top:"38%"},
-        {left:"70%",top:"38%"},
-        {left:"39%",top:"61%"}
+    // 2G-2A-1C
+    }else if(formation === "2-2-1"){
+
+      rows = [
+        data.centers,
+        data.forwards,
+        data.guards
+      ];
+
+    // 1G-3A-1C
+    }else if(formation === "1-3-1"){
+
+      rows = [
+        data.centers,
+        data.forwards,
+        data.guards
+      ];
+
+    // 1G-2A-2C
+    }else if(formation === "1-2-2"){
+
+      rows = [
+        data.centers,
+        data.forwards,
+        data.guards
+      ];
+
+    // 2G-1A-2C
+    }else if(formation === "2-1-2"){
+
+      rows = [
+        data.centers,
+        data.forwards,
+        data.guards
       ];
 
     }else{
 
-      positions = [
-        {left:"18%",top:"12%"},
-        {left:"62%",top:"12%"},
-        {left:"25%",top:"43%"},
-        {left:"55%",top:"43%"},
-        {left:"39%",top:"65%"}
+      rows = [
+        data.centers,
+        data.forwards,
+        data.guards
       ];
-
     }
 
+    let html = "";
 
-    return ordered
-      .slice(0,5)
-      .map((x,i)=>`
+    rows.forEach((row,index) => {
 
+      if(!row.length) return;
+
+      html += `
         <div style="
-          position:absolute;
-          left:${positions[i]?.left || "39%"};
-          top:${positions[i]?.top || "45%"};
-          transform:translate(-50%,-50%);
+          width:100%;
+          display:grid;
+          grid-template-columns:
+            repeat(${Math.max(1,row.length)},minmax(0,1fr));
+          gap:8px;
+          align-items:center;
+          justify-items:center;
         ">
-          ${playerCard(x)}
+          ${row.map(x => playerCard(x,side)).join("")}
         </div>
+      `;
 
-      `)
-      .join("");
-
-  }
-
-
-  /* =========================
-     PANCHINA / SESTO / FUORI
-  ========================= */
-
-  function bottomPlayers(formation,managerId){
-
-    let sixth =
-      formation.sixth || [];
-
-    let bench =
-      formation.bench || [];
-
-    let out =
-      formation.out || [];
-
-
-    sixth.forEach(x=>{
-      x.managerId=managerId;
     });
-
-    bench.forEach(x=>{
-      x.managerId=managerId;
-    });
-
-    out.forEach(x=>{
-      x.managerId=managerId;
-    });
-
-
-    let allBench =
-      [...sixth,...bench];
-
 
     return `
+      <div style="
+        width:100%;
+        height:100%;
+        min-height:220px;
+        display:flex;
+        flex-direction:column;
+        justify-content:space-evenly;
+        padding:14px 10px;
+        gap:8px;
+      ">
+        ${html}
+      </div>
+    `;
+  }
 
+  // ------------------------------------------------------------
+  // PANCHINA
+  // ------------------------------------------------------------
+
+  function benchBlock(list,managerId){
+
+    let sixth = list.find(x =>
+      x.role === "sixth" ||
+      x.lineup_role === "sixth" ||
+      x.sixth === true
+    );
+
+    let bench = list.filter(x =>
+      x.role === "bench" ||
+      x.lineup_role === "bench"
+    );
+
+    let out = list.filter(x =>
+      x.role === "out" ||
+      x.lineup_role === "out"
+    );
+
+    if(sixth) sixth.managerId = managerId;
+    bench = bench.map(x => ({...x,managerId}));
+    out = out.map(x => ({...x,managerId}));
+
+    return `
       <div style="
         margin-top:10px;
-        padding:9px;
-        border-radius:12px;
-        background:rgba(0,0,0,.14);
-        border:1px solid rgba(255,255,255,.06);
+        padding:10px;
+        border-radius:14px;
+        background:rgba(255,255,255,.045);
+        border:1px solid rgba(255,255,255,.07);
       ">
 
         ${
-          allBench.length
-            ? `
+          sixth
+          ? `
+            <div style="
+              margin-bottom:8px;
+            ">
               <div style="
-                display:flex;
-                flex-wrap:wrap;
-                justify-content:center;
-                gap:7px;
+                font-size:9px;
+                font-weight:900;
+                letter-spacing:.08em;
+                text-transform:uppercase;
+                color:#a78bfa;
+                margin-bottom:5px;
               ">
-
-                ${allBench.map(x=>`
-
-                  <div style="
-                    min-width:72px;
-                    max-width:90px;
-                    padding:6px 7px;
-                    border-radius:9px;
-                    background:rgba(255,255,255,.045);
-                    border:1px solid rgba(255,255,255,.06);
-                    text-align:center;
-                  ">
-
-                    <div style="
-                      font-size:8px;
-                      font-weight:900;
-                      text-transform:uppercase;
-                      opacity:.45;
-                      margin-bottom:2px;
-                    ">
-                      ${
-                        x.role === "sixth"
-                          ? "6° UOMO"
-                          : "PANCHINA"
-                      }
-                    </div>
-
-                    <div style="
-                      font-size:10px;
-                      font-weight:750;
-                      white-space:nowrap;
-                      overflow:hidden;
-                      text-overflow:ellipsis;
-                    ">
-                      ${x.player.name || ""}
-                    </div>
-
-                    ${
-                      x.player.surname
-                        ? `
-                          <div style="
-                            font-size:9px;
-                            opacity:.55;
-                            white-space:nowrap;
-                            overflow:hidden;
-                            text-overflow:ellipsis;
-                          ">
-                            ${x.player.surname}
-                          </div>
-                        `
-                        : ""
-                    }
-
-                  </div>
-
-                `).join("")}
-
+                6° uomo · 100%
               </div>
-            `
-            : `
+
               <div style="
-                text-align:center;
-                font-size:10px;
-                opacity:.4;
+                max-width:105px;
               ">
-                Nessuna riserva
+                ${playerCard(sixth,"bench")}
               </div>
-            `
+            </div>
+          `
+          : ""
+        }
+
+        ${
+          bench.length
+          ? `
+            <div style="
+              font-size:9px;
+              font-weight:900;
+              letter-spacing:.08em;
+              text-transform:uppercase;
+              color:#9ca3af;
+              margin-bottom:5px;
+            ">
+              Panchina · 50%
+            </div>
+
+            <div style="
+              display:grid;
+              grid-template-columns:
+                repeat(${Math.min(4,bench.length)},minmax(0,1fr));
+              gap:6px;
+            ">
+              ${bench.map(x => playerCard(x,"bench")).join("")}
+            </div>
+          `
+          : ""
         }
 
         ${
           out.length
-            ? `
+          ? `
+            <div style="
+              margin-top:8px;
+              padding-top:7px;
+              border-top:1px solid rgba(255,255,255,.06);
+              font-size:9px;
+              line-height:1.4;
+              color:#6b7280;
+            ">
+              <span style="font-weight:800;color:#7b8496">
+                OUT:
+              </span>
+              ${out.map(x =>
+                `${x.name || ""} ${x.surname || ""}`
+              ).join(" · ")}
+            </div>
+          `
+          : ""
+        }
+
+      </div>
+    `;
+  }
+
+  // ------------------------------------------------------------
+  // SQUADRA
+  // ------------------------------------------------------------
+
+  function teamBlock(teamManager,teamId,side){
+
+    let list =
+      teamId === managerId
+        ? myPlayers
+        : opponentPlayers;
+
+    return `
+      <div style="
+        width:100%;
+      ">
+
+        <div style="
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:8px;
+          margin-bottom:8px;
+        ">
+
+          <div style="
+            min-width:0;
+          ">
+            <div style="
+              font-size:15px;
+              line-height:1.1;
+              font-weight:900;
+              color:#fff;
+              white-space:nowrap;
+              overflow:hidden;
+              text-overflow:ellipsis;
+            ">
+              ${teamManager?.team_name || teamManager?.name || "Squadra"}
+            </div>
+
+            <div style="
+              margin-top:2px;
+              font-size:10px;
+              color:#8b93a5;
+            ">
+              ${teamManager?.name || ""}
+            </div>
+          </div>
+
+          <div style="
+            flex-shrink:0;
+            padding:5px 8px;
+            border-radius:9px;
+            background:rgba(124,58,237,.16);
+            border:1px solid rgba(167,139,250,.18);
+            font-size:9px;
+            font-weight:800;
+            color:#c4b5fd;
+          ">
+            ${detectFormation(list.filter(x =>
+              x.role === "starter" ||
+              x.lineup_role === "starter" ||
+              x.starter === true
+            ))}
+          </div>
+
+        </div>
+
+        <div style="
+          position:relative;
+          overflow:hidden;
+          border-radius:18px;
+          background:
+            linear-gradient(
+              180deg,
+              rgba(52,211,153,.18),
+              rgba(16,185,129,.08)
+            );
+          border:1px solid rgba(255,255,255,.12);
+          box-shadow:
+            inset 0 0 30px rgba(0,0,0,.12),
+            0 8px 20px rgba(0,0,0,.18);
+        ">
+
+          <!-- linee campo -->
+          <div style="
+            position:absolute;
+            left:0;
+            right:0;
+            top:50%;
+            height:1px;
+            background:rgba(255,255,255,.20);
+          "></div>
+
+          <div style="
+            position:absolute;
+            width:70px;
+            height:70px;
+            left:50%;
+            top:50%;
+            transform:translate(-50%,-50%);
+            border:1px solid rgba(255,255,255,.18);
+            border-radius:50%;
+          "></div>
+
+          <div style="
+            position:absolute;
+            left:50%;
+            top:0;
+            transform:translateX(-50%);
+            width:85px;
+            height:42px;
+            border:1px solid rgba(255,255,255,.16);
+            border-top:0;
+            border-radius:0 0 45px 45px;
+          "></div>
+
+          <div style="
+            position:absolute;
+            left:50%;
+            bottom:0;
+            transform:translateX(-50%);
+            width:85px;
+            height:42px;
+            border:1px solid rgba(255,255,255,.16);
+            border-bottom:0;
+            border-radius:45px 45px 0 0;
+          "></div>
+
+          <div style="
+            position:absolute;
+            top:3px;
+            left:50%;
+            transform:translateX(-50%);
+            font-size:10px;
+            opacity:.65;
+          ">
+            🏀
+          </div>
+
+          <div style="
+            position:relative;
+            z-index:2;
+          ">
+            ${courtHalf(list,teamId,side)}
+          </div>
+
+        </div>
+
+        ${benchBlock(list,teamId)}
+
+      </div>
+    `;
+  }
+
+  // ------------------------------------------------------------
+  // RISULTATO
+  // ------------------------------------------------------------
+
+  let myScore = null;
+  let oppScore = null;
+
+  if(match){
+
+    if(match.home_manager_id === managerId){
+
+      myScore = match.home_score;
+      oppScore = match.away_score;
+
+    }else{
+
+      myScore = match.away_score;
+      oppScore = match.home_score;
+
+    }
+  }
+
+  // ------------------------------------------------------------
+  // OUTPUT FINALE
+  // ------------------------------------------------------------
+
+  return `
+    <div style="
+      width:100%;
+      max-width:520px;
+      margin:0 auto;
+      color:#fff;
+      font-family:inherit;
+    ">
+
+      <!-- HEADER -->
+
+      <div style="
+        margin-bottom:12px;
+        padding:12px 13px;
+        border-radius:16px;
+        background:
+          linear-gradient(
+            135deg,
+            rgba(124,58,237,.18),
+            rgba(59,130,246,.08)
+          );
+        border:1px solid rgba(255,255,255,.08);
+      ">
+
+        <div style="
+          text-align:center;
+          font-size:9px;
+          text-transform:uppercase;
+          letter-spacing:.12em;
+          color:#8b93a5;
+          font-weight:800;
+        ">
+          Giornata ${dayNumber}
+        </div>
+
+        ${
+          opponent
+          ? `
+            <div style="
+              margin-top:8px;
+              display:flex;
+              align-items:center;
+              justify-content:center;
+              gap:10px;
+            ">
+
               <div style="
-                margin-top:8px;
-                padding-top:7px;
-                border-top:1px solid rgba(255,255,255,.05);
-                text-align:center;
+                flex:1;
+                min-width:0;
+                text-align:right;
+                font-size:12px;
+                font-weight:800;
+                white-space:nowrap;
+                overflow:hidden;
+                text-overflow:ellipsis;
               ">
-
-                <div style="
-                  font-size:8px;
-                  font-weight:900;
-                  text-transform:uppercase;
-                  opacity:.35;
-                  margin-bottom:4px;
-                ">
-                  FUORI
-                </div>
-
-                <div style="
-                  display:flex;
-                  flex-wrap:wrap;
-                  justify-content:center;
-                  gap:5px;
-                ">
-
-                  ${out.map(x=>`
-
-                    <span style="
-                      font-size:9px;
-                      opacity:.45;
-                      padding:3px 6px;
-                      border-radius:6px;
-                      background:rgba(255,255,255,.025);
-                    ">
-                      ${
-                        [
-                          x.player.name,
-                          x.player.surname
-                        ]
-                        .filter(Boolean)
-                        .join(" ")
-                      }
-                    </span>
-
-                  `).join("")}
-
-                </div>
-
+                ${manager?.team_name || manager?.name || ""}
               </div>
-            `
-            : ""
+
+              <div style="
+                min-width:54px;
+                text-align:center;
+                font-size:19px;
+                font-weight:950;
+                letter-spacing:-.03em;
+              ">
+                ${
+                  myScore !== null && myScore !== undefined
+                  ? myScore
+                  : "—"
+                }
+                <span style="
+                  color:#6b7280;
+                  font-size:12px;
+                  margin:0 3px;
+                ">–</span>
+                ${
+                  oppScore !== null && oppScore !== undefined
+                  ? oppScore
+                  : "—"
+                }
+              </div>
+
+              <div style="
+                flex:1;
+                min-width:0;
+                text-align:left;
+                font-size:12px;
+                font-weight:800;
+                white-space:nowrap;
+                overflow:hidden;
+                text-overflow:ellipsis;
+              ">
+                ${opponent?.team_name || opponent?.name || ""}
+              </div>
+
+            </div>
+          `
+          : `
+            <div style="
+              margin-top:8px;
+              text-align:center;
+              font-size:13px;
+              font-weight:800;
+            ">
+              ${manager?.team_name || manager?.name || ""}
+            </div>
+          `
         }
 
       </div>
 
-    `;
+      <!-- CAMPO SQUADRA 1 -->
 
-  }
+      ${teamBlock(manager,managerId,"home")}
 
-
-  /* =========================
-     METÀ CAMPO
-  ========================= */
-
-  function courtHalf(
-    formation,
-    managerId,
-    side
-  ){
-
-    if(formation.bot){
-
-      return `
-        <div style="
-          height:100%;
-          display:flex;
-          align-items:center;
-          justify-content:center;
-          text-align:center;
-        ">
-
-          <div>
-
+      ${
+        opponent
+        ? `
+          <div style="
+            height:14px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+          ">
             <div style="
-              font-size:32px;
-              margin-bottom:6px;
-            ">
-              🤖
-            </div>
-
-            <div style="
-              font-size:12px;
-              font-weight:850;
-            ">
-              FantaBot
-            </div>
-
-            <div style="
-              margin-top:3px;
-              font-size:9px;
-              opacity:.5;
-            ">
-              Quota fissa · 1 punto
-            </div>
-
+              width:32px;
+              height:2px;
+              border-radius:2px;
+              background:rgba(167,139,250,.35);
+            "></div>
           </div>
 
-        </div>
-      `;
-
-    }
-
-
-    if(!formation.saved){
-
-      return `
-        <div style="
-          height:100%;
-          display:flex;
-          align-items:center;
-          justify-content:center;
-          text-align:center;
-          padding:20px;
-        ">
-
-          <div style="
-            font-size:11px;
-            opacity:.5;
-          ">
-            ⚠️<br>
-            Formazione non selezionata
-          </div>
-
-        </div>
-      `;
-
-    }
-
-
-    return `
-
-      ${courtStarters(
-        formation.starters,
-        side
-      )}
-
-    `;
-
-  }
-
-
-  /* =========================
-     PUNTEGGIO PARTITA
-  ========================= */
-
-  let matchScore =
-    match.completed
-      ? `
-        <div style="
-          font-size:20px;
-          font-weight:950;
-        ">
-          ${match.home_score ?? 0}
-          <span style="
-            opacity:.35;
-            margin:0 4px;
-          ">
-            -
-          </span>
-          ${match.away_score ?? 0}
-        </div>
-      `
-      : `
-        <div style="
-          font-size:11px;
-          font-weight:850;
-          opacity:.45;
-        ">
-          VS
-        </div>
-      `;
-
-
-  /* =========================
-     CAMPO COMPLETO
-  ========================= */
-
-  let courtHtml = `
-
-    <div style="
-      margin-top:4px;
-    ">
-
-      <!-- TESTATA -->
-
-      <div style="
-        display:grid;
-        grid-template-columns:1fr auto 1fr;
-        align-items:center;
-        gap:8px;
-        margin-bottom:12px;
-      ">
-
-        <div style="
-          text-align:center;
-          min-width:0;
-        ">
-
-          <div style="
-            font-size:13px;
-            font-weight:900;
-            overflow:hidden;
-            text-overflow:ellipsis;
-            white-space:nowrap;
-          ">
-            ${teamName(homeManager)}
-          </div>
-
-          <div style="
-            margin-top:2px;
-            font-size:9px;
-            opacity:.5;
-          ">
-            ${managerName(homeManager)}
-          </div>
-
-        </div>
-
-
-        <div style="
-          text-align:center;
-        ">
-
-          <div style="
-            font-size:8px;
-            font-weight:900;
-            letter-spacing:.7px;
-            opacity:.4;
-            margin-bottom:2px;
-          ">
-            GIORNATA ${dayNumber}
-          </div>
-
-          ${matchScore}
-
-        </div>
-
-
-        <div style="
-          text-align:center;
-          min-width:0;
-        ">
-
-          <div style="
-            font-size:13px;
-            font-weight:900;
-            overflow:hidden;
-            text-overflow:ellipsis;
-            white-space:nowrap;
-          ">
-            ${teamName(awayManager)}
-          </div>
-
-          <div style="
-            margin-top:2px;
-            font-size:9px;
-            opacity:.5;
-          ">
-            ${managerName(awayManager)}
-          </div>
-
-        </div>
-
-      </div>
-
-
-      <!-- CAMPO -->
-
-      <div style="
-        position:relative;
-        width:100%;
-        max-width:500px;
-        margin:0 auto;
-        aspect-ratio:1 / 1.35;
-        border-radius:18px;
-        overflow:hidden;
-
-        background:
-          linear-gradient(
-            90deg,
-            rgba(255,255,255,.025) 1px,
-            transparent 1px
-          ),
-          linear-gradient(
-            rgba(255,255,255,.025) 1px,
-            transparent 1px
-          ),
-          linear-gradient(
-            180deg,
-            #18243a 0%,
-            #131e33 100%
-          );
-
-        background-size:
-          25% 25%,
-          25% 25%,
-          100% 100%;
-
-        border:2px solid rgba(255,255,255,.13);
-
-        box-shadow:
-          inset 0 0 45px rgba(0,0,0,.28),
-          0 15px 40px rgba(0,0,0,.25);
-      ">
-
-        <!-- LINEA DI META' CAMPO -->
-
-        <div style="
-          position:absolute;
-          left:0;
-          right:0;
-          top:50%;
-          height:1px;
-          background:rgba(255,255,255,.22);
-        "></div>
-
-
-        <!-- CERCHIO CENTRALE -->
-
-        <div style="
-          position:absolute;
-          width:22%;
-          aspect-ratio:1;
-          left:39%;
-          top:39%;
-          border:1px solid rgba(255,255,255,.20);
-          border-radius:50%;
-        "></div>
-
-
-        <!-- CANESTRO CASA -->
-
-        <div style="
-          position:absolute;
-          left:50%;
-          top:0;
-          transform:translateX(-50%);
-          width:22%;
-          height:11%;
-          border:1px solid rgba(255,255,255,.20);
-          border-top:0;
-          border-radius:0 0 50% 50%;
-        "></div>
-
-        <div style="
-          position:absolute;
-          left:50%;
-          top:5%;
-          width:10%;
-          height:1px;
-          transform:translateX(-50%);
-          background:#f97316;
-        "></div>
-
-
-        <!-- CANESTRO TRASFERTA -->
-
-        <div style="
-          position:absolute;
-          left:50%;
-          bottom:0;
-          transform:translateX(-50%);
-          width:22%;
-          height:11%;
-          border:1px solid rgba(255,255,255,.20);
-          border-bottom:0;
-          border-radius:50% 50% 0 0;
-        "></div>
-
-        <div style="
-          position:absolute;
-          left:50%;
-          bottom:5%;
-          width:10%;
-          height:1px;
-          transform:translateX(-50%);
-          background:#f97316;
-        "></div>
-
-
-        <!-- AREA CASA -->
-
-        <div style="
-          position:absolute;
-          left:27%;
-          right:27%;
-          top:0;
-          height:24%;
-          border:1px solid rgba(255,255,255,.16);
-          border-top:0;
-          border-radius:0 0 8px 8px;
-        "></div>
-
-
-        <!-- AREA TRASFERTA -->
-
-        <div style="
-          position:absolute;
-          left:27%;
-          right:27%;
-          bottom:0;
-          height:24%;
-          border:1px solid rgba(255,255,255,.16);
-          border-bottom:0;
-          border-radius:8px 8px 0 0;
-        "></div>
-
-
-        <!-- TITOLARI CASA -->
-
-        <div style="
-          position:absolute;
-          inset:0 0 50% 0;
-        ">
-
-          ${courtHalf(
-            homeFormation,
-            homeId,
-            "home"
-          )}
-
-        </div>
-
-
-        <!-- TITOLARI TRASFERTA -->
-
-        <div style="
-          position:absolute;
-          inset:50% 0 0 0;
-        ">
-
-          <div style="
-            transform:rotate(180deg);
-            width:100%;
-            height:100%;
-          ">
-
-            ${courtHalf(
-              awayFormation,
-              awayId,
-              "away"
-            )}
-
-          </div>
-
-        </div>
-
-
-        <!-- ETICHETTE -->
-
-        <div style="
-          position:absolute;
-          top:7px;
-          left:10px;
-          font-size:8px;
-          font-weight:900;
-          letter-spacing:.7px;
-          opacity:.35;
-        ">
-          CASA
-        </div>
-
-        <div style="
-          position:absolute;
-          bottom:7px;
-          right:10px;
-          font-size:8px;
-          font-weight:900;
-          letter-spacing:.7px;
-          opacity:.35;
-        ">
-          TRASFERTA
-        </div>
-
-      </div>
-
-
-      <!-- PANCHINE -->
-
-      <div style="
-        display:grid;
-        grid-template-columns:1fr 1fr;
-        gap:9px;
-        margin-top:10px;
-      ">
-
-        <div>
-
-          <div style="
-            font-size:9px;
-            font-weight:900;
-            text-transform:uppercase;
-            letter-spacing:.5px;
-            opacity:.45;
-            margin-bottom:4px;
-            text-align:center;
-          ">
-            ${teamName(homeManager)}
-          </div>
-
-          ${bottomPlayers(
-            homeFormation,
-            homeId
-          )}
-
-        </div>
-
-
-        <div>
-
-          <div style="
-            font-size:9px;
-            font-weight:900;
-            text-transform:uppercase;
-            letter-spacing:.5px;
-            opacity:.45;
-            margin-bottom:4px;
-            text-align:center;
-          ">
-            ${teamName(awayManager)}
-          </div>
-
-          ${bottomPlayers(
-            awayFormation,
-            awayId
-          )}
-
-        </div>
-
-      </div>
+          <!-- CAMPO SQUADRA 2 -->
+
+          ${teamBlock(opponent,opponentId,"away")}
+        `
+        : ""
+      }
 
     </div>
-
   `;
-
-
-  /* =========================
-     CONTENITORE
-  ========================= */
-
-  return courtHtml;
-
 }
-
 
   /* =========================
      APERTURA FORMAZIONE
