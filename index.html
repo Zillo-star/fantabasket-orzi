@@ -8799,13 +8799,7 @@ if(Array.isArray(matches)){
     let displayName =
       surname || firstName;
 
-    let team =
-      x.player?.real_team_id
-        ? realTeams.find(t => t.id === x.player.real_team_id)
-        : null;
-
-    let logo =
-      team?.logo_url || null;
+let logo = null;
 
     return `
       <div class="fb-lineup-player"
