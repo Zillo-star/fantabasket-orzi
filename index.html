@@ -5398,6 +5398,19 @@ window.loadLiveFantasyScores = async function(){
    SALVA FANTASY SCORE
 ========================= */
 
+console.log(
+  "SALVATAGGIO SCORE:",
+  {
+    manager_id: me.id,
+    matchday_id: matchdayId,
+    player_id: row.player_id,
+    raw_score: base,
+    lineup_multiplier: multiplier,
+    captain_multiplier: captainMultiplier,
+    final_score: finalScore
+  }
+);
+       
 let saveScore = await db
   .from("fantasy_scores")
   .upsert({
