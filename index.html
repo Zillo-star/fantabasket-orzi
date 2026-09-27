@@ -8734,20 +8734,31 @@ if(Array.isArray(matches)){
   // POSIZIONE / RUOLO
   // ------------------------------------------------------------
 
-  function getPlayerData(lp){
+function getPlayerData(lp){
 
-    let p = players.find(x => x.id === lp.player_id);
+  let p = null;
 
-    return {
-      ...lp,
-      player:p || null,
-      name:p?.name || lp.name || "",
-      surname:p?.surname || lp.surname || "",
-      position:p?.position || lp.position || "",
-      photo_url:p?.photo_url || null,
-      real_team_id:p?.real_team_id || null
-    };
+  // players può essere un oggetto indicizzato per ID
+  if(players && typeof players === "object"){
+
+    if(Array.isArray(players)){
+      p = players.find(x => x.id === lp.player_id) || null;
+    }else{
+      p = players[lp.player_id] || null;
+    }
+
   }
+
+  return {
+    ...lp,
+    player:p || null,
+    name:p?.name || lp.name || "",
+    surname:p?.surname || lp.surname || "",
+    position:p?.position || lp.position || "",
+    photo_url:p?.photo_url || null,
+    real_team_id:p?.real_team_id || null
+  };
+}
 
   myPlayers = myPlayers.map(getPlayerData);
   opponentPlayers = opponentPlayers.map(getPlayerData);
