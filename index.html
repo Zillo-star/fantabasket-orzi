@@ -5394,6 +5394,32 @@ window.loadLiveFantasyScores = async function(){
               finalScore * 10
             ) / 10;
 
+/* =========================
+   SALVA FANTASY SCORE
+========================= */
+
+let saveScore = await db
+  .from("fantasy_scores")
+  .upsert({
+    manager_id: me.id,
+    matchday_id: matchdayId,
+    player_id: row.player_id,
+    raw_score: base,
+    lineup_multiplier: multiplier,
+    captain_multiplier: captainMultiplier,
+    final_score: finalScore
+  }, {
+    onConflict: "manager_id,matchday_id,player_id"
+  });
+
+if(saveScore.error){
+
+  console.error(
+    "Errore salvataggio fantasy_score:",
+    saveScore.error
+  );
+
+}
 
       /* =========================
          DISPLAY
