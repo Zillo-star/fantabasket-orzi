@@ -4715,28 +4715,30 @@ async function lineup(){
      ROSA DEL FANTALLENATORE
   ========================= */
 
-let r=await db.from("rosters")
-  .select(`
-    player_id,
-    players(
-      name,
-      surname,
-      position,
-      photo_url,
-      real_team_id,
-      real_teams(
+  let r=await db.from("rosters")
+    .select(`
+      player_id,
+      players(
         name,
-        logo_url
+        surname,
+        position,
+        photo_url,
+        real_team_id,
+        webpont_id,
+        real_teams(
+          name,
+          logo_url
+        )
       )
-    )
-  `)
-  .eq("manager_id",me.id)
-  .eq("active",true);
+    `)
+    .eq("manager_id",me.id)
+    .eq("active",true);
 
   if(r.error)
     return message(r.error.message,"err");
 
   console.log("ROSA + SQUADRE:", r.data);
+
 
   /* =========================
      TROVA GIORNATA CORRENTE
@@ -4834,24 +4836,25 @@ let r=await db.from("rosters")
       <h3>Formazione</h3>
 
 
-    <select id="day"
-  onchange="loadSavedLineup(); loadPlayerGames()">
+      <select
+        id="day"
+        onchange="loadSavedLineup(); loadPlayerGames(); loadLiveFantasyScores()">
 
-  ${availableDays.map(x=>`
+        ${availableDays.map(x=>`
 
-    <option
-      value="${x.id}"
-      data-number="${x.number}"
-      ${x.number===currentDay?"selected":""}>
+          <option
+            value="${x.id}"
+            data-number="${x.number}"
+            ${x.number===currentDay?"selected":""}>
 
-      Giornata ${x.number}
-      ${x.number===currentDay?" · ATTUALE":""}
+            Giornata ${x.number}
+            ${x.number===currentDay?" · ATTUALE":""}
 
-    </option>
+          </option>
 
-  `).join("")}
+        `).join("")}
 
-</select>
+      </select>
 
 
       <div id="deadlineBox" class="card">
@@ -4867,113 +4870,158 @@ let r=await db.from("rosters")
 
       </div>
 
-<div id="lineupSummary">
-  <div class="muted">
-    Caricamento formazione...
-  </div>
-</div>
+
+      <div id="lineupSummary">
+
+        <div class="muted">
+          Caricamento formazione...
+        </div>
+
       </div>
 
-      <div id="lp">
-
-        ${(r.data||[]).map(x=>`
-
-<div
-  class="card"
-  data-logo-url="${x.players.real_teams?.logo_url || ""}"
-  data-real-team="${x.players.real_team_id || ""}"
-  data-real-team-name="${x.players.real_teams?.name || ""}"
-  data-photo-url="${x.players.photo_url || ""}"
->
-
-<b>
-  ${
-    [
-      x.players?.name,
-      x.players?.surname
-    ]
-    .filter(Boolean)
-    .join(" ")
-    || "Giocatore"
-  }
-</b>
-· ${x.players.position}
-· ${x.players.real_teams?.name || "Squadra non disponibile"}
-
-<div
-  class="muted"
-  style="margin-top:4px;font-size:13px"
-  data-game-player="${x.player_id}">
-
-  Caricamento avversaria...
-
-</div>
+    </div>
 
 
-<select
-  data-p="${x.player_id}"
-  data-pos="${x.players.position}"
-  onchange="handleLineupRoleChange(this)">
+    <div id="lp">
 
-              <option value="out">
-                Fuori
-              </option>
+      ${(r.data||[]).map(x=>`
 
-              <option value="starter">
-                Titolare · 100%
-              </option>
+        <div
+          class="card"
+          data-player-id="${x.player_id}"
+          data-webpont-id="${x.players?.webpont_id || ""}"
+          data-logo-url="${x.players.real_teams?.logo_url || ""}"
+          data-real-team="${x.players.real_team_id || ""}"
+          data-real-team-name="${x.players.real_teams?.name || ""}"
+          data-photo-url="${x.players.photo_url || ""}"
+        >
 
-              <option value="sixth">
-                Sesto uomo · 100%
-              </option>
+          <div style="
+            display:flex;
+            justify-content:space-between;
+            align-items:flex-start;
+            gap:12px;
+          ">
 
-              <option value="bench">
-                Panchina · 50%
-              </option>
+            <div>
 
-            </select>
+              <b>
+                ${
+                  [
+                    x.players?.name,
+                    x.players?.surname
+                  ]
+                  .filter(Boolean)
+                  .join(" ")
+                  || "Giocatore"
+                }
+              </b>
+
+              · ${x.players.position}
+              · ${x.players.real_teams?.name || "Squadra non disponibile"}
+
+            </div>
 
 
-            <label>
-
-              <input
-                type="checkbox"
-                data-captain="${x.player_id}"
-onchange="checkCaptain(this); updateLineupSummary()">
-
-              Capitano
-
-            </label>
+            <div
+              data-live-score="${x.player_id}"
+              style="
+                min-width:55px;
+                text-align:right;
+                font-size:20px;
+                font-weight:800;
+                color:#a78bfa;
+              "
+            >
+              —
+            </div>
 
           </div>
 
-        `).join("")}
 
-      </div>
+          <div
+            class="muted"
+            style="margin-top:4px;font-size:13px"
+            data-game-player="${x.player_id}"
+          >
+            Caricamento avversaria...
+          </div>
 
 
-      <div id="lineupStatus"
-           class="muted">
-      </div>
+          <div
+            data-live-detail="${x.player_id}"
+            class="muted"
+            style="
+              margin-top:4px;
+              font-size:12px;
+            "
+          >
+          </div>
 
 
-      <button
-        id="saveLineupBtn"
-        onclick="saveLineup()">
+          <select
+            data-p="${x.player_id}"
+            data-pos="${x.players.position}"
+            onchange="handleLineupRoleChange(this); loadLiveFantasyScores()">
 
-        Salva formazione
+            <option value="out">
+              Fuori
+            </option>
 
-      </button>
+            <option value="starter">
+              Titolare · 100%
+            </option>
 
-<p class="muted">
-  5 titolari (100%): 2G-2A-1C · 1G-3A-1C · 1G-2A-2C · 2G-1A-2C · 3G-1A-1C
-  · 1 sesto uomo (100%)
-  · 4 panchinari (50%)
-  · 3 fuori (0%)
-  · 1 capitano (×1,5)
-</p>
+            <option value="sixth">
+              Sesto uomo · 100%
+            </option>
+
+            <option value="bench">
+              Panchina · 50%
+            </option>
+
+          </select>
+
+
+          <label>
+
+            <input
+              type="checkbox"
+              data-captain="${x.player_id}"
+              onchange="checkCaptain(this); updateLineupSummary(); loadLiveFantasyScores()">
+
+            Capitano
+
+          </label>
+
+        </div>
+
+      `).join("")}
 
     </div>
+
+
+    <div id="lineupStatus"
+         class="muted">
+    </div>
+
+
+    <button
+      id="saveLineupBtn"
+      onclick="saveLineup()">
+
+      Salva formazione
+
+    </button>
+
+
+    <p class="muted">
+      5 titolari (100%): 2G-2A-1C · 1G-3A-1C · 1G-2A-2C · 2G-1A-2C · 3G-1A-1C
+      · 1 sesto uomo (100%)
+      · 4 panchinari (50%)
+      · 3 fuori (0%)
+      · 1 capitano (×1,5)
+    </p>
 
   `;
 
@@ -4982,13 +5030,371 @@ onchange="checkCaptain(this); updateLineupSummary()">
      CARICA FORMAZIONE
   ========================= */
 
-await loadSavedLineup();
+  await loadSavedLineup();
 
-updateLineupSummary();
+  updateLineupSummary();
 
-setTimeout(()=>{
-  loadPlayerGames();
-},100);
+
+  /* =========================
+     CARICA AVVERSARIE
+  ========================= */
+
+  setTimeout(()=>{
+    loadPlayerGames();
+  },100);
+
+
+  /* =========================
+     LIVE FANTASY SCORE
+  ========================= */
+
+  window.loadLiveFantasyScores = async function(){
+
+    try{
+
+      let daySelect=
+        el("day");
+
+      if(!daySelect)
+        return;
+
+      let selectedOption=
+        daySelect.options[
+          daySelect.selectedIndex
+        ];
+
+      let dayNumber=
+        Number(
+          selectedOption?.dataset?.number
+        );
+
+      if(!dayNumber)
+        return;
+
+
+      /* =========================
+         TROVA PARTITA FANTASY
+      ========================= */
+
+      let lm=await db
+        .from("league_matches")
+        .select(`
+          id,
+          matchday_number,
+          home_manager_id,
+          away_manager_id,
+          home_score,
+          away_score,
+          completed,
+          webpont_game
+        `)
+        .eq(
+          "matchday_number",
+          dayNumber
+        )
+        .or(
+          `home_manager_id.eq.${me.id},away_manager_id.eq.${me.id}`
+        )
+        .maybeSingle();
+
+      if(lm.error){
+
+        console.error(
+          "Errore league_matches:",
+          lm.error
+        );
+
+        return;
+
+      }
+
+      let match=
+        lm.data;
+
+      if(!match){
+
+        console.log(
+          "Nessuna partita trovata per la giornata",
+          dayNumber
+        );
+
+        return;
+
+      }
+
+
+      /* =========================
+         WEBPONT NON COLLEGATO
+      ========================= */
+
+      if(!match.webpont_game){
+
+        console.log(
+          "Partita senza webpont_game:",
+          match.id
+        );
+
+        return;
+
+      }
+
+
+      console.log(
+        "WEBPONT GAME:",
+        match.webpont_game
+      );
+
+
+      /* =========================
+         CHIAMATA WORKER
+      ========================= */
+
+      let wr=await fetch(
+        "https://fantabasket-webpont.davzil2005.workers.dev?game=" +
+        encodeURIComponent(match.webpont_game)
+      );
+
+      let w=await wr.json();
+
+      if(!w.ok){
+
+        console.error(
+          "Worker error:",
+          w
+        );
+
+        return;
+
+      }
+
+
+      /* =========================
+         MAPPA WEBPONT
+      ========================= */
+
+      let byWebpont={};
+
+      (w.players||[]).forEach(p=>{
+
+        if(p.webpont_id)
+          byWebpont[p.webpont_id]=p;
+
+      });
+
+
+      /* =========================
+         PUNTEGGI
+      ========================= */
+
+      let cards=
+        document.querySelectorAll(
+          "#lp [data-player-id]"
+        );
+
+      cards.forEach(card=>{
+
+        let playerId=
+          card.dataset.playerId;
+
+        let webpontId=
+          card.dataset.webpontId;
+
+        let scoreBox=
+          card.querySelector(
+            `[data-live-score="${playerId}"]`
+          );
+
+        let detailBox=
+          card.querySelector(
+            `[data-live-detail="${playerId}"]`
+          );
+
+        if(!scoreBox)
+          return;
+
+
+        /* giocatore non presente
+           nel feed della partita */
+
+        if(
+          !webpontId ||
+          !byWebpont[webpontId]
+        ){
+
+          scoreBox.textContent="—";
+
+          if(detailBox)
+            detailBox.textContent="";
+
+          return;
+
+        }
+
+
+        let wp=
+          byWebpont[webpontId];
+
+
+        /* =========================
+           RUOLO FANTASY
+        ========================= */
+
+        let select=
+          card.querySelector(
+            `select[data-p="${playerId}"]`
+          );
+
+        let role=
+          select?.value || "out";
+
+
+        let multiplier=
+          role==="starter" ||
+          role==="sixth"
+            ? 1
+            : role==="bench"
+              ? 0.5
+              : 0;
+
+
+        /* =========================
+           CAPITANO
+        ========================= */
+
+        let captain=
+          card.querySelector(
+            `input[data-captain="${playerId}"]`
+          )?.checked;
+
+
+        let captainMultiplier=
+          captain
+            ? 1.5
+            : 1;
+
+
+        /* =========================
+           CALCOLO
+        ========================= */
+
+        let base=
+          Number(wp.fantasyScore ?? 0);
+
+        let finalScore=
+          base *
+          multiplier *
+          captainMultiplier;
+
+
+        /* =========================
+           TRONCAMENTO A 1 DECIMALE
+        ========================= */
+
+        finalScore=
+          finalScore >= 0
+            ? Math.floor(finalScore * 10) / 10
+            : Math.ceil(finalScore * 10) / 10;
+
+
+        if(role==="out"){
+
+          scoreBox.textContent="—";
+
+        }else{
+
+          scoreBox.textContent=
+            (
+              finalScore > 0
+                ? "+" + finalScore
+                : finalScore
+            );
+
+        }
+
+
+        if(detailBox){
+
+          let stats=[];
+
+          if(wp.points!=null)
+            stats.push(`${wp.points} pt`);
+
+          if(wp.assists!=null)
+            stats.push(`${wp.assists} ast`);
+
+          if(
+            wp.offensiveRebounds!=null ||
+            wp.defensiveRebounds!=null
+          ){
+
+            stats.push(
+              `${
+                Number(wp.offensiveRebounds||0) +
+                Number(wp.defensiveRebounds||0)
+              } reb`
+            );
+
+          }
+
+          if(wp.steals!=null)
+            stats.push(`${wp.steals} rec`);
+
+          detailBox.textContent=
+            stats.join(" · ");
+
+        }
+
+      });
+
+
+      console.log(
+        "LIVE FANTASY SCORE CARICATO:",
+        match.webpont_game
+      );
+
+    }catch(err){
+
+      console.error(
+        "Errore live fantasy score:",
+        err
+      );
+
+    }
+
+  };
+
+
+  /* =========================
+     PRIMO CARICAMENTO LIVE
+  ========================= */
+
+  setTimeout(()=>{
+    loadLiveFantasyScores();
+  },300);
+
+
+  /* =========================
+     AGGIORNAMENTO AUTOMATICO
+     OGNI 20 SECONDI
+  ========================= */
+
+  clearInterval(
+    window.liveFantasyTimer
+  );
+
+  window.liveFantasyTimer=
+    setInterval(()=>{
+
+      if(
+        typeof window.loadLiveFantasyScores ===
+        "function"
+      ){
+
+        window.loadLiveFantasyScores();
+
+      }
+
+    },20000);
 
 }
 async function loadPlayerGames(){
