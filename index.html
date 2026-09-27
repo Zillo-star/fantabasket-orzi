@@ -5044,324 +5044,454 @@ async function lineup(){
   },100);
 
 
-  /* =========================
-     LIVE FANTASY SCORE
-  ========================= */
+/* =========================
+   LIVE FANTASY SCORE
+========================= */
 
-  window.loadLiveFantasyScores = async function(){
+window.loadLiveFantasyScores = async function(){
 
-    try{
+  try{
 
-      let daySelect=
-        el("day");
+    let daySelect = el("day");
 
-      if(!daySelect)
-        return;
+    if(!daySelect)
+      return;
 
-      let selectedOption=
-        daySelect.options[
-          daySelect.selectedIndex
-        ];
+    let selectedOption =
+      daySelect.options[
+        daySelect.selectedIndex
+      ];
 
-      let dayNumber=
-        Number(
-          selectedOption?.dataset?.number
-        );
-
-      if(!dayNumber)
-        return;
-
-
-      /* =========================
-         TROVA PARTITA FANTASY
-      ========================= */
-
-      let lm=await db
-        .from("league_matches")
-        .select(`
-          id,
-          matchday_number,
-          home_manager_id,
-          away_manager_id,
-          home_score,
-          away_score,
-          completed,
-          webpont_game
-        `)
-        .eq(
-          "matchday_number",
-          dayNumber
-        )
-        .or(
-          `home_manager_id.eq.${me.id},away_manager_id.eq.${me.id}`
-        )
-        .maybeSingle();
-
-      if(lm.error){
-
-        console.error(
-          "Errore league_matches:",
-          lm.error
-        );
-
-        return;
-
-      }
-
-      let match=
-        lm.data;
-
-      if(!match){
-
-        console.log(
-          "Nessuna partita trovata per la giornata",
-          dayNumber
-        );
-
-        return;
-
-      }
-
-
-      /* =========================
-         WEBPONT NON COLLEGATO
-      ========================= */
-
-      if(!match.webpont_game){
-
-        console.log(
-          "Partita senza webpont_game:",
-          match.id
-        );
-
-        return;
-
-      }
-
-
-      console.log(
-        "WEBPONT GAME:",
-        match.webpont_game
+    let dayNumber =
+      Number(
+        selectedOption?.dataset?.number
       );
 
+    if(!dayNumber)
+      return;
 
-      /* =========================
-         CHIAMATA WORKER
-      ========================= */
 
-      let wr=await fetch(
-        "https://fantabasket-webpont.davzil2005.workers.dev?game=" +
-        encodeURIComponent(match.webpont_game)
+    /* =========================
+       1. TROVA PARTITA FANTASY
+    ========================= */
+
+    let lm = await db
+      .from("league_matches")
+      .select(`
+        id,
+        matchday_number,
+        home_manager_id,
+        away_manager_id,
+        home_score,
+        away_score,
+        completed,
+        webpont_game
+      `)
+      .eq("matchday_number",dayNumber)
+      .or(
+        `home_manager_id.eq.${me.id},away_manager_id.eq.${me.id}`
       );
 
-      let w=await wr.json();
-
-      if(!w.ok){
-
-        console.error(
-          "Worker error:",
-          w
-        );
-
-        return;
-
-      }
-
-
-      /* =========================
-         MAPPA WEBPONT
-      ========================= */
-
-      let byWebpont={};
-
-      (w.players||[]).forEach(p=>{
-
-        if(p.webpont_id)
-          byWebpont[p.webpont_id]=p;
-
-      });
-
-
-      /* =========================
-         PUNTEGGI
-      ========================= */
-
-      let cards=
-        document.querySelectorAll(
-          "#lp [data-player-id]"
-        );
-
-      cards.forEach(card=>{
-
-        let playerId=
-          card.dataset.playerId;
-
-        let webpontId=
-          card.dataset.webpontId;
-
-        let scoreBox=
-          card.querySelector(
-            `[data-live-score="${playerId}"]`
-          );
-
-        let detailBox=
-          card.querySelector(
-            `[data-live-detail="${playerId}"]`
-          );
-
-        if(!scoreBox)
-          return;
-
-
-        /* giocatore non presente
-           nel feed della partita */
-
-        if(
-          !webpontId ||
-          !byWebpont[webpontId]
-        ){
-
-          scoreBox.textContent="—";
-
-          if(detailBox)
-            detailBox.textContent="";
-
-          return;
-
-        }
-
-
-        let wp=
-          byWebpont[webpontId];
-
-
-        /* =========================
-           RUOLO FANTASY
-        ========================= */
-
-        let select=
-          card.querySelector(
-            `select[data-p="${playerId}"]`
-          );
-
-        let role=
-          select?.value || "out";
-
-
-        let multiplier=
-          role==="starter" ||
-          role==="sixth"
-            ? 1
-            : role==="bench"
-              ? 0.5
-              : 0;
-
-
-        /* =========================
-           CAPITANO
-        ========================= */
-
-        let captain=
-          card.querySelector(
-            `input[data-captain="${playerId}"]`
-          )?.checked;
-
-
-        let captainMultiplier=
-          captain
-            ? 1.5
-            : 1;
-
-
-        /* =========================
-           CALCOLO
-        ========================= */
-
-        let base=
-          Number(wp.fantasyScore ?? 0);
-
-        let finalScore=
-          base *
-          multiplier *
-          captainMultiplier;
-
-
-        /* =========================
-           TRONCAMENTO A 1 DECIMALE
-        ========================= */
-
-        finalScore=
-          finalScore >= 0
-            ? Math.floor(finalScore * 10) / 10
-            : Math.ceil(finalScore * 10) / 10;
-
-
-        if(role==="out"){
-
-          scoreBox.textContent="—";
-
-        }else{
-
-          scoreBox.textContent=
-            (
-              finalScore > 0
-                ? "+" + finalScore
-                : finalScore
-            );
-
-        }
-
-
-        if(detailBox){
-
-          let stats=[];
-
-          if(wp.points!=null)
-            stats.push(`${wp.points} pt`);
-
-          if(wp.assists!=null)
-            stats.push(`${wp.assists} ast`);
-
-          if(
-            wp.offensiveRebounds!=null ||
-            wp.defensiveRebounds!=null
-          ){
-
-            stats.push(
-              `${
-                Number(wp.offensiveRebounds||0) +
-                Number(wp.defensiveRebounds||0)
-              } reb`
-            );
-
-          }
-
-          if(wp.steals!=null)
-            stats.push(`${wp.steals} rec`);
-
-          detailBox.textContent=
-            stats.join(" · ");
-
-        }
-
-      });
-
-
-      console.log(
-        "LIVE FANTASY SCORE CARICATO:",
-        match.webpont_game
-      );
-
-    }catch(err){
+    if(lm.error){
 
       console.error(
-        "Errore live fantasy score:",
-        err
+        "Errore league_matches:",
+        lm.error
       );
+
+      return;
 
     }
 
-  };
+    let match = lm.data?.[0];
+
+    if(!match){
+
+      console.log(
+        "Nessuna partita trovata:",
+        me.name,
+        "giornata",
+        dayNumber
+      );
+
+      return;
+
+    }
+
+
+    /* =========================
+       2. WEBPONT
+    ========================= */
+
+    if(!match.webpont_game){
+
+      console.log(
+        "Partita senza webpont_game:",
+        match.id
+      );
+
+      return;
+
+    }
+
+    let wr = await fetch(
+      "https://fantabasket-webpont.davzil2005.workers.dev?game=" +
+      encodeURIComponent(match.webpont_game)
+    );
+
+    if(!wr.ok){
+
+      console.error(
+        "Worker HTTP error:",
+        wr.status
+      );
+
+      return;
+
+    }
+
+    let w = await wr.json();
+
+    if(!w.ok){
+
+      console.error(
+        "Worker error:",
+        w
+      );
+
+      return;
+
+    }
+
+
+    /* =========================
+       3. MAPPA WEBPONT
+    ========================= */
+
+    let byWebpont = {};
+
+    (w.players || []).forEach(p => {
+
+      if(!p.webpont_id)
+        return;
+
+      let key =
+        String(
+          p.webpont_id
+        )
+        .trim()
+        .toUpperCase();
+
+      byWebpont[key] = p;
+
+    });
+
+
+    /* =========================
+       4. TROVA MATCHDAY ID
+    ========================= */
+
+    let matchdayId =
+      selectedOption?.value;
+
+    if(!matchdayId){
+
+      console.error(
+        "matchday_id non trovato"
+      );
+
+      return;
+
+    }
+
+
+    /* =========================
+       5. TROVA FORMAZIONE
+    ========================= */
+
+    let lu = await db
+      .from("lineups")
+      .select("id")
+      .eq("manager_id",me.id)
+      .eq("matchday_id",matchdayId)
+      .maybeSingle();
+
+    if(lu.error){
+
+      console.error(
+        "Errore lineups:",
+        lu.error
+      );
+
+      return;
+
+    }
+
+    if(!lu.data){
+
+      console.log(
+        "Nessuna formazione salvata:",
+        me.name,
+        "giornata",
+        dayNumber
+      );
+
+      return;
+
+    }
+
+
+    /* =========================
+       6. GIOCATORI FORMAZIONE
+    ========================= */
+
+    let lp = await db
+      .from("lineup_players")
+      .select(`
+        player_id,
+        role,
+        captain,
+        players(
+          name,
+          surname,
+          webpont_id
+        )
+      `)
+      .eq("lineup_id",lu.data.id);
+
+    if(lp.error){
+
+      console.error(
+        "Errore lineup_players:",
+        lp.error
+      );
+
+      return;
+
+    }
+
+
+    /* =========================
+       7. PULISCI DISPLAY
+    ========================= */
+
+    document
+      .querySelectorAll(
+        "#lp [data-live-score]"
+      )
+      .forEach(box => {
+
+        box.textContent = "—";
+
+      });
+
+    document
+      .querySelectorAll(
+        "#lp [data-live-detail]"
+      )
+      .forEach(box => {
+
+        box.textContent = "";
+
+      });
+
+
+    /* =========================
+       8. CALCOLO
+    ========================= */
+
+    (lp.data || []).forEach(row => {
+
+      let player =
+        row.players;
+
+      if(!player)
+        return;
+
+      let webpontId =
+        String(
+          player.webpont_id || ""
+        )
+        .trim()
+        .toUpperCase();
+
+      if(!webpontId)
+        return;
+
+      let wp =
+        byWebpont[webpontId];
+
+      if(!wp)
+        return;
+
+
+      /* =========================
+         RUOLO
+      ========================= */
+
+      let multiplier = 0;
+
+      if(
+        row.role === "starter" ||
+        row.role === "sixth"
+      ){
+
+        multiplier = 1;
+
+      }
+      else if(
+        row.role === "bench"
+      ){
+
+        multiplier = 0.5;
+
+      }
+      else if(
+        row.role === "out"
+      ){
+
+        multiplier = 0;
+
+      }
+
+
+      /* =========================
+         CAPITANO
+      ========================= */
+
+      let captainMultiplier =
+        row.captain
+          ? 1.5
+          : 1;
+
+
+      /* =========================
+         PUNTEGGIO BASE
+      ========================= */
+
+      let base =
+        Number(
+          wp.fantasyScore
+        ) || 0;
+
+
+      let finalScore =
+        base *
+        multiplier *
+        captainMultiplier;
+
+
+      /* =========================
+         TRONCAMENTO 1 DECIMALE
+      ========================= */
+
+      finalScore =
+        finalScore >= 0
+          ? Math.floor(
+              finalScore * 10
+            ) / 10
+          : Math.ceil(
+              finalScore * 10
+            ) / 10;
+
+
+      /* =========================
+         DISPLAY
+      ========================= */
+
+      let scoreBox =
+        document.querySelector(
+          `[data-live-score="${row.player_id}"]`
+        );
+
+      if(scoreBox){
+
+        if(row.role === "out"){
+
+          scoreBox.textContent = "—";
+
+        }else{
+
+          scoreBox.textContent =
+            finalScore > 0
+              ? "+" + finalScore.toFixed(1)
+              : finalScore.toFixed(1);
+
+        }
+
+      }
+
+
+      /* =========================
+         DETTAGLI
+      ========================= */
+
+      let detailBox =
+        document.querySelector(
+          `[data-live-detail="${row.player_id}"]`
+        );
+
+      if(detailBox){
+
+        let stats = [];
+
+        if(wp.points != null)
+          stats.push(`${wp.points} pt`);
+
+        if(wp.assists != null)
+          stats.push(`${wp.assists} ast`);
+
+        if(
+          wp.offensiveRebounds != null ||
+          wp.defensiveRebounds != null
+        ){
+
+          let rebounds =
+            Number(
+              wp.offensiveRebounds || 0
+            ) +
+            Number(
+              wp.defensiveRebounds || 0
+            );
+
+          stats.push(
+            `${rebounds} reb`
+          );
+
+        }
+
+        if(wp.steals != null)
+          stats.push(`${wp.steals} rec`);
+
+        detailBox.textContent =
+          stats.join(" · ");
+
+      }
+
+    });
+
+
+    console.log(
+      "LIVE FANTASY SCORE CARICATO:",
+      {
+        manager: me.name,
+        giornata: dayNumber,
+        webpont: match.webpont_game,
+        giocatoriFormazione: lp.data?.length || 0
+      }
+    );
+
+  }
+  catch(err){
+
+    console.error(
+      "Errore LIVE FANTASY SCORE:",
+      err
+    );
+
+  }
+
+};
 
 
   /* =========================
