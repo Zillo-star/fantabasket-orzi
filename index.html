@@ -10912,8 +10912,26 @@ if(homeIsBot || awayIsBot){
      RENDER
   ========================= */
 
-  el("content").innerHTML =
-    html;
+el("content").innerHTML =
+  html;
+
+
+/* =========================
+   AGGIORNA FANTASY SCORE LIVE
+========================= */
+
+setTimeout(() => {
+
+  if(
+    typeof window.loadLiveFantasyScores ===
+    "function"
+  ){
+
+    window.loadLiveFantasyScores();
+
+  }
+
+}, 100);
 
 }
 async function standings(){
