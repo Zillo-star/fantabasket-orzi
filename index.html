@@ -5801,23 +5801,24 @@ window.loadAllFantasyScores = async function(){
        2. TUTTE LE PARTITE CONCLUSE
     ===================================================== */
 
-    let lm = await db
-      .from("league_matches")
-      .select(`
-        id,
-        matchday_number,
-        home_manager_id,
-        away_manager_id,
-        completed,
-        webpont_game
-      `)
-      .eq(
-        "completed",
-        true
-      )
-      .order("matchday_number")
-      .order("id");
-
+let lm = await db
+  .from("league_matches")
+  .select(`
+    id,
+    matchday_number,
+    home_manager_id,
+    away_manager_id,
+    completed,
+    webpont_game
+  `)
+  .not(
+    "webpont_game",
+    "is",
+    null
+  )
+  .order("matchday_number")
+  .order("id");
+     
     if(lm.error){
 
       console.error(
