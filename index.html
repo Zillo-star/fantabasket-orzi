@@ -10166,7 +10166,8 @@ ${
     .map(day => `
 
       <option
-        value="${day}"
+        value="${matchdays[day]?.id || ""}"
+        data-number="${day}"
         ${
           selectedDay === day
             ? "selected"
