@@ -5300,7 +5300,9 @@ window.loadLiveFantasyScores = async function(){
        8. CALCOLO
     ========================= */
 
-    (lp.data || []).forEach(row => {
+   console.log("LINEUP DATA:", lp.data);
+   
+   (lp.data || []).forEach(row => {
 
       let player =
         row.players;
