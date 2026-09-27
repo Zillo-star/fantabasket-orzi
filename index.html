@@ -5743,725 +5743,808 @@ window.liveFantasyTimer =
 
 window.loadAllFantasyScores = async function(){
 
-  console.log("=================================");
-  console.log("INIZIO CARICAMENTO MASSIVO");
-  console.log("=================================");
+  console.log("=== INIZIO LOAD ALL FANTASY SCORES ===");
 
-  try{
+  /* =========================================================
+     1. MAPPA CERTA GIORNATA 1
+     real_team_id -> webpont_game
+     ========================================================= */
 
-    /* =====================================================
-       1. GIORNATE
-    ===================================================== */
+  const webpontMap = {
 
-    let md = await db
-      .from("matchdays")
-      .select(`
+    // ita3_b_400
+    "58b4c970-460c-4e20-981a-c3ac8a37f7f5": "ita3_b_400", // San Giobbe CHIUSI
+    "32aec2a6-d129-4a62-948e-57068ab0a789": "ita3_b_400", // Basket RAVENNA
+
+    // ita3_b_401
+    "25f7d815-e989-410f-b952-7cdb23cd0d97": "ita3_b_401", // Janus FABRIANO
+    "86f86ac9-4a68-47e9-9125-c343c3c422fd": "ita3_b_401", // PSA NAPOLI EST
+
+    // ita3_b_402
+    "f94df558-7de9-49ff-957d-afb22a82502f": "ita3_b_402", // LATINA Basket
+    "921c1923-2cac-4426-b3d4-f34f8152c22e": "ita3_b_402", // Raggisolaris FAENZA
+
+    // ita3_b_403
+    "ff1f0359-f6d6-4a9e-b11e-53fa06d75a02": "ita3_b_403", // Herons MONTECATINI
+    "cc1e28b4-11c6-4c1f-a60f-eff7245468a1": "ita3_b_403", // Basket Golfo PIOMBINO
+
+    // ita3_b_404
+    "8c0094d3-9dc0-413d-96c7-45eb1676d600": "ita3_b_404", // Loreto PESARO
+    "3236f0aa-409b-456c-bd6c-d851e5e1228f": "ita3_b_404", // Luiss ROMA
+
+    // ita3_b_405
+    "5968a101-7a1c-47de-aaa4-f5ef4df0b966": "ita3_b_405", // Dany Basket QUARRATA
+    "82adc99d-d11d-49e3-940f-8c1843508779": "ita3_b_405", // Pielle LIVORNO
+
+    // ita3_b_406
+    "9cfb5b9b-412c-48ef-8038-dd746dbcb711": "ita3_b_406", // Virtus ROMA
+    "787c3b98-acba-4676-bfe5-5dc5b5feb65e": "ita3_b_406", // Scandone AVELLINO
+
+    // ita3_b_407
+    "389e0b4f-7e01-4531-b98d-b44ac9a681f6": "ita3_b_407", // Mens Sana SIENA
+    "eba465a8-495a-4de9-8f01-dfe32b346754": "ita3_b_407", // Basketball Club LUCCA
+
+    // ita3_b_408
+    "b69e50eb-3ba3-4bf6-b0b1-0e577b6c87b9": "ita3_b_408", // Cestistica SAN SEVERO
+    "5f8b7500-48ad-4f35-9c95-d3a08e379501": "ita3_b_408"  // Liofilchem ROSETO
+  };
+
+
+  /* =========================================================
+     2. PRENDIAMO LE GIORNATE
+     ========================================================= */
+
+  const mdRes = await db
+    .from("matchdays")
+    .select("id, number")
+    .order("number");
+
+  if(mdRes.error){
+    console.error("Errore matchdays:", mdRes.error);
+    return;
+  }
+
+  const matchdays = mdRes.data || [];
+
+  if(!matchdays.length){
+    console.warn("Nessuna giornata trovata.");
+    return;
+  }
+
+  console.log(
+    "Giornate trovate:",
+    matchdays.map(x => x.number)
+  );
+
+
+  /* =========================================================
+     3. PRENDIAMO TUTTE LE LINEUP
+     ========================================================= */
+
+  const lineupRes = await db
+    .from("lineups")
+    .select(`
+      id,
+      manager_id,
+      matchday_id,
+      captain_player_id
+    `);
+
+  if(lineupRes.error){
+    console.error("Errore lineups:", lineupRes.error);
+    return;
+  }
+
+  const lineups = lineupRes.data || [];
+
+  console.log("Lineup trovate:", lineups.length);
+
+
+  /* =========================================================
+     4. PRENDIAMO TUTTI I LINEUP PLAYERS
+     ========================================================= */
+
+  const lpRes = await db
+    .from("lineup_players")
+    .select(`
+      id,
+      player_id,
+      lineup_id,
+      position,
+      players(
         id,
-        number
-      `)
-      .order("number");
+        name,
+        surname,
+        real_team_id,
+        real_teams(
+          id,
+          name
+        )
+      )
+    `);
 
-    if(md.error){
+  if(lpRes.error){
+    console.error("Errore lineup_players:", lpRes.error);
+    return;
+  }
 
-      console.error(
-        "Errore matchdays:",
-        md.error
-      );
+  const lineupPlayers = lpRes.data || [];
 
-      return;
+  console.log(
+    "Lineup players trovati:",
+    lineupPlayers.length
+  );
 
+
+  /* =========================================================
+     5. WORKER WEBPONT
+     ========================================================= */
+
+  const WORKER_URL =
+    "https://fantabasket-webpont.davzil2005.workers.dev?game=";
+
+
+  /* =========================================================
+     6. FUNZIONE PER CALCOLARE IL MOLTIPLICATORE
+     ========================================================= */
+
+  function getLineupMultiplier(lp){
+
+    /*
+      position deve rispettare la struttura già utilizzata
+      dall'app:
+
+      starter = 100%
+      sixth   = 100%
+      bench   = 50%
+      out     = 0%
+
+      In caso di struttura numerica/stringa diversa,
+      gestiamo comunque i casi più comuni.
+    */
+
+    const p = lp?.position;
+
+    if(
+      p === "starter" ||
+      p === "sixth" ||
+      p === "titolare" ||
+      p === "sesto" ||
+      p === 1 ||
+      p === 6
+    ){
+      return 1;
     }
 
-    let matchdays =
-      md.data || [];
-
-    if(!matchdays.length){
-
-      console.log(
-        "Nessuna giornata trovata."
-      );
-
-      return;
-
+    if(
+      p === "bench" ||
+      p === "panchina" ||
+      p === 0.5 ||
+      p === "50%"
+    ){
+      return 0.5;
     }
 
-
-    let matchdayMap = {};
-
-    matchdays.forEach(day => {
-
-      matchdayMap[
-        Number(day.number)
-      ] = day.id;
-
-    });
-
-
-    /* =====================================================
-       2. TUTTE LE PARTITE CONCLUSE
-    ===================================================== */
-
-let lm = await db
-  .from("league_matches")
-  .select(`
-    id,
-    matchday_number,
-    home_manager_id,
-    away_manager_id,
-    completed,
-    webpont_game
-  `)
-  .not(
-    "webpont_game",
-    "is",
-    null
-  )
-  .order("matchday_number")
-  .order("id");
-     
-    if(lm.error){
-
-      console.error(
-        "Errore league_matches:",
-        lm.error
-      );
-
-      return;
-
+    if(
+      p === "out" ||
+      p === "fuori" ||
+      p === 0
+    ){
+      return 0;
     }
 
-    let matches =
-      lm.data || [];
+    /*
+      Se la struttura attuale dell'app usa un altro valore,
+      lasciamo 0 invece di assegnare per errore un punteggio.
+    */
+    return 0;
+  }
 
 
-    console.log(
-      "Partite concluse trovate:",
-      matches.length
-    );
+  /* =========================================================
+     7. CACHE DELLE PARTITE WEBPONT
+     ========================================================= */
+
+  const webpontCache = new Map();
 
 
-    if(!matches.length){
+  async function getWebPontGame(gameId){
 
-      console.log(
-        "Nessuna partita conclusa."
-      );
-
-      return;
-
+    if(!gameId){
+      return null;
     }
 
+    if(webpontCache.has(gameId)){
+      return webpontCache.get(gameId);
+    }
 
-    /* =====================================================
-       3. COSTRUISCE LE GIORNATE VALIDE
-    ===================================================== */
+    try{
 
-    let validMatchdays = {};
+      console.log("Scarico WebPont:", gameId);
 
-    let managerDayKeys = new Set();
-
-    matches.forEach(match => {
-
-      let matchdayId =
-        matchdayMap[
-          Number(
-            match.matchday_number
-          )
-        ];
-
-      if(!matchdayId)
-        return;
-
-
-      validMatchdays[
-        matchdayId
-      ] = Number(
-        match.matchday_number
+      const r = await fetch(
+        WORKER_URL + encodeURIComponent(gameId)
       );
 
-
-      if(match.home_manager_id){
-
-        managerDayKeys.add(
-          match.home_manager_id +
-          "_" +
-          matchdayId
+      if(!r.ok){
+        console.warn(
+          "WebPont HTTP error:",
+          gameId,
+          r.status
         );
 
+        webpontCache.set(gameId, null);
+        return null;
       }
 
+      const data = await r.json();
 
-      if(match.away_manager_id){
-
-        managerDayKeys.add(
-          match.away_manager_id +
-          "_" +
-          matchdayId
+      if(!data?.ok){
+        console.warn(
+          "WebPont risposta non valida:",
+          gameId,
+          data
         );
 
+        webpontCache.set(gameId, null);
+        return null;
       }
 
-    });
+      webpontCache.set(gameId, data);
 
+      return data;
 
-    /* =====================================================
-       4. SCARICA TUTTE LE FORMAZIONI
-    ===================================================== */
-
-    let validMatchdayIds =
-      Object.keys(
-        validMatchdays
-      );
-
-
-    let lu = await db
-      .from("lineups")
-      .select(`
-        id,
-        manager_id,
-        matchday_id
-      `)
-      .in(
-        "matchday_id",
-        validMatchdayIds
-      );
-
-
-    if(lu.error){
+    }catch(err){
 
       console.error(
-        "Errore lineups:",
-        lu.error
+        "Errore fetch WebPont:",
+        gameId,
+        err
       );
 
-      return;
+      webpontCache.set(gameId, null);
 
+      return null;
     }
+  }
 
 
-    let lineups =
-      (lu.data || [])
-      .filter(lineup =>
-        managerDayKeys.has(
-          lineup.manager_id +
-          "_" +
-          lineup.matchday_id
-        )
-      );
+  /* =========================================================
+     8. CONVERTIAMO I DATI WEBPONT IN MAPPA PLAYER
+     ========================================================= */
 
+  function buildWebPontPlayerMap(data){
 
-    console.log(
-      "Formazioni trovate:",
-      lineups.length
-    );
+    const map = new Map();
 
+    for(const p of (data?.players || [])){
 
-    if(!lineups.length){
-
-      console.log(
-        "Nessuna formazione trovata."
-      );
-
-      return;
-
-    }
-
-
-    /* =====================================================
-       5. SCARICA TUTTI I GIOCATORI DELLE FORMAZIONI
-    ===================================================== */
-
-    let lineupIds =
-      lineups.map(
-        x => x.id
-      );
-
-
-    let lp = await db
-      .from("lineup_players")
-      .select(`
-        lineup_id,
-        player_id,
-        role,
-        captain,
-        players(
-          name,
-          surname,
-          webpont_id
-        )
-      `)
-      .in(
-        "lineup_id",
-        lineupIds
-      );
-
-
-    if(lp.error){
-
-      console.error(
-        "Errore lineup_players:",
-        lp.error
-      );
-
-      return;
-
-    }
-
-
-    let lineupPlayers =
-      lp.data || [];
-
-
-    console.log(
-      "Giocatori nelle formazioni:",
-      lineupPlayers.length
-    );
-
-
-    /* =====================================================
-       6. MAPPA LE FORMAZIONI
-    ===================================================== */
-
-    let lineupMap = {};
-
-    lineups.forEach(lineup => {
-
-      lineupMap[
-        lineup.id
-      ] = lineup;
-
-    });
-
-
-    /* =====================================================
-       7. CACHE WEBPONT
-    ===================================================== */
-
-    let webpontCache = {};
-
-
-    /* =====================================================
-       8. PREPARA TUTTI I PUNTEGGI
-    ===================================================== */
-
-    let scoresToSave = [];
-
-    let processedGames = 0;
-
-    let processedPlayers = 0;
-
-
-    /* =====================================================
-       9. ELABORA TUTTE LE PARTITE
-    ===================================================== */
-
-    for(const match of matches){
-
-      let matchdayId =
-        matchdayMap[
-          Number(
-            match.matchday_number
-          )
-        ];
-
-
-      if(!matchdayId)
+      if(!p?.webpont_id){
         continue;
-
-
-      if(!match.webpont_game){
-
-        console.log(
-          "Partita senza webpont_game:",
-          match.id
-        );
-
-        continue;
-
       }
 
+      map.set(String(p.webpont_id), p);
+    }
 
-      /* ===================================================
-         WEBPONT
-      =================================================== */
+    return map;
+  }
 
-      let webpontGame =
-        String(
-          match.webpont_game
-        )
+
+  /* =========================================================
+     9. MATCH WEBPONT PLAYER -> PLAYER DATABASE
+     ========================================================= */
+
+  function findWebPontPlayer(dbPlayer, webPlayers){
+
+    if(!dbPlayer){
+      return null;
+    }
+
+    const fullName = (
+      `${dbPlayer.name || ""} ${dbPlayer.surname || ""}`
+    )
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g," ");
+
+    if(!fullName){
+      return null;
+    }
+
+    let exact = null;
+
+    for(const wp of webPlayers){
+
+      const wpName = String(wp.name || "")
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g," ");
+
+      if(!wpName){
+        continue;
+      }
+
+      /*
+        WebPont spesso usa:
+        "M. Giacomini"
+
+        mentre DB:
+        "Marco Giacomini"
+
+        Quindi confrontiamo soprattutto il cognome.
+      */
+
+      const dbSurname = String(dbPlayer.surname || "")
         .trim()
         .toLowerCase();
 
+      const wpParts = wpName.split(" ");
+      const wpSurname =
+        wpParts.length
+          ? wpParts[wpParts.length - 1]
+          : "";
 
-      let w =
-        webpontCache[
-          webpontGame
-        ];
+      if(
+        dbSurname &&
+        wpSurname &&
+        dbSurname === wpSurname
+      ){
 
+        /*
+          Se possibile controlliamo anche
+          l'iniziale del nome.
+        */
 
-      if(!w){
-
-        console.log(
-          "Scarico WebPont:",
-          match.webpont_game,
-          "giornata:",
-          match.matchday_number
-        );
-
-
-        let wr = await fetch(
-          "https://fantabasket-webpont.davzil2005.workers.dev?game=" +
-          encodeURIComponent(
-            match.webpont_game
-          )
-        );
-
-
-        if(!wr.ok){
-
-          console.error(
-            "Worker HTTP error:",
-            wr.status,
-            match.webpont_game
-          );
-
-          continue;
-
-        }
-
-
-        w = await wr.json();
-
-
-        if(!w.ok){
-
-          console.error(
-            "Worker error:",
-            w
-          );
-
-          continue;
-
-        }
-
-
-        webpontCache[
-          webpontGame
-        ] = w;
-
-      }
-
-
-      /* ===================================================
-         MAPPA GIOCATORI WEBPONT
-      =================================================== */
-
-      let byWebpont = {};
-
-
-      (w.players || [])
-        .forEach(player => {
-
-          if(!player.webpont_id)
-            return;
-
-
-          let key =
-            String(
-              player.webpont_id
-            )
+        const dbInitial =
+          String(dbPlayer.name || "")
             .trim()
-            .toUpperCase();
+            .charAt(0)
+            .toLowerCase();
 
+        const wpInitial =
+          wpParts.length
+            ? wpParts[0].charAt(0).toLowerCase()
+            : "";
 
-          byWebpont[key] =
-            player;
-
-        });
-
-
-      /* ===================================================
-         MANAGER DELLA PARTITA
-      =================================================== */
-
-      let managerIds = [
-        match.home_manager_id,
-        match.away_manager_id
-      ]
-      .filter(Boolean);
-
-
-      /* ===================================================
-         FORMAZIONI DEI MANAGER
-      =================================================== */
-
-      for(const managerId of managerIds){
-
-        let lineup =
-          lineups.find(x =>
-            x.manager_id === managerId &&
-            x.matchday_id === matchdayId
-          );
-
-
-        if(!lineup){
-
-          console.log(
-            "Formazione non trovata:",
-            {
-              managerId,
-              giornata:
-                match.matchday_number
-            }
-          );
-
-          continue;
-
-        }
-
-
-        let playersOfLineup =
-          lineupPlayers.filter(
-            x =>
-              x.lineup_id ===
-              lineup.id
-          );
-
-
-        /* ===============================================
-           GIOCATORI
-        =============================================== */
-
-        for(
-          const row
-          of playersOfLineup
+        if(
+          !dbInitial ||
+          !wpInitial ||
+          dbInitial === wpInitial
         ){
-
-          let player =
-            row.players;
-
-
-          if(!player)
-            continue;
-
-
-          let webpontId =
-            String(
-              player.webpont_id || ""
-            )
-            .trim()
-            .toUpperCase();
-
-
-          if(!webpontId){
-
-            console.log(
-              "Giocatore senza webpont_id:",
-              player.name,
-              player.surname
-            );
-
-            continue;
-
-          }
-
-
-          let wp =
-            byWebpont[
-              webpontId
-            ];
-
-
-          if(!wp){
-
-            console.log(
-              "Giocatore non trovato su WebPont:",
-              player.name,
-              player.surname,
-              "ID:",
-              webpontId,
-              "giornata:",
-              match.matchday_number
-            );
-
-            continue;
-
-          }
-
-
-          /* =============================================
-             MOLTIPLICATORE RUOLO
-          ============================================= */
-
-          let multiplier = 0;
-
-
-          if(
-            row.role === "starter" ||
-            row.role === "sixth"
-          ){
-
-            multiplier = 1;
-
-          }
-          else if(
-            row.role === "bench"
-          ){
-
-            multiplier = 0.5;
-
-          }
-          else if(
-            row.role === "out"
-          ){
-
-            multiplier = 0;
-
-          }
-
-
-          /* =============================================
-             CAPITANO
-          ============================================= */
-
-          let captainMultiplier =
-            row.captain
-              ? 1.5
-              : 1;
-
-
-          /* =============================================
-             PUNTEGGIO BASE
-          ============================================= */
-
-          let base =
-            Number(
-              wp.fantasyScore
-            ) || 0;
-
-
-          /* =============================================
-             PUNTEGGIO FINALE
-          ============================================= */
-
-          let finalScore =
-            base *
-            multiplier *
-            captainMultiplier;
-
-
-          /* =============================================
-             TRONCAMENTO A 1 DECIMALE
-          ============================================= */
-
-          finalScore =
-            finalScore >= 0
-              ? Math.floor(
-                  finalScore * 10
-                ) / 10
-              : Math.ceil(
-                  finalScore * 10
-                ) / 10;
-
-
-          /* =============================================
-             AGGIUNGE ALLA LISTA
-          ============================================= */
-
-          scoresToSave.push({
-
-            manager_id:
-              managerId,
-
-            matchday_id:
-              matchdayId,
-
-            player_id:
-              row.player_id,
-
-            raw_score:
-              base,
-
-            lineup_multiplier:
-              multiplier,
-
-            captain_multiplier:
-              captainMultiplier,
-
-            final_score:
-              finalScore
-
-          });
-
-
-          processedPlayers++;
-
-
-          console.log(
-            "Fantasy Score preparato:",
-            player.name,
-            player.surname,
-            "giornata:",
-            match.matchday_number,
-            "score:",
-            finalScore
-          );
-
+          exact = wp;
+          break;
         }
-
       }
+    }
+
+    return exact;
+  }
 
 
-      processedGames++;
+  /* =========================================================
+     10. CALCOLO PUNTEGGIO BASE
+     ========================================================= */
 
+  function calculateRawScore(p){
+
+    if(!p){
+      return 0;
+    }
+
+    const minutes =
+      Number(p.minutes ?? 0);
+
+    /*
+      0 minuti = 0
+    */
+    if(minutes <= 0){
+      return 0;
+    }
+
+    let score = 0;
+
+    score += Number(p.points ?? 0) * 1;
+    score += Number(p.defensiveRebounds ?? 0) * 1.25;
+    score += Number(p.offensiveRebounds ?? 0) * 1.5;
+
+    score += Number(p.assists ?? 0) * 1.5;
+    score += Number(p.steals ?? 0) * 1.5;
+    score += Number(p.blocks ?? 0) * 1.5;
+
+    score -= Number(p.turnovers ?? 0) * 1.5;
+
+    score -= Number(p.blocksReceived ?? 0) * 0.5;
+
+    score -= Number(p.twoPointsAttempted ?? 0)
+      - Number(p.twoPointsMade ?? 0);
+
+    score -= Number(p.threePointsAttempted ?? 0)
+      - Number(p.threePointsMade ?? 0);
+
+    score -= Number(p.freeThrowsAttempted ?? 0)
+      - Number(p.freeThrowsMade ?? 0);
+
+    /*
+      Double Double
+    */
+
+    const categories = [
+      Number(p.points ?? 0),
+      Number(p.offensiveRebounds ?? 0)
+        + Number(p.defensiveRebounds ?? 0),
+      Number(p.assists ?? 0),
+      Number(p.steals ?? 0),
+      Number(p.blocks ?? 0)
+    ];
+
+    const tens =
+      categories.filter(x => x >= 10).length;
+
+    if(tens >= 2){
+      score += 5;
+    }
+
+    /*
+      Triple Double
+    */
+
+    if(tens >= 3){
+      score += 10;
+    }
+
+    return Number(score.toFixed(1));
+  }
+
+
+  /* =========================================================
+     11. FUNZIONE DI ARROTONDAMENTO
+     ========================================================= */
+
+  function round1(x){
+    return Number(
+      Number(x || 0).toFixed(1)
+    );
+  }
+
+
+  /* =========================================================
+     12. ELABORIAMO OGNI GIORNATA
+     ========================================================= */
+
+  let totalSaved = 0;
+
+  for(const md of matchdays){
+
+    const matchdayNumber =
+      Number(md.number);
+
+    console.log(
+      `\n===== GIORNATA ${matchdayNumber} =====`
+    );
+
+
+    /* -------------------------------------------------------
+       LINEUP DELLA GIORNATA
+       ------------------------------------------------------- */
+
+    const dayLineups =
+      lineups.filter(
+        l => l.matchday_id === md.id
+      );
+
+    if(!dayLineups.length){
+
+      console.log(
+        "Nessuna formazione per questa giornata."
+      );
+
+      continue;
+    }
+
+    const lineupById = new Map(
+      dayLineups.map(
+        l => [l.id,l]
+      )
+    );
+
+
+    /* -------------------------------------------------------
+       GIOCATORI DELLA GIORNATA
+       ------------------------------------------------------- */
+
+    const dayPlayers =
+      lineupPlayers.filter(
+        lp => lineupById.has(lp.lineup_id)
+      );
+
+    if(!dayPlayers.length){
+
+      console.log(
+        "Nessun giocatore schierato."
+      );
+
+      continue;
     }
 
 
-    /* =====================================================
-       10. SALVATAGGIO MASSIVO
-    ===================================================== */
+    /* -------------------------------------------------------
+       SQUADRE REALI PRESENTI NELLE FORMAZIONI
+       ------------------------------------------------------- */
+
+    const realTeamIds = [
+      ...new Set(
+        dayPlayers
+          .map(lp => lp.players?.real_team_id)
+          .filter(Boolean)
+      )
+    ];
+
 
     console.log(
-      "================================="
-    );
-
-    console.log(
-      "PUNTEGGI DA SALVARE:",
-      scoresToSave.length
+      "Squadre reali nelle formazioni:",
+      realTeamIds.length
     );
 
 
-    if(!scoresToSave.length){
+    /* -------------------------------------------------------
+       SCARICHIAMO OGNI PARTITA WEBPONT UNA SOLA VOLTA
+       ------------------------------------------------------- */
+
+    const playerStatsByPlayerId = new Map();
+
+
+    for(const realTeamId of realTeamIds){
+
+      /*
+        Per ora abbiamo la mappa certa della giornata 1.
+        Per le altre giornate non inventiamo nessun match.
+      */
+
+      let gameId = null;
+
+      if(matchdayNumber === 1){
+        gameId = webpontMap[realTeamId] || null;
+      }
+
+
+      /*
+        Nessuna partita WebPont disponibile:
+        il giocatore non riceve statistiche.
+      */
+
+      if(!gameId){
+
+        const teamName =
+          dayPlayers.find(
+            lp =>
+              lp.players?.real_team_id === realTeamId
+          )?.players?.real_teams?.name
+          || realTeamId;
+
+        console.log(
+          "Nessun WebPont per:",
+          teamName
+        );
+
+        continue;
+      }
+
+
+      const data =
+        await getWebPontGame(gameId);
+
+      if(!data){
+
+        console.warn(
+          "Dati WebPont mancanti:",
+          gameId
+        );
+
+        continue;
+      }
+
+
+      const webPlayers =
+        data.players || [];
+
+
+      console.log(
+        gameId,
+        "giocatori WebPont:",
+        webPlayers.length
+      );
+
+
+      /*
+        Tutti i giocatori del database appartenenti
+        a questa squadra.
+      */
+
+      const dbPlayersOfTeam =
+        dayPlayers.filter(
+          lp =>
+            lp.players?.real_team_id === realTeamId
+        );
+
+
+      for(const lp of dbPlayersOfTeam){
+
+        const dbPlayer =
+          lp.players;
+
+        const wp =
+          findWebPontPlayer(
+            dbPlayer,
+            webPlayers
+          );
+
+
+        if(!wp){
+
+          console.warn(
+            "Giocatore non trovato WebPont:",
+            dbPlayer?.name,
+            dbPlayer?.surname,
+            "team:",
+            dbPlayer?.real_teams?.name
+          );
+
+          continue;
+        }
+
+
+        const raw =
+          calculateRawScore(wp);
+
+
+        playerStatsByPlayerId.set(
+          dbPlayer.id,
+          {
+            raw_score: raw,
+            webpont_id: wp.webpont_id,
+            webpont: wp
+          }
+        );
+      }
+    }
+
+
+    /* =======================================================
+       13. CREIAMO LE RIGHE fantasy_scores
+       ======================================================= */
+
+    const rows = [];
+
+
+    for(const lp of dayPlayers){
+
+      const lineup =
+        lineupById.get(lp.lineup_id);
+
+      if(!lineup){
+        continue;
+      }
+
+
+      const player =
+        lp.players;
+
+      if(!player){
+        continue;
+      }
+
+
+      const stat =
+        playerStatsByPlayerId.get(
+          player.id
+        );
+
+
+      /*
+        Se la squadra non ha giocato oppure
+        il giocatore non è stato trovato,
+        il punteggio base è 0.
+      */
+
+      const rawScore =
+        stat
+          ? Number(stat.raw_score || 0)
+          : 0;
+
+
+      /* -----------------------------------------------------
+         MOLTIPLICATORE FORMAZIONE
+         ----------------------------------------------------- */
+
+      const lineupMultiplier =
+        getLineupMultiplier(lp);
+
+
+      /* -----------------------------------------------------
+         CAPITANO
+         ----------------------------------------------------- */
+
+      const captainMultiplier =
+        String(lineup.captain_player_id || "") ===
+        String(player.id)
+          ? 1.5
+          : 1;
+
+
+      /* -----------------------------------------------------
+         PUNTEGGIO FINALE
+         ----------------------------------------------------- */
+
+      const finalScore =
+        round1(
+          rawScore *
+          lineupMultiplier *
+          captainMultiplier
+        );
+
+
+      rows.push({
+
+        manager_id:
+          lineup.manager_id,
+
+        matchday_id:
+          md.id,
+
+        player_id:
+          player.id,
+
+        raw_score:
+          round1(rawScore),
+
+        lineup_multiplier:
+          lineupMultiplier,
+
+        captain_multiplier:
+          captainMultiplier,
+
+        final_score:
+          finalScore
+      });
+    }
+
+
+    /* =======================================================
+       14. SALVATAGGIO
+       ======================================================= */
+
+    if(!rows.length){
 
       console.log(
         "Nessun punteggio da salvare."
       );
 
-      return;
-
+      continue;
     }
 
 
-    /* =====================================================
-       SALVA A BLOCCHI
-    ===================================================== */
+    console.log(
+      "Righe fantasy_scores da salvare:",
+      rows.length
+    );
 
-    const chunkSize = 100;
 
+    /*
+      Upsert a blocchi per evitare problemi
+      con richieste troppo grandi.
+    */
 
     for(
       let i = 0;
-      i < scoresToSave.length;
-      i += chunkSize
+      i < rows.length;
+      i += 100
     ){
 
-      let chunk =
-        scoresToSave.slice(
-          i,
-          i + chunkSize
-        );
+      const chunk =
+        rows.slice(i,i + 100);
 
 
-      let save =
+      const save =
         await db
           .from("fantasy_scores")
           .upsert(
@@ -6476,69 +6559,45 @@ let lm = await db
       if(save.error){
 
         console.error(
-          "Errore salvataggio blocco:",
+          "ERRORE SALVATAGGIO fantasy_scores:",
           save.error
         );
 
-      }
-      else{
-
-        console.log(
-          "Blocco salvato:",
-          Math.min(
-            i + chunk.length,
-            scoresToSave.length
-          ),
-          "/",
-          scoresToSave.length
-        );
-
+        continue;
       }
 
+
+      totalSaved += chunk.length;
+
+      console.log(
+        "Fantasy score salvati:",
+        chunk.length
+      );
     }
 
 
-    /* =====================================================
-       11. RISULTATO FINALE
-    ===================================================== */
-
     console.log(
-      "================================="
+      `GIORNATA ${matchdayNumber} COMPLETATA`
     );
-
-    console.log(
-      "CARICAMENTO MASSIVO COMPLETATO"
-    );
-
-    console.log(
-      "Partite elaborate:",
-      processedGames
-    );
-
-    console.log(
-      "Giocatori elaborati:",
-      processedPlayers
-    );
-
-    console.log(
-      "Punteggi salvati:",
-      scoresToSave.length
-    );
-
-    console.log(
-      "================================="
-    );
-
-
   }
-  catch(err){
 
-    console.error(
-      "ERRORE CARICAMENTO MASSIVO:",
-      err
-    );
 
-  }
+  /* =========================================================
+     15. FINE
+     ========================================================= */
+
+  console.log(
+    "========================================"
+  );
+
+  console.log(
+    "FANTASY SCORE SALVATI:",
+    totalSaved
+  );
+
+  console.log(
+    "========================================"
+  );
 
 };
 
