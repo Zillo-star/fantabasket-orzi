@@ -8685,15 +8685,15 @@ function renderLineup(managerId,dayNumber){
 
   let match = null;
 
-  if(typeof leagueMatches !== "undefined" && Array.isArray(leagueMatches)){
-    match = leagueMatches.find(m =>
+if(Array.isArray(matches)){
+    match = matches.find(m =>
       Number(m.matchday_number) === Number(dayNumber) &&
       (
         m.home_manager_id === managerId ||
         m.away_manager_id === managerId
       )
     );
-  }
+}
 
   let opponentId = null;
 
