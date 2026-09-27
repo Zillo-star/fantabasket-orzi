@@ -10149,16 +10149,17 @@ let logo = null;
         </label>
 
 
-        <select
-          onchange="
-            window.calendarSelectedDay =
-              Number(this.value);
-            calendar();
-          "
-          style="
-            width:100%;
-          "
-        >
+<select
+  id="day"
+  onchange="
+    window.calendarSelectedDay =
+      Number(this.value);
+    calendar();
+  "
+  style="
+    width:100%;
+  "
+>
 
 ${
   allDays
