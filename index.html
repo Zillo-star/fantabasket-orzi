@@ -10132,48 +10132,36 @@ let logo = null;
       </div>
 
 
-      <div style="
-        margin-top:16px;
-        max-width:300px;
-      ">
+<div style="
+  margin-top:16px;
+  max-width:300px;
+">
 
-        <label style="
-          display:block;
-          margin-bottom:6px;
-          font-size:12px;
-          font-weight:800;
-          text-transform:uppercase;
-          letter-spacing:.3px;
-        ">
-          Giornata
-        </label>
+  <label style="
+    display:block;
+    margin-bottom:6px;
+    font-size:12px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.3px;
+  ">
+    Giornata
+  </label>
 
-<select
-  id="day"
-  onchange="
-    window.calendarSelectedDay =
-      Number(
-        this.options[this.selectedIndex]
-          .dataset.number
-      );
-    calendar();
-  "
-  style="
-    width:100%;
-  "
->
-
-<select
-  id="day"
-  onchange="
-    window.calendarSelectedDay =
-      Number(this.value);
-    calendar();
-  "
-  style="
-    width:100%;
-  "
->
+  <select
+    id="day"
+    onchange="
+      window.calendarSelectedDay =
+        Number(
+          this.options[this.selectedIndex]
+            .dataset.number
+        );
+      calendar();
+    "
+    style="
+      width:100%;
+    "
+  >
 
 ${
   allDays
@@ -10196,9 +10184,9 @@ ${
     .join("")
 }
 
-        </select>
+  </select>
 
-      </div>
+</div>
 
     </div>
 
