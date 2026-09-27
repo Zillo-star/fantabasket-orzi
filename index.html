@@ -5755,21 +5755,20 @@ window.liveFantasyTimer =
     window.liveFantasyTimer
   );
 
-  window.liveFantasyTimer=
-    setInterval(()=>{
+window.liveFantasyTimer =
+  setInterval(()=>{
 
-      if(
-        typeof window.loadLiveFantasyScores ===
-        "function"
-      ){
+    if(
+      typeof window.loadLiveFantasyScores ===
+      "function"
+    ){
 
-        window.loadLiveFantasyScores();
+      window.loadLiveFantasyScores();
 
-      }
+    }
 
-    },20000);
+  },20000);
 
-}
 async function loadPlayerGames(){
 
 console.log("LOAD PLAYER GAMES PARTITA!");
