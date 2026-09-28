@@ -5680,7 +5680,7 @@ const leagueMatches = await db
     home_manager_id,
     away_manager_id
   `)
-  .eq("matchday_number", dayNumber);
+  .eq("matchday_number", day);
 
 if(leagueMatches.error){
 
