@@ -5669,6 +5669,151 @@ if(coachSave.error){
 
   }
 
+/* =========================================
+   AGGIORNA RISULTATI MATCH FANTASY
+========================================= */
+
+const leagueMatches = await db
+  .from("league_matches")
+  .select(`
+    id,
+    home_manager_id,
+    away_manager_id
+  `)
+  .eq("matchday_number", dayNumber);
+
+if(leagueMatches.error){
+
+  console.error(
+    "ERRORE LEAGUE MATCHES:",
+    leagueMatches.error
+  );
+
+}else{
+
+  const playerScores = await db
+    .from("fantasy_scores")
+    .select(`
+      manager_id,
+      final_score
+    `)
+    .eq("matchday_id", matchdayId);
+
+  const coachScores = await db
+    .from("fantasy_coach_scores")
+    .select(`
+      manager_id,
+      final_score
+    `)
+    .eq("matchday_id", matchdayId);
+
+
+  if(
+    !playerScores.error &&
+    !coachScores.error
+  ){
+
+    const totals = {};
+
+    /* GIOCATORI */
+
+    (playerScores.data || []).forEach(x => {
+
+      const id = String(x.manager_id);
+
+      totals[id] =
+        (totals[id] || 0) +
+        Number(x.final_score || 0);
+
+    });
+
+
+    /* ALLENATORI */
+
+    (coachScores.data || []).forEach(x => {
+
+      const id = String(x.manager_id);
+
+      totals[id] =
+        (totals[id] || 0) +
+        Number(x.final_score || 0);
+
+    });
+
+
+    /* SALVA I RISULTATI DELLE PARTITE */
+
+    for(const match of (leagueMatches.data || [])){
+
+      const homeId =
+        String(match.home_manager_id);
+
+      const awayId =
+        String(match.away_manager_id);
+
+      const homeScore =
+        totals[homeId] !== undefined
+          ? Number(totals[homeId].toFixed(1))
+          : null;
+
+      const awayScore =
+        totals[awayId] !== undefined
+          ? Number(totals[awayId].toFixed(1))
+          : null;
+
+
+      /*
+        Aggiorniamo solo quando almeno uno
+        dei due fantallenatori ha già
+        un punteggio disponibile.
+      */
+
+      if(
+        homeScore === null &&
+        awayScore === null
+      )
+        continue;
+
+
+      const updateMatch =
+        await db
+          .from("league_matches")
+          .update({
+
+            home_score:
+              homeScore,
+
+            away_score:
+              awayScore
+
+          })
+          .eq("id",match.id);
+
+
+      if(updateMatch.error){
+
+        console.error(
+          "ERRORE AGGIORNAMENTO MATCH FANTASY:",
+          updateMatch.error
+        );
+
+      }else{
+
+        console.log(
+          "RISULTATO FANTASY AGGIORNATO:",
+          homeScore,
+          "-",
+          awayScore
+        );
+
+      }
+
+    }
+
+  }
+
+}
+
   /* =========================================================
      8. FINE
   ========================================================= */
