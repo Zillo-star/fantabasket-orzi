@@ -9621,115 +9621,147 @@ function playerCard(x,side){
   // PANCHINA
   // ------------------------------------------------------------
 
-  function benchBlock(list,managerId){
+function benchBlock(list,managerId){
 
-    let sixth = list.find(x =>
-      x.role === "sixth" ||
-      x.lineup_role === "sixth" ||
-      x.sixth === true
-    );
+  let sixth = list.find(x =>
+    x.role === "sixth" ||
+    x.lineup_role === "sixth" ||
+    x.sixth === true
+  );
 
-    let bench = list.filter(x =>
-      x.role === "bench" ||
-      x.lineup_role === "bench"
-    );
+  let bench = list.filter(x =>
+    x.role === "bench" ||
+    x.lineup_role === "bench"
+  );
 
-    let out = list.filter(x =>
-      x.role === "out" ||
-      x.lineup_role === "out"
-    );
+  let out = list.filter(x =>
+    x.role === "out" ||
+    x.lineup_role === "out"
+  );
 
-    if(sixth) sixth.managerId = managerId;
-    bench = bench.map(x => ({...x,managerId}));
-    out = out.map(x => ({...x,managerId}));
+  if(sixth){
+    sixth.managerId = managerId;
+  }
 
-    return `
-      <div style="
-        margin-top:10px;
-        padding:10px;
-        border-radius:14px;
-        background:rgba(255,255,255,.045);
-        border:1px solid rgba(255,255,255,.07);
-      ">
+  bench = bench.map(x => ({
+    ...x,
+    managerId
+  }));
 
-        ${
-          sixth
-          ? `
-            <div style="
-              margin-bottom:8px;
-            ">
-              <div style="
-                font-size:9px;
-                font-weight:900;
-                letter-spacing:.08em;
-                text-transform:uppercase;
-                color:#a78bfa;
-                margin-bottom:5px;
-              ">
-                6° uomo · 100%
-              </div>
+  out = out.map(x => ({
+    ...x,
+    managerId
+  }));
 
-              <div style="
-                max-width:105px;
-              ">
-                ${playerCard(sixth,"bench")}
-              </div>
-            </div>
-          `
-          : ""
-        }
+  return `
+    <div style="
+      margin-top:10px;
+      padding:10px;
+      border-radius:14px;
+      background:rgba(255,255,255,.045);
+      border:1px solid rgba(255,255,255,.07);
+    ">
 
-        ${
-          bench.length
-          ? `
+      ${
+        sixth
+        ? `
+          <div style="
+            margin-bottom:9px;
+          ">
+
             <div style="
               font-size:9px;
               font-weight:900;
               letter-spacing:.08em;
               text-transform:uppercase;
-              color:#9ca3af;
+              color:#a78bfa;
               margin-bottom:5px;
             ">
-              Panchina · 50%
+              6° UOMO · 100%
             </div>
 
             <div style="
-              display:grid;
-              grid-template-columns:
-                repeat(${Math.min(4,bench.length)},minmax(0,1fr));
-              gap:6px;
+              width:100%;
             ">
-              ${bench.map(x => playerCard(x,"bench")).join("")}
+              ${playerCard(sixth,"bench")}
             </div>
-          `
-          : ""
-        }
 
-        ${
-          out.length
-          ? `
-            <div style="
-              margin-top:8px;
-              padding-top:7px;
-              border-top:1px solid rgba(255,255,255,.06);
-              font-size:9px;
-              line-height:1.4;
-              color:#6b7280;
+          </div>
+        `
+        : ""
+      }
+
+      ${
+        bench.length
+        ? `
+          <div style="
+            font-size:9px;
+            font-weight:900;
+            letter-spacing:.08em;
+            text-transform:uppercase;
+            color:#9ca3af;
+            margin-bottom:6px;
+          ">
+            PANCHINA · 50%
+          </div>
+
+          <div style="
+            display:grid;
+            grid-template-columns:repeat(2,minmax(0,1fr));
+            gap:7px;
+          ">
+            ${bench.map(x =>
+              playerCard(x,"bench")
+            ).join("")}
+          </div>
+        `
+        : ""
+      }
+
+      ${
+        out.length
+        ? `
+          <div style="
+            margin-top:8px;
+            padding-top:7px;
+            border-top:1px solid rgba(255,255,255,.06);
+            font-size:9px;
+            line-height:1.4;
+            color:#6b7280;
+          ">
+            <span style="
+              font-weight:800;
+              color:#7b8496;
             ">
-              <span style="font-weight:800;color:#7b8496">
-                OUT:
-              </span>
-              ${out.map(x =>
-                `${x.name || ""} ${x.surname || ""}`
-              ).join(" · ")}
-            </div>
-          `
-          : ""
-        }
+              OUT:
+            </span>
 
-      </div>
-    `;
-  }
+            ${out.map(x => {
+
+              let n = String(x.name || "").trim();
+              let s = String(x.surname || "").trim();
+
+              if(!s && n.includes(" ")){
+
+                let parts = n.split(/\s+/);
+
+                s = parts.pop();
+                n = parts.join(" ");
+
+              }
+
+              return `${n} ${s}`;
+
+            }).join(" · ")}
+
+          </div>
+        `
+        : ""
+      }
+
+    </div>
+  `;
+}
 
   // ------------------------------------------------------------
   // SQUADRA
