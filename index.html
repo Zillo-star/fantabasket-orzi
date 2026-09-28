@@ -8810,6 +8810,39 @@ async function calendar(){
 
   }
 
+  /* =========================
+     ALLENATORI
+  ========================= */
+
+  let managerCoaches = {};
+
+  if(managerIds.length){
+
+    let mc = await db.from("manager_coaches")
+      .select(`
+        manager_id,
+        real_team_id,
+        purchase_price,
+        active,
+        real_teams(
+          name,
+          coach,
+          logo_url
+        )
+      `)
+      .in("manager_id",managerIds)
+      .eq("active",true);
+
+    if(mc.error)
+      return message(mc.error.message,"err");
+
+    (mc.data || []).forEach(x => {
+
+      managerCoaches[x.manager_id] = x;
+
+    });
+
+  }
 
   /* =========================
      GIORNATE
