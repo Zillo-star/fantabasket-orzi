@@ -5051,1736 +5051,519 @@ setTimeout(()=>{
 
 window.loadLiveFantasyScores = async function(){
 
-  try{
+  const day = Number(el("day")?.value || el("day")?.dataset?.day || 1);
 
-    /* =========================
-       1. GIORNATA
-    ========================= */
+  const gamesByMatchday = {
+    1: [
+      "ita3_a_400","ita3_a_401","ita3_a_402","ita3_a_403",
+      "ita3_a_404","ita3_a_406","ita3_a_407","ita3_a_408",
+      "ita3_b_400","ita3_b_401","ita3_b_402","ita3_b_403",
+      "ita3_b_404","ita3_b_405","ita3_b_407","ita3_b_408"
+    ]
+  };
 
-    const daySelect = el("day");
+  const games = gamesByMatchday[day] || [];
 
-    if(!daySelect) return;
+  if(!games.length){
+    console.warn("NESSUNA PARTITA WEBPONT PER LA GIORNATA:",day);
+    return;
+  }
 
-    const selectedOption =
-      daySelect.options[
-        daySelect.selectedIndex
-      ];
+  console.log("=== LIVE FANTASY SCORE ===");
+  console.log("Giornata:",day);
+  console.log("Games:",games);
 
-    const dayNumber =
-      Number(
-        selectedOption?.dataset?.number
+  /* =========================================================
+     1. SCARICO TUTTE LE PARTITE WEBPONT
+  ========================================================= */
+
+  const gamesData = {};
+
+  for(const game of games){
+
+    try{
+
+      const r = await fetch(
+        "https://fantabasket-webpont.davzil2005.workers.dev?game="+game
       );
 
-    const matchdayId =
-      selectedOption?.value;
+      const w = await r.json();
 
-    if(!dayNumber || !matchdayId)
-      return;
-
-
-    /* =========================
-       2. GAMES WEBPONT
-    ========================= */
-
-    const gamesByMatchday = {
-
-      1: [
-        "ita3_a_400",
-        "ita3_a_401",
-        "ita3_a_402",
-        "ita3_a_403",
-        "ita3_a_404",
-        "ita3_a_406",
-        "ita3_a_407",
-        "ita3_a_408",
-        "ita3_b_400",
-        "ita3_b_401",
-        "ita3_b_402",
-        "ita3_b_403",
-        "ita3_b_404",
-        "ita3_b_405",
-        "ita3_b_407",
-        "ita3_b_408"
-      ]
-
-    };
-
-    const webpontGames =
-      gamesByMatchday[dayNumber] || [];
-
-    if(!webpontGames.length){
-
-      console.warn(
-        "Nessun WebPont game configurato per la giornata",
-        dayNumber
-      );
-
-      return;
-    }
-
-    console.log(
-      "=============================="
-    );
-
-    console.log(
-      "WEBPONT GAMES GIORNATA",
-      dayNumber,
-      webpontGames
-    );
-
-
-    /* =========================
-       3. PULISCI DISPLAY
-    ========================= */
-
-    document
-      .querySelectorAll(
-        "#lp [data-live-score]"
-      )
-      .forEach(box => {
-
-        box.textContent = "—";
-
-      });
-
-    document
-      .querySelectorAll(
-        "#lp [data-live-detail]"
-      )
-      .forEach(box => {
-
-        box.textContent = "";
-
-      });
-
-
-    /* =========================
-       4. GIOCATORI DATABASE
-    ========================= */
-
-    const dbPlayersResult =
-      await db
-        .from("players")
-        .select(`
-          id,
-          name,
-          surname,
-          webpont_id,
-          real_team_id,
-          real_teams(
-            id,
-            name
-          )
-        `)
-        .eq(
-          "active",
-          true
-        );
-
-    if(dbPlayersResult.error){
-
-      console.error(
-        "Errore caricamento players:",
-        dbPlayersResult.error
-      );
-
-      return;
-    }
-
-    const dbPlayers =
-      dbPlayersResult.data || [];
-
-    console.log(
-      "GIOCATORI DB:",
-      dbPlayers.length
-    );
-
-
-    /* =========================
-       5. NORMALIZZAZIONE NOMI
-    ========================= */
-
-    function normalizeName(str){
-
-      return String(str || "")
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(
-          /[\u0300-\u036f]/g,
-          ""
-        )
-        .replace(
-          /[^a-z0-9]+/g,
-          " "
-        )
-        .trim();
-
-    }
-
-
-    function getLastSurname(str){
-
-      const parts =
-        normalizeName(str)
-          .split(" ")
-          .filter(Boolean);
-
-      return parts.length
-        ? parts[parts.length - 1]
-        : "";
-
-    }
-
-
-    function namesMatch(
-      dbPlayer,
-      wpPlayer
-    ){
-
-      const dbFull =
-        normalizeName(
-          [
-            dbPlayer.name,
-            dbPlayer.surname
-          ]
-          .filter(Boolean)
-          .join(" ")
-        );
-
-      const wpFull =
-        normalizeName(
-          wpPlayer.name
-        );
-
-      if(!dbFull || !wpFull)
-        return false;
-
-
-      if(dbFull === wpFull)
-        return true;
-
-
-      const dbParts =
-        dbFull.split(" ");
-
-      const wpParts =
-        wpFull.split(" ");
-
-
-      if(
-        dbParts.length < 2 ||
-        wpParts.length < 2
-      ){
-
-        return false;
-
-      }
-
-
-      const dbSurname =
-        dbParts
-          .slice(1)
-          .join(" ");
-
-      const wpSurname =
-        wpParts
-          .slice(1)
-          .join(" ");
-
-
-      if(
-        dbSurname &&
-        wpSurname &&
-        dbSurname === wpSurname
-      ){
-
-        return true;
-
-      }
-
-
-      const dbLast =
-        getLastSurname(dbFull);
-
-      const wpLast =
-        getLastSurname(wpFull);
-
-
-      if(
-        dbLast &&
-        wpLast &&
-        dbLast === wpLast
-      ){
-
-        return true;
-
-      }
-
-
-      return false;
-
-    }
-
-
-    /* =========================
-       6. SCARICA GAMES WEBPONT
-    ========================= */
-
-    const gamesData = {};
-
-    for(
-      const game of webpontGames
-    ){
-
-      try{
-
-        const wr =
-          await fetch(
-            "https://fantabasket-webpont.davzil2005.workers.dev?game=" +
-            encodeURIComponent(game)
-          );
-
-
-        if(!wr.ok){
-
-          console.warn(
-            "WebPont HTTP:",
-            wr.status,
-            game
-          );
-
-          continue;
-
-        }
-
-
-        const w =
-          await wr.json();
-
-
-        if(!w.ok){
-
-          console.warn(
-            "WebPont errore:",
-            game,
-            w
-          );
-
-          continue;
-
-        }
-
-
-        /*
-          SALVIAMO TUTTA LA RISPOSTA WEBPONT,
-          NON SOLO players.
-          Serve anche per il risultato dell'allenatore.
-        */
-
-        gamesData[game] = w;
-
-
-        console.log(
-          "WEBPONT CARICATO:",
-          game,
-          "giocatori:",
-          (w.players || []).length
-        );
-
-
-      }catch(err){
-
-        console.error(
-          "Errore WebPont:",
-          game,
-          err
-        );
-
-      }
-
-    }
-
-
-    /* =========================
-       7. MAPPA GIOCATORE DB → WEBPONT
-    ========================= */
-
-    function findDbPlayerFromWebPont(
-      wpPlayer
-    ){
-
-      if(wpPlayer.webpont_id){
-
-        const wpId =
-          String(
-            wpPlayer.webpont_id
-          )
-          .trim()
-          .toUpperCase();
-
-
-        const exactId =
-          dbPlayers.find(
-            p =>
-              p.webpont_id &&
-              String(
-                p.webpont_id
-              )
-              .trim()
-              .toUpperCase() === wpId
-          );
-
-
-        if(exactId)
-          return exactId;
-
-      }
-
-
-      const matches =
-        dbPlayers.filter(
-          p =>
-            namesMatch(
-              p,
-              wpPlayer
-            )
-        );
-
-
-      if(matches.length === 1)
-        return matches[0];
-
-
-      if(matches.length > 1){
-
-        const wpParts =
-          normalizeName(
-            wpPlayer.name
-          )
-          .split(" ")
-          .filter(Boolean);
-
-
-        const wpInitial =
-          wpParts[0]?.charAt(0);
-
-
-        const initialMatches =
-          matches.filter(
-            p => {
-
-              const dbParts =
-                normalizeName(
-                  p.name
-                )
-                .split(" ")
-                .filter(Boolean);
-
-
-              return (
-                dbParts[0]?.charAt(0) ===
-                wpInitial
-              );
-
-            }
-          );
-
-
-        if(initialMatches.length === 1)
-          return initialMatches[0];
-
-      }
-
-
-      return null;
-
-    }
-
-
-    /* =========================
-       8. MAPPA PARTITA → SQUADRE
-    ========================= */
-
-    const gameTeamMap = {};
-
-    for(
-      const game of Object.keys(
-        gamesData
-      )
-    ){
-
-      const playersInGame =
-        gamesData[game].players || [];
-
-
-      const teamCounts = {};
-
-
-      for(
-        const wpPlayer of playersInGame
-      ){
-
-        const dbPlayer =
-          findDbPlayerFromWebPont(
-            wpPlayer
-          );
-
-
-        if(
-          !dbPlayer ||
-          !dbPlayer.real_team_id
-        ){
-
-          continue;
-
-        }
-
-
-        const teamId =
-          String(
-            dbPlayer.real_team_id
-          );
-
-
-        if(!teamCounts[teamId]){
-
-          teamCounts[teamId] = {
-
-            count: 0,
-
-            teamName:
-              dbPlayer
-                .real_teams
-                ?.name ||
-              "?"
-
-          };
-
-        }
-
-
-        teamCounts[teamId].count++;
-
-      }
-
-
-      const orderedTeams =
-        Object.entries(
-          teamCounts
-        )
-        .sort(
-          (a,b) =>
-            b[1].count -
-            a[1].count
-        );
-
-
-      gameTeamMap[game] =
-        orderedTeams
-          .slice(0,2)
-          .map(
-            x => x[0]
-          );
-
+      gamesData[game] = w;
 
       console.log(
-        "MAPPA PARTITA:",
+        "WEBPONT:",
         game,
-        gameTeamMap[game]
-          .map(
-            teamId =>
-              teamCounts[
-                teamId
-              ]?.teamName ||
-              teamId
-          )
+        w.info?.home,
+        w.info?.homeScore,
+        "-",
+        w.info?.away,
+        w.info?.awayScore
       );
 
+    }catch(e){
+
+      console.error("ERRORE WEBPONT:",game,e);
+
     }
+  }
 
+  /* =========================================================
+     2. CARICO I GIOCATORI
+  ========================================================= */
 
-    /* =========================
-       9. MAPPA TEAM → GAME
-    ========================= */
-
-    const teamToGame = {};
-
-    for(
-      const game of Object.keys(
-        gameTeamMap
+  const playersResult = await db
+    .from("players")
+    .select(`
+      id,
+      name,
+      surname,
+      webpont_id,
+      real_team_id,
+      active,
+      real_teams(
+        name
       )
-    ){
+    `)
+    .eq("active",true);
 
-      for(
-        const teamId of
-          gameTeamMap[game]
-      ){
+  if(playersResult.error){
+    console.error(playersResult.error);
+    return;
+  }
 
-        if(
-          !teamToGame[teamId]
-        ){
+  const dbPlayers = playersResult.data || [];
 
-          teamToGame[teamId] =
-            game;
+  /* =========================================================
+     3. ASSOCIO GIOCATORI WEBPONT -> SQUADRA REALE
+  ========================================================= */
+
+  const teamToGame = {};
+  const playerToGame = {};
+
+  for(const game of games){
+
+    const w = gamesData[game];
+
+    if(!w || !Array.isArray(w.players))
+      continue;
+
+    for(const wp of w.players){
+
+      let dbPlayer = null;
+
+      if(wp.webpont_id != null){
+
+        dbPlayer = dbPlayers.find(
+          p => String(p.webpont_id) === String(wp.webpont_id)
+        );
+
+      }
+
+      if(!dbPlayer){
+
+        const wpName = String(wp.name || "").trim().toLowerCase();
+        const wpSurname = String(wp.surname || "").trim().toLowerCase();
+
+        dbPlayer = dbPlayers.find(p =>
+          String(p.name || "").trim().toLowerCase() === wpName &&
+          String(p.surname || "").trim().toLowerCase() === wpSurname
+        );
+      }
+
+      if(dbPlayer){
+
+        playerToGame[dbPlayer.id] = {
+          game,
+          wp
+        };
+
+        if(dbPlayer.real_team_id){
+
+          teamToGame[String(dbPlayer.real_team_id)] = game;
 
         }
 
       }
 
     }
+  }
 
+  console.log(
+    "SQUADRE REALI COLLEGATE:",
+    Object.keys(teamToGame).length
+  );
 
-    console.log(
-      "=============================="
+  /* =========================================================
+     4. CARICO LE FORMAZIONI DELLA GIORNATA
+  ========================================================= */
+
+  const lineupsResult = await db
+    .from("lineups")
+    .select(`
+      id,
+      manager_id,
+      lineup_players(
+        player_id,
+        role,
+        captain
+      )
+    `)
+    .eq("matchday_id",day);
+
+  if(lineupsResult.error){
+
+    console.error(
+      "ERRORE LINEUPS:",
+      lineupsResult.error
     );
 
-    console.log(
-      "MAPPA TEAM → WEBPONT GAME",
-      teamToGame
-    );
+    return;
+  }
 
+  const lineups = lineupsResult.data || [];
 
-    /* =========================
-       10. TROVA LE FORMAZIONI
-    ========================= */
+  /* =========================================================
+     5. PUNTEGGI GIOCATORI
+  ========================================================= */
 
-    const lu =
-      await db
-        .from("lineups")
-        .select(`
-          id,
-          manager_id
-        `)
-        .eq(
-          "matchday_id",
-          matchdayId
-        );
+  for(const lineup of lineups){
 
+    for(const lp of (lineup.lineup_players || [])){
 
-    if(lu.error){
+      const pg = playerToGame[lp.player_id];
 
-      console.error(
-        "Errore lineups:",
-        lu.error
-      );
-
-      return;
-
-    }
-
-
-    const lineups =
-      lu.data || [];
-
-
-    if(!lineups.length){
-
-      console.log(
-        "Nessuna formazione per la giornata:",
-        dayNumber
-      );
-
-      return;
-
-    }
-
-
-    /* =========================
-       11. ELABORA GIOCATORI
-    ========================= */
-
-    for(
-      const lineup of lineups
-    ){
-
-      const managerId =
-        lineup.manager_id;
-
-
-      const lp =
-        await db
-          .from("lineup_players")
-          .select(`
-            player_id,
-            role,
-            captain,
-            players(
-              id,
-              name,
-              surname,
-              webpont_id,
-              real_team_id,
-              real_teams(
-                id,
-                name
-              )
-            )
-          `)
-          .eq(
-            "lineup_id",
-            lineup.id
-          );
-
-
-      if(lp.error){
-
-        console.error(
-          "Errore lineup_players:",
-          lp.error,
-          lineup.id
-        );
-
+      if(!pg)
         continue;
 
-      }
+      const raw = Number(pg.wp?.fantasyScore);
 
+      if(!Number.isFinite(raw))
+        continue;
 
-      for(
-        const row of
-          (lp.data || [])
+      let multiplier = 0;
+
+      if(
+        lp.role === "starter" ||
+        lp.role === "sixth"
       ){
 
-        const player =
-          row.players;
-
-
-        if(!player)
-          continue;
-
-
-        /* =========================
-           12. GAME DELLA SQUADRA
-        ========================= */
-
-        const teamId =
-          player.real_team_id
-            ? String(
-                player.real_team_id
-              )
-            : null;
-
-
-        let game =
-          teamId
-            ? teamToGame[teamId]
-            : null;
-
-
-        if(
-          !game &&
-          player.webpont_id
-        ){
-
-          const playerWebpontId =
-            String(
-              player.webpont_id
-            )
-            .trim()
-            .toUpperCase();
-
-
-          for(
-            const candidateGame of
-              Object.keys(gamesData)
-          ){
-
-            const found =
-              (
-                gamesData[
-                  candidateGame
-                ].players || []
-              )
-              .find(
-                p =>
-                  p.webpont_id &&
-                  String(
-                    p.webpont_id
-                  )
-                  .trim()
-                  .toUpperCase() ===
-                  playerWebpontId
-              );
-
-
-            if(found){
-
-              game =
-                candidateGame;
-
-              break;
-
-            }
-
-          }
-
-        }
-
-
-        if(!game){
-
-          console.warn(
-            "GAME WEBPONT NON TROVATO:",
-            player.name,
-            player.surname,
-            "team:",
-            player.real_teams?.name
-          );
-
-          continue;
-
-        }
-
-
-        /* =========================
-           13. TROVA GIOCATORE
-        ========================= */
-
-        let wp = null;
-
-
-        if(player.webpont_id){
-
-          const playerWebpontId =
-            String(
-              player.webpont_id
-            )
-            .trim()
-            .toUpperCase();
-
-
-          wp =
-            (
-              gamesData[game]
-                .players || []
-            )
-            .find(
-              p =>
-                p.webpont_id &&
-                String(
-                  p.webpont_id
-                )
-                .trim()
-                .toUpperCase() ===
-                playerWebpontId
-            );
-
-        }
-
-
-        if(!wp){
-
-          const candidates =
-            (
-              gamesData[game]
-                .players || []
-            )
-            .filter(
-              p =>
-                namesMatch(
-                  player,
-                  p
-                )
-            );
-
-
-          if(
-            candidates.length === 1
-          ){
-
-            wp =
-              candidates[0];
-
-          }else if(
-            candidates.length > 1
-          ){
-
-            const playerInitial =
-              normalizeName(
-                player.name
-              ).charAt(0);
-
-
-            const initialMatches =
-              candidates.filter(
-                p =>
-                  normalizeName(
-                    p.name
-                  ).charAt(0) ===
-                  playerInitial
-              );
-
-
-            if(
-              initialMatches.length === 1
-            ){
-
-              wp =
-                initialMatches[0];
-
-            }
-
-          }
-
-        }
-
-
-        if(!wp){
-
-          console.warn(
-            "GIOCATORE NON TROVATO NEL GAME:",
-            player.name,
-            player.surname,
-            "game:",
-            game
-          );
-
-          continue;
-
-        }
-
-
-        /* =========================
-           14. MOLTIPLICATORE RUOLO
-        ========================= */
-
-        let multiplier = 0;
-
-
-        if(
-          row.role === "starter" ||
-          row.role === "sixth"
-        ){
-
-          multiplier = 1;
-
-        }else if(
-          row.role === "bench"
-        ){
-
-          multiplier = 0.5;
-
-        }else if(
-          row.role === "out"
-        ){
-
-          multiplier = 0;
-
-        }
-
-
-        /* =========================
-           15. CAPITANO
-        ========================= */
-
-        const captainMultiplier =
-          row.captain
-            ? 1.5
-            : 1;
-
-
-        /* =========================
-           16. SCORE WEBPONT
-        ========================= */
-
-        const base =
-          Number(
-            wp.fantasyScore
-          ) || 0;
-
-
-        /* =========================
-           17. SCORE FINALE
-        ========================= */
-
-        let finalScore =
-          base *
-          multiplier *
-          captainMultiplier;
-
-
-        finalScore =
-          finalScore >= 0
-            ? Math.floor(
-                finalScore * 10
-              ) / 10
-            : Math.ceil(
-                finalScore * 10
-              ) / 10;
-
-
-        /* =========================
-           18. SALVA FANTASY SCORE
-        ========================= */
-
-        const saveScore =
-          await db
-            .from("fantasy_scores")
-            .upsert(
-              {
-                manager_id:
-                  managerId,
-
-                matchday_id:
-                  matchdayId,
-
-                player_id:
-                  row.player_id,
-
-                raw_score:
-                  base,
-
-                lineup_multiplier:
-                  multiplier,
-
-                captain_multiplier:
-                  captainMultiplier,
-
-                final_score:
-                  finalScore
-
-              },
-              {
-                onConflict:
-                  "manager_id,matchday_id,player_id"
-              }
-            );
-
-
-        if(saveScore.error){
-
-          console.error(
-            "ERRORE SALVATAGGIO FANTASY SCORE:",
-            saveScore.error,
-            player.name,
-            player.surname
-          );
-
-        }else{
-
-          console.log(
-            "FANTASY SCORE SALVATO:",
-            player.name,
-            player.surname,
-            "GAME:",
-            game,
-            "TEAM:",
-            player.real_teams?.name,
-            "RAW:",
-            base,
-            "ROLE:",
-            row.role,
-            "CAP:",
-            row.captain,
-            "FINAL:",
-            finalScore
-          );
-
-        }
-
-
-        /* =========================
-           19. DISPLAY UTENTE
-        ========================= */
-
-        if(
-          managerId !== me.id
-        ){
-
-          continue;
-
-        }
-
-
-        const scoreBox =
-          document.querySelector(
-            `[data-live-score="${row.player_id}"]`
-          );
-
-
-        if(scoreBox){
-
-          if(
-            row.role === "out"
-          ){
-
-            scoreBox.textContent =
-              "—";
-
-          }else{
-
-            scoreBox.textContent =
-              finalScore > 0
-                ? "+" +
-                  finalScore.toFixed(1)
-                : finalScore.toFixed(1);
-
-          }
-
-        }
-
-
-        /* =========================
-           20. DETTAGLI
-        ========================= */
-
-        const detailBox =
-          document.querySelector(
-            `[data-live-detail="${row.player_id}"]`
-          );
-
-
-        if(detailBox){
-
-          const stats = [];
-
-
-          if(
-            wp.points != null
-          ){
-
-            stats.push(
-              `${wp.points} pt`
-            );
-
-          }
-
-
-          if(
-            wp.assists != null
-          ){
-
-            stats.push(
-              `${wp.assists} ast`
-            );
-
-          }
-
-
-          if(
-            wp.offensiveRebounds != null ||
-            wp.defensiveRebounds != null
-          ){
-
-            const rebounds =
-              Number(
-                wp.offensiveRebounds || 0
-              ) +
-              Number(
-                wp.defensiveRebounds || 0
-              );
-
-
-            stats.push(
-              `${rebounds} reb`
-            );
-
-          }
-
-
-          if(
-            wp.steals != null
-          ){
-
-            stats.push(
-              `${wp.steals} rec`
-            );
-
-          }
-
-
-          detailBox.textContent =
-            stats.join(" · ");
-
-        }
+        multiplier = 1;
+
+      }else if(lp.role === "bench"){
+
+        multiplier = 0.5;
+
+      }else{
+
+        multiplier = 0;
+
+      }
+
+      if(lp.captain)
+        multiplier *= 1.5;
+
+      const finalScore =
+        Math.round(raw * multiplier * 10) / 10;
+
+      const save = await db
+        .from("fantasy_scores")
+        .upsert({
+          lineup_id: lineup.id,
+          player_id: lp.player_id,
+          score: finalScore
+        },{
+          onConflict:"lineup_id,player_id"
+        });
+
+      if(save.error){
+
+        console.error(
+          "ERRORE SALVATAGGIO FANTASY SCORE:",
+          save.error
+        );
+
+      }else{
+
+        console.log(
+          "FANTASY SCORE SALVATO:",
+          pg.wp.name || "",
+          pg.wp.surname || "",
+          "GAME:",
+          pg.game,
+          "RAW:",
+          raw,
+          "ROLE:",
+          lp.role,
+          "CAP:",
+          lp.captain,
+          "FINAL:",
+          finalScore
+        );
 
       }
 
     }
 
+  }
 
-    /* =====================================================
-       21. ALLENATORI
-       ===================================================== */
+  /* =========================================================
+     6. CARICO GLI ALLENATORI
+  ========================================================= */
 
-    console.log(
-      "=============================="
+  console.log("=== CALCOLO PUNTEGGI ALLENATORI ===");
+
+  const coachesResult = await db
+    .from("manager_coaches")
+    .select(`
+      manager_id,
+      real_team_id,
+      purchase_price,
+      active,
+      real_teams(
+        name,
+        coach,
+        logo_url
+      )
+    `)
+    .eq("active",true);
+
+  if(coachesResult.error){
+
+    console.error(
+      "ERRORE MANAGER COACHES:",
+      coachesResult.error
     );
 
-    console.log(
-      "CALCOLO PUNTEGGI ALLENATORI"
+    return;
+  }
+
+  const coaches = coachesResult.data || [];
+
+  console.log(
+    "ALLENATORI ATTIVI:",
+    coaches
+  );
+
+  /* =========================================================
+     7. CALCOLO PUNTEGGIO ALLENATORE
+  ========================================================= */
+
+  for(const coach of coaches){
+
+    const realTeamId = String(coach.real_team_id);
+
+    const game = teamToGame[realTeamId];
+
+    if(!game){
+
+      console.warn(
+        "GAME ALLENATORE NON TROVATO:",
+        coach.real_teams?.name,
+        realTeamId
+      );
+
+      continue;
+    }
+
+    const info = gamesData[game]?.info;
+
+    if(!info){
+
+      console.warn(
+        "INFO RISULTATO NON TROVATA:",
+        game
+      );
+
+      continue;
+    }
+
+    const homeScore = Number(info.homeScore);
+    const awayScore = Number(info.awayScore);
+
+    if(
+      !Number.isFinite(homeScore) ||
+      !Number.isFinite(awayScore)
+    ){
+
+      console.warn(
+        "RISULTATO NON VALIDO:",
+        game,
+        info
+      );
+
+      continue;
+    }
+
+    const homeName = String(info.home || "").trim().toLowerCase();
+    const awayName = String(info.away || "").trim().toLowerCase();
+
+    const realTeamName = String(
+      coach.real_teams?.name || ""
+    ).trim().toLowerCase();
+
+    let teamScore = null;
+    let opponentScore = null;
+
+    /*
+      Prima proviamo a capire da che parte è la squadra
+      usando il nome completo e quello abbreviato.
+    */
+
+    if(
+      realTeamName === homeName ||
+      realTeamName === String(info.homeShort || "").trim().toLowerCase()
+    ){
+
+      teamScore = homeScore;
+      opponentScore = awayScore;
+
+    }else if(
+      realTeamName === awayName ||
+      realTeamName === String(info.awayShort || "").trim().toLowerCase()
+    ){
+
+      teamScore = awayScore;
+      opponentScore = homeScore;
+
+    }else{
+
+      /*
+        Fallback: confronto parole del nome squadra.
+      */
+
+      const teamWords = realTeamName
+        .split(/\s+/)
+        .filter(x => x.length >= 4);
+
+      const homeMatch = teamWords.some(
+        word => homeName.includes(word)
+      );
+
+      const awayMatch = teamWords.some(
+        word => awayName.includes(word)
+      );
+
+      if(homeMatch && !awayMatch){
+
+        teamScore = homeScore;
+        opponentScore = awayScore;
+
+      }else if(awayMatch && !homeMatch){
+
+        teamScore = awayScore;
+        opponentScore = homeScore;
+
+      }
+
+    }
+
+    if(
+      teamScore === null ||
+      opponentScore === null
+    ){
+
+      console.warn(
+        "SQUADRA ALLENATORE NON RICONOSCIUTA:",
+        coach.real_teams?.name,
+        "GAME:",
+        game,
+        "HOME:",
+        info.home,
+        homeScore,
+        "AWAY:",
+        info.away,
+        awayScore
+      );
+
+      continue;
+    }
+
+    const margin = Math.abs(
+      teamScore - opponentScore
     );
 
+    let coachScore = 0;
 
-    const managerIds =
-      lineups
-        .map(
-          l => l.manager_id
-        )
-        .filter(Boolean);
+    if(teamScore > opponentScore){
 
+      if(margin <= 5)
+        coachScore = 2.5;
+      else if(margin <= 11)
+        coachScore = 5;
+      else if(margin <= 17)
+        coachScore = 7.5;
+      else
+        coachScore = 10;
 
-    const coachQuery =
-      await db
-        .from("manager_coaches")
-        .select(`
-          manager_id,
-          real_team_id,
-          active,
-          real_teams(
-            id,
-            name,
-            coach
-          )
-        `)
-        .in(
-          "manager_id",
-          managerIds
-        )
-        .eq(
-          "active",
-          true
-        );
+    }else if(teamScore < opponentScore){
 
+      if(margin <= 5)
+        coachScore = -2.5;
+      else if(margin <= 11)
+        coachScore = -5;
+      else if(margin <= 17)
+        coachScore = -7.5;
+      else
+        coachScore = -10;
 
-    if(coachQuery.error){
+    }
+
+    console.log(
+      "ALLENATORE:",
+      coach.real_teams?.coach,
+      "| SQUADRA:",
+      coach.real_teams?.name,
+      "| RISULTATO:",
+      teamScore + "-" + opponentScore,
+      "| MARGINE:",
+      margin,
+      "| PUNTEGGIO:",
+      coachScore
+    );
+
+    const coachSave = await db
+      .from("fantasy_coach_scores")
+      .upsert({
+        manager_id: coach.manager_id,
+        matchday_id: day,
+        real_team_id: coach.real_team_id,
+        score: coachScore
+      },{
+        onConflict:"manager_id,matchday_id"
+      });
+
+    if(coachSave.error){
 
       console.error(
-        "ERRORE CARICAMENTO ALLENATORI:",
-        coachQuery.error
+        "ERRORE SALVATAGGIO COACH:",
+        coachSave.error
       );
 
     }else{
 
-      const managerCoaches =
-        coachQuery.data || [];
-
-
       console.log(
-        "ALLENATORI ATTIVI:",
-        managerCoaches
+        "PUNTEGGIO ALLENATORE SALVATO:",
+        coach.real_teams?.coach,
+        coachScore
       );
 
-
-      /*
-        Cerchiamo il risultato WebPont
-        della squadra dell'allenatore.
-      */
-
-      function getPossibleValue(
-        obj,
-        keys
-      ){
-
-        if(!obj)
-          return null;
-
-
-        for(
-          const key of keys
-        ){
-
-          if(
-            obj[key] !== undefined &&
-            obj[key] !== null
-          ){
-
-            return obj[key];
-
-          }
-
-        }
-
-
-        return null;
-
-      }
-
-
-      function normalizeTeamName(
-        value
-      ){
-
-        return normalizeName(
-          value
-        );
-
-      }
-
-
-      function findScoreInfo(
-        gameData,
-        teamName
-      ){
-
-        if(!gameData)
-          return null;
-
-
-        const target =
-          normalizeTeamName(
-            teamName
-          );
-
-
-        /*
-          WebPont può restituire
-          nomi/scores con nomi diversi.
-        */
-
-        const homeName =
-          getPossibleValue(
-            gameData,
-            [
-              "home",
-              "homeTeam",
-              "home_team",
-              "homeTeamName",
-              "home_team_name"
-            ]
-          );
-
-
-        const awayName =
-          getPossibleValue(
-            gameData,
-            [
-              "away",
-              "awayTeam",
-              "away_team",
-              "awayTeamName",
-              "away_team_name"
-            ]
-          );
-
-
-        const homeScore =
-          getPossibleValue(
-            gameData,
-            [
-              "homeScore",
-              "home_score",
-              "scoreHome",
-              "score_home",
-              "homePoints",
-              "home_points"
-            ]
-          );
-
-
-        const awayScore =
-          getPossibleValue(
-            gameData,
-            [
-              "awayScore",
-              "away_score",
-              "scoreAway",
-              "score_away",
-              "awayPoints",
-              "away_points"
-            ]
-          );
-
-
-        if(
-          homeName != null &&
-          awayName != null &&
-          homeScore != null &&
-          awayScore != null
-        ){
-
-          const hn =
-            normalizeTeamName(
-              homeName
-            );
-
-
-          const an =
-            normalizeTeamName(
-              awayName
-            );
-
-
-          if(
-            hn === target ||
-            hn.includes(target) ||
-            target.includes(hn)
-          ){
-
-            return {
-
-              teamScore:
-                Number(homeScore),
-
-              opponentScore:
-                Number(awayScore)
-
-            };
-
-          }
-
-
-          if(
-            an === target ||
-            an.includes(target) ||
-            target.includes(an)
-          ){
-
-            return {
-
-              teamScore:
-                Number(awayScore),
-
-              opponentScore:
-                Number(homeScore)
-
-            };
-
-          }
-
-        }
-
-
-        /*
-          Secondo tentativo:
-          alcuni endpoint possono avere
-          un oggetto match.
-        */
-
-        const match =
-          gameData.match;
-
-
-        if(match){
-
-          const nested =
-            findScoreInfo(
-              match,
-              teamName
-            );
-
-
-          if(nested)
-            return nested;
-
-        }
-
-
-        return null;
-
-      }
-
-
-      for(
-        const coach of managerCoaches
-      ){
-
-        const realTeamId =
-          String(
-            coach.real_team_id
-          );
-
-
-        const game =
-          teamToGame[
-            realTeamId
-          ];
-
-
-        if(!game){
-
-          console.warn(
-            "GAME ALLENATORE NON TROVATO:",
-            coach.real_teams?.name,
-            "real_team_id:",
-            realTeamId
-          );
-
-          continue;
-
-        }
-
-
-        const gameData =
-          gamesData[game];
-
-
-        const teamName =
-          coach
-            .real_teams
-            ?.name;
-
-
-        const scoreInfo =
-          findScoreInfo(
-            gameData,
-            teamName
-          );
-
-
-        if(!scoreInfo){
-
-          console.warn(
-            "RISULTATO WEBPONT ALLENATORE NON TROVATO:",
-            teamName,
-            "GAME:",
-            game,
-            gameData
-          );
-
-          continue;
-
-        }
-
-
-        const teamScore =
-          Number(
-            scoreInfo.teamScore
-          );
-
-
-        const opponentScore =
-          Number(
-            scoreInfo.opponentScore
-          );
-
-
-        if(
-          !Number.isFinite(teamScore) ||
-          !Number.isFinite(opponentScore)
-        ){
-
-          console.warn(
-            "PUNTEGGI NON VALIDI ALLENATORE:",
-            teamName,
-            teamScore,
-            opponentScore
-          );
-
-          continue;
-
-        }
-
-
-        if(
-          teamScore === opponentScore
-        ){
-
-          console.warn(
-            "PAREGGIO ALLENATORE:",
-            teamName
-          );
-
-          continue;
-
-        }
-
-
-        const win =
-          teamScore >
-          opponentScore;
-
-
-        const margin =
-          Math.abs(
-            teamScore -
-            opponentScore
-          );
-
-
-        let coachScore = 0;
-
-
-        if(
-          margin >= 1 &&
-          margin <= 5
-        ){
-
-          coachScore =
-            win
-              ? 2.5
-              : -2.5;
-
-        }else if(
-          margin >= 6 &&
-          margin <= 11
-        ){
-
-          coachScore =
-            win
-              ? 5
-              : -5;
-
-        }else if(
-          margin >= 12 &&
-          margin <= 17
-        ){
-
-          coachScore =
-            win
-              ? 7.5
-              : -7.5;
-
-        }else if(
-          margin >= 18
-        ){
-
-          coachScore =
-            win
-              ? 10
-              : -10;
-
-        }
-
-
-        console.log(
-          "ALLENATORE:",
-          teamName,
-          "RISULTATO:",
-          teamScore + "-" + opponentScore,
-          "SCARTO:",
-          margin,
-          "PUNTEGGIO:",
-          coachScore
-        );
-
-
-        /* =========================
-           22. SALVA ALLENATORE
-        ========================= */
-
-        const coachSave =
-          await db
-            .from(
-              "fantasy_coach_scores"
-            )
-            .upsert(
-              {
-                manager_id:
-                  coach.manager_id,
-
-                matchday_id:
-                  matchdayId,
-
-                real_team_id:
-                  coach.real_team_id,
-
-                raw_score:
-                  coachScore,
-
-                final_score:
-                  coachScore
-
-              },
-              {
-                onConflict:
-                  "manager_id,matchday_id,real_team_id"
-              }
-            );
-
-
-        if(coachSave.error){
-
-          console.error(
-            "ERRORE SALVATAGGIO PUNTEGGIO ALLENATORE:",
-            coachSave.error,
-            coach
-          );
-
-        }else{
-
-          console.log(
-            "PUNTEGGIO ALLENATORE SALVATO:",
-            coach
-              .real_teams
-              ?.coach,
-            "→",
-            coachScore
-          );
-
-        }
-
-      }
-
     }
-
-
-    /* =========================
-       FINE
-    ========================= */
-
-    console.log(
-      "=============================="
-    );
-
-    console.log(
-      "LIVE FANTASY SCORE COMPLETATO"
-    );
-
-    console.log(
-      "Giornata:",
-      dayNumber
-    );
-
-    console.log(
-      "Games WebPont:",
-      Object.keys(
-        gamesData
-      ).length
-    );
-
-    console.log(
-      "Formazioni:",
-      lineups.length
-    );
-
-    console.log(
-      "=============================="
-    );
-
-
-  }catch(err){
-
-    console.error(
-      "ERRORE LIVE FANTASY SCORE:",
-      err
-    );
 
   }
 
+  /* =========================================================
+     8. FINE
+  ========================================================= */
+
+  console.log("=================================");
+  console.log("LIVE FANTASY SCORE COMPLETATO");
+  console.log("Giornata:",day);
+  console.log("Games WebPont:",games.length);
+  console.log("Formazioni:",lineups.length);
+  console.log("=================================");
+
 };
-/* =========================
-   PRIMO CARICAMENTO LIVE
-========================= */
-
-setTimeout(()=>{
-
-  loadLiveFantasyScores();
-
-},300);
-
-
-/* =========================
-   AGGIORNAMENTO AUTOMATICO
-   OGNI 20 SECONDI
-========================= */
-
-clearInterval(
-  window.liveFantasyTimer
-);
-
-window.liveFantasyTimer =
-  setInterval(()=>{
-
-    if(
-      typeof window.loadLiveFantasyScores ===
-      "function"
-    ){
-
-      window.loadLiveFantasyScores();
-
-    }
-
-  },20000);
 
 /* =========================================================
    CARICAMENTO MASSIVO FANTASY SCORE
