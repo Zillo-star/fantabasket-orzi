@@ -9147,7 +9147,46 @@ window.calendarSelectedDay =
 
   });
 
+  /* =========================
+     FANTASY COACH SCORES
+  ========================= */
 
+  let fantasyCoachScores = [];
+
+  if(managerIds.length && matchdayIds.length){
+
+    let fcs = await db.from("fantasy_coach_scores")
+      .select(`
+        id,
+        matchday_id,
+        manager_id,
+        real_team_id,
+        raw_score,
+        final_score,
+        created_at
+      `)
+      .in("manager_id",managerIds)
+      .in("matchday_id",matchdayIds);
+
+    if(fcs.error)
+      return message(fcs.error.message,"err");
+
+    fantasyCoachScores = fcs.data || [];
+
+  }
+
+  let coachScoreMap = {};
+
+  fantasyCoachScores.forEach(x => {
+
+    coachScoreMap[
+      x.manager_id +
+      "_" +
+      x.matchday_id
+    ] = x.final_score;
+
+  });
+   
   /* =========================
      RENDER FORMAZIONE
   ========================= */
