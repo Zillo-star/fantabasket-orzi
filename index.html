@@ -9725,73 +9725,64 @@ function benchBlock(list,managerId){
             margin-top:8px;
             padding-top:7px;
             border-top:1px solid rgba(255,255,255,.06);
+            display:flex;
+            align-items:center;
+            gap:6px;
+            width:100%;
             font-size:9px;
             line-height:1.4;
             color:#6b7280;
           ">
+
             <span style="
-              font-weight:800;
+              flex-shrink:0;
+              font-weight:900;
               color:#7b8496;
+              text-transform:uppercase;
             ">
-              OUT:
+              OUT ·
             </span>
 
-${
-  out.length
-  ? `
-    <div style="
-      margin-top:8px;
-      padding-top:7px;
-      border-top:1px solid rgba(255,255,255,.06);
-      display:flex;
-      align-items:center;
-      gap:6px;
-      width:100%;
-      font-size:9px;
-      line-height:1.4;
-      color:#6b7280;
-    ">
+            <span style="
+              flex:1;
+              min-width:0;
+              display:flex;
+              justify-content:space-between;
+              gap:8px;
+            ">
+              ${out.map(x => {
 
-      <span style="
-        flex-shrink:0;
-        font-weight:900;
-        color:#7b8496;
-        text-transform:uppercase;
-      ">
-        OUT ·
-      </span>
+                let n = String(x.name || "").trim();
+                let s = String(x.surname || "").trim();
 
-      <span style="
-        flex:1;
-        min-width:0;
-        display:flex;
-        justify-content:space-between;
-        text-align:justify;
-        gap:8px;
-      ">
-        ${out.map(x => {
+                if(!s && n.includes(" ")){
 
-          let n = String(x.name || "").trim();
-          let s = String(x.surname || "").trim();
+                  let parts = n.split(/\s+/);
 
-          if(!s && n.includes(" ")){
+                  s = parts.pop();
+                  n = parts.join(" ");
 
-            let parts = n.split(/\s+/);
+                }
 
-            s = parts.pop();
-            n = parts.join(" ");
+                return `
+                  <span style="
+                    flex:1;
+                    text-align:center;
+                    white-space:nowrap;
+                    overflow:hidden;
+                    text-overflow:ellipsis;
+                  ">
+                    ${n} ${s}
+                  </span>
+                `;
 
-          }
+              }).join("")}
+            </span>
 
-          return `<span style="flex:1;text-align:center;">${n} ${s}</span>`;
-
-        }).join("")}
-      </span>
-
-    </div>
-  `
-  : ""
-}
+          </div>
+        `
+        : ""
+      }
 
     </div>
   `;
