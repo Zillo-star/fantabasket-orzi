@@ -5499,11 +5499,11 @@ if(coachTeamsResult.error){
      7. CALCOLO PUNTEGGIO ALLENATORE
   ========================================================= */
 
-  for(const coach of coaches){
+for(const coach of coaches){
 
-    const realTeamId = String(coach.real_team_id);
+  const realTeamId = String(coach.real_team_id);
 
-    const game = teamToGame[realTeamId];
+  const game = coachTeamToGame[realTeamId];
 
     if(!game){
 
