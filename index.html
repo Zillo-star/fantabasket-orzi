@@ -6094,12 +6094,8 @@ for(const lineup of dayLineups){
     al fantallenatore.
   */
 
-  const coach =
-    managerCoaches.find(
-      mc =>
-        mc.manager_id === lineup.manager_id &&
-        mc.active !== false
-    );
+const coach =
+  managerCoaches[lineup.manager_id];
 
 
   if(!coach){
