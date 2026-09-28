@@ -5385,6 +5385,27 @@ if(!game){
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g,"");
 
+  const coachTeamAliases = {
+
+    "virtus roma": [
+      "virtus roma"
+    ],
+
+    "siaz piazza armerina": [
+      "piazza armerina",
+      "siaz"
+    ],
+
+    "sae legnano": [
+      "sae scientifica-soevis legnano",
+      "sae scientifica",
+      "legnano knights"
+    ]
+
+  };
+
+  const aliases = coachTeamAliases[coachTeamName] || [];
+
   for(const g of games){
 
     const w = gamesData[g];
@@ -5405,17 +5426,16 @@ if(!game){
         .replace(/[\u0300-\u036f]/g,"");
 
     if(
-      home.includes(coachTeamName) ||
-      coachTeamName.includes(home) ||
-      away.includes(coachTeamName) ||
-      coachTeamName.includes(away)
+      aliases.some(alias =>
+        home.includes(alias) ||
+        away.includes(alias)
+      )
     ){
       game = g;
       break;
     }
   }
 }
-
     if(!game){
 
       console.warn(
