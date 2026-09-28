@@ -5522,16 +5522,52 @@ window.loadLiveFantasyScores = async function(){
       coachScore
     );
 
-    const coachSave = await db
-      .from("fantasy_coach_scores")
-      .upsert({
-        manager_id: coach.manager_id,
-        matchday_id: day,
-        real_team_id: coach.real_team_id,
-        score: coachScore
-      },{
-        onConflict:"manager_id,matchday_id"
-      });
+const matchdayResult = await db
+  .from("matchdays")
+  .select("id")
+  .eq("number", day)
+  .single();
+
+if(matchdayResult.error){
+
+  console.error(
+    "ERRORE RECUPERO MATCHDAY:",
+    matchdayResult.error
+  );
+
+  continue;
+}
+
+const matchdayId = matchdayResult.data.id;
+
+const coachSave = await db
+  .from("fantasy_coach_scores")
+  .upsert({
+    manager_id: coach.manager_id,
+    matchday_id: matchdayId,
+    real_team_id: coach.real_team_id,
+    raw_score: coachScore,
+    final_score: coachScore
+  },{
+    onConflict:"manager_id,matchday_id"
+  });
+
+if(coachSave.error){
+
+  console.error(
+    "ERRORE SALVATAGGIO COACH:",
+    coachSave.error
+  );
+
+}else{
+
+  console.log(
+    "PUNTEGGIO ALLENATORE SALVATO:",
+    coach.real_teams?.coach,
+    coachScore
+  );
+
+}
 
     if(coachSave.error){
 
