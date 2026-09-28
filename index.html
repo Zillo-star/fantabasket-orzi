@@ -9718,68 +9718,72 @@ function benchBlock(list,managerId){
         : ""
       }
 
-${
-  out.length
-  ? `
-    <div style="
-      margin-top:8px;
-      padding-top:7px;
-      border-top:1px solid rgba(255,255,255,.06);
-      width:100%;
-      font-size:9px;
-      line-height:1.4;
-      color:#6b7280;
-    ">
+      ${
+        out.length
+        ? `
+          <div style="
+            margin-top:8px;
+            padding-top:7px;
+            border-top:1px solid rgba(255,255,255,.06);
+            width:100%;
+            font-size:9px;
+            line-height:1.4;
+            color:#6b7280;
+          ">
 
-      <div style="
-        font-weight:900;
-        color:#7b8496;
-        text-transform:uppercase;
-        margin-bottom:4px;
-      ">
-        OUT
-      </div>
-
-      <div style="
-        display:flex;
-        justify-content:space-between;
-        gap:8px;
-        width:100%;
-      ">
-
-        ${out.map(x => {
-
-          let n = String(x.name || "").trim();
-          let s = String(x.surname || "").trim();
-
-          if(!s && n.includes(" ")){
-
-            let parts = n.split(/\s+/);
-
-            s = parts.pop();
-            n = parts.join(" ");
-
-          }
-
-          return `
-            <span style="
-              flex:1;
-              text-align:center;
-              white-space:nowrap;
-              overflow:hidden;
-              text-overflow:ellipsis;
+            <div style="
+              font-weight:900;
+              color:#7b8496;
+              text-transform:uppercase;
+              margin-bottom:4px;
             ">
-              ${n} ${s}
-            </span>
-          `;
+              OUT
+            </div>
 
-        }).join("")}
+            <div style="
+              display:flex;
+              justify-content:space-between;
+              gap:8px;
+              width:100%;
+            ">
 
-      </div>
+              ${out.map(x => {
+
+                let n = String(x.name || "").trim();
+                let s = String(x.surname || "").trim();
+
+                if(!s && n.includes(" ")){
+
+                  let parts = n.split(/\s+/);
+
+                  s = parts.pop();
+                  n = parts.join(" ");
+
+                }
+
+                return `
+                  <span style="
+                    flex:1;
+                    text-align:center;
+                    white-space:nowrap;
+                    overflow:hidden;
+                    text-overflow:ellipsis;
+                  ">
+                    ${n} ${s}
+                  </span>
+                `;
+
+              }).join("")}
+
+            </div>
+
+          </div>
+        `
+        : ""
+      }
 
     </div>
-  `
-  : ""
+  `;
 }
 
   // ------------------------------------------------------------
