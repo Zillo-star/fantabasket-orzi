@@ -9736,28 +9736,62 @@ function benchBlock(list,managerId){
               OUT:
             </span>
 
-            ${out.map(x => {
+${
+  out.length
+  ? `
+    <div style="
+      margin-top:8px;
+      padding-top:7px;
+      border-top:1px solid rgba(255,255,255,.06);
+      display:flex;
+      align-items:center;
+      gap:6px;
+      width:100%;
+      font-size:9px;
+      line-height:1.4;
+      color:#6b7280;
+    ">
 
-              let n = String(x.name || "").trim();
-              let s = String(x.surname || "").trim();
+      <span style="
+        flex-shrink:0;
+        font-weight:900;
+        color:#7b8496;
+        text-transform:uppercase;
+      ">
+        OUT ·
+      </span>
 
-              if(!s && n.includes(" ")){
+      <span style="
+        flex:1;
+        min-width:0;
+        display:flex;
+        justify-content:space-between;
+        text-align:justify;
+        gap:8px;
+      ">
+        ${out.map(x => {
 
-                let parts = n.split(/\s+/);
+          let n = String(x.name || "").trim();
+          let s = String(x.surname || "").trim();
 
-                s = parts.pop();
-                n = parts.join(" ");
+          if(!s && n.includes(" ")){
 
-              }
+            let parts = n.split(/\s+/);
 
-              return `${n} ${s}`;
+            s = parts.pop();
+            n = parts.join(" ");
 
-            }).join(" · ")}
+          }
 
-          </div>
-        `
-        : ""
-      }
+          return `<span style="flex:1;text-align:center;">${n} ${s}</span>`;
+
+        }).join("")}
+      </span>
+
+    </div>
+  `
+  : ""
+}
 
     </div>
   `;
