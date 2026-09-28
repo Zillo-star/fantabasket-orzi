@@ -5348,18 +5348,36 @@ if(coachTeamsResult.error){
      4. CARICO LE FORMAZIONI DELLA GIORNATA
   ========================================================= */
 
-  const lineupsResult = await db
-    .from("lineups")
-    .select(`
-      id,
-      manager_id,
-      lineup_players(
-        player_id,
-        role,
-        captain
-      )
-    `)
-    .eq("matchday_id",day);
+const matchdayResult = await db
+  .from("matchdays")
+  .select("id")
+  .eq("number", day)
+  .single();
+
+if(matchdayResult.error){
+
+  console.error(
+    "ERRORE RECUPERO MATCHDAY:",
+    matchdayResult.error
+  );
+
+  return;
+}
+
+const matchdayId = matchdayResult.data.id;
+
+const lineupsResult = await db
+  .from("lineups")
+  .select(`
+    id,
+    manager_id,
+    lineup_players(
+      player_id,
+      role,
+      captain
+    )
+  `)
+  .eq("matchday_id", matchdayId);
 
   if(lineupsResult.error){
 
