@@ -9306,157 +9306,137 @@ function getPlayerData(lp){
   // PLAYER CARD
   // ------------------------------------------------------------
 
-  function playerCard(x,side){
+function playerCard(x,side){
 
-    let score = getScore(
-      x.managerId,
-      x.player_id
-    );
+  let score = getScore(
+    x.managerId,
+    x.player_id
+  );
 
-    let isCaptain =
-      x.captain === true ||
-      x.is_captain === true;
+  let isCaptain =
+    x.captain === true ||
+    x.is_captain === true;
 
-    let role =
-      String(x.position || "").toUpperCase();
+  let firstName =
+    String(x.name || "").trim();
 
-    let firstName =
-      String(x.name || "").trim();
+  let surname =
+    String(x.surname || "").trim();
 
-    let surname =
-      String(x.surname || "").trim();
+  /*
+    Se il cognome non è separato nel DB,
+    prova a ricavarlo dal nome completo.
+  */
+  if(!surname && firstName.includes(" ")){
 
-    let displayName =
-      surname || firstName;
+    let parts = firstName.split(/\s+/);
 
-let logo = null;
+    surname = parts.pop();
 
-    return `
-      <div class="fb-lineup-player"
-           style="
-             position:relative;
-             width:100%;
-             min-width:0;
-             display:flex;
-             flex-direction:column;
-             align-items:center;
-             justify-content:center;
-             padding:7px 4px 6px;
-             border-radius:12px;
-             background:
-               linear-gradient(
-                 180deg,
-                 rgba(255,255,255,.10),
-                 rgba(255,255,255,.045)
-               );
-             border:1px solid rgba(255,255,255,.13);
-             box-shadow:
-               0 5px 12px rgba(0,0,0,.24);
-             color:#fff;
-             overflow:hidden;
-           ">
+    firstName = parts.join(" ");
 
-        ${
-          isCaptain
-          ? `
-            <div style="
-              position:absolute;
-              top:3px;
-              right:4px;
-              font-size:11px;
-              line-height:1;
-            ">👑</div>
-          `
-          : ""
-        }
-
-        <div style="
-          width:26px;
-          height:26px;
-          border-radius:50%;
-          display:flex;
-          align-items:center;
-          justify-content:center;
-          margin-bottom:3px;
-          background:
-            ${
-              logo
-              ? `rgba(255,255,255,.9)`
-              : `linear-gradient(135deg,#7c3aed,#4f46e5)`
-            };
-          overflow:hidden;
-          flex-shrink:0;
-        ">
-          ${
-            logo
-            ? `
-              <img
-                src="${logo}"
-                style="
-                  width:21px;
-                  height:21px;
-                  object-fit:contain;
-                "
-              >
-            `
-            : `
-              <span style="font-size:13px">🏀</span>
-            `
-          }
-        </div>
-
-        <div style="
-          width:100%;
-          text-align:center;
-          font-size:10px;
-          line-height:1.1;
-          font-weight:800;
-          white-space:nowrap;
-          overflow:hidden;
-          text-overflow:ellipsis;
-          padding:0 2px;
-        ">
-          ${displayName}
-        </div>
-
-        <div style="
-          margin-top:2px;
-          font-size:8px;
-          line-height:1;
-          font-weight:700;
-          color:#9ca3af;
-        ">
-          ${role}
-        </div>
-
-        ${
-          score !== null
-          ? `
-            <div style="
-              margin-top:4px;
-              font-size:13px;
-              line-height:1;
-              font-weight:900;
-              color:#c4b5fd;
-            ">
-              ${score}
-            </div>
-          `
-          : `
-            <div style="
-              margin-top:4px;
-              font-size:10px;
-              line-height:1;
-              color:#6b7280;
-            ">
-              —
-            </div>
-          `
-        }
-
-      </div>
-    `;
   }
+
+  return `
+    <div class="fb-lineup-player"
+         style="
+           position:relative;
+           width:100%;
+           min-width:0;
+           display:flex;
+           flex-direction:column;
+           align-items:center;
+           justify-content:center;
+           padding:8px 5px 7px;
+           border-radius:12px;
+           background:
+             linear-gradient(
+               180deg,
+               rgba(255,255,255,.10),
+               rgba(255,255,255,.045)
+             );
+           border:1px solid rgba(255,255,255,.13);
+           box-shadow:
+             0 5px 12px rgba(0,0,0,.24);
+           color:#fff;
+           overflow:hidden;
+         ">
+
+      ${
+        isCaptain
+        ? `
+          <div style="
+            position:absolute;
+            top:4px;
+            right:5px;
+            font-size:11px;
+            line-height:1;
+          ">👑</div>
+        `
+        : ""
+      }
+
+      <!-- NOME -->
+
+      <div style="
+        width:100%;
+        text-align:center;
+        font-size:11px;
+        line-height:1.05;
+        font-weight:700;
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        padding:0 2px;
+      ">
+        ${firstName}
+      </div>
+
+      <!-- COGNOME -->
+
+      <div style="
+        width:100%;
+        margin-top:2px;
+        text-align:center;
+        font-size:12px;
+        line-height:1.05;
+        font-weight:900;
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        padding:0 2px;
+      ">
+        ${surname}
+      </div>
+
+      ${
+        score !== null
+        ? `
+          <div style="
+            margin-top:5px;
+            font-size:13px;
+            line-height:1;
+            font-weight:900;
+            color:#c4b5fd;
+          ">
+            ${score}
+          </div>
+        `
+        : `
+          <div style="
+            margin-top:5px;
+            font-size:10px;
+            line-height:1;
+            color:#6b7280;
+          ">
+            —
+          </div>
+        `
+      }
+
+    </div>
+  `;
+}
 
   // ------------------------------------------------------------
   // PREPARA I 5 TITOLARI
