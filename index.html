@@ -9862,17 +9862,70 @@ function benchBlock(list,managerId){
   // SQUADRA
   // ------------------------------------------------------------
 
-  function teamBlock(teamManager,teamId,side){
+    function teamBlock(teamManager,teamId,side){
 
     let list =
       teamId === managerId
         ? myPlayers
         : opponentPlayers;
 
+    /* =========================
+       ALLENATORE
+    ========================= */
+
+    let coachData =
+      managerCoaches[teamId] || null;
+
+    let coachTeam =
+      coachData?.real_teams || null;
+
+    let coachName =
+      coachTeam?.coach ||
+      coachTeam?.name ||
+      "Allenatore";
+
+    let coachLogo =
+      coachTeam?.logo_url || "";
+
+    let coachScore =
+      coachScoreMap[
+        teamId + "_" + matchdayId
+      ];
+
+    if(
+      coachScore === undefined ||
+      coachScore === null ||
+      coachScore === ""
+    ){
+
+      coachScore = null;
+
+    }else{
+
+      coachScore =
+        Number(coachScore).toFixed(1);
+
+    }
+
+    /* =========================
+       FORMAZIONE
+    ========================= */
+
+    let starters = list.filter(x =>
+      x.role === "starter" ||
+      x.lineup_role === "starter" ||
+      x.starter === true
+    );
+
+    let formation =
+      detectFormation(starters);
+
     return `
       <div style="
         width:100%;
       ">
+
+        <!-- HEADER SQUADRA -->
 
         <div style="
           display:flex;
@@ -9885,6 +9938,7 @@ function benchBlock(list,managerId){
           <div style="
             min-width:0;
           ">
+
             <div style="
               font-size:15px;
               line-height:1.1;
@@ -9894,7 +9948,9 @@ function benchBlock(list,managerId){
               overflow:hidden;
               text-overflow:ellipsis;
             ">
-              ${teamManager?.team_name || teamManager?.name || "Squadra"}
+              ${teamManager?.team_name ||
+                teamManager?.name ||
+                "Squadra"}
             </div>
 
             <div style="
@@ -9904,6 +9960,7 @@ function benchBlock(list,managerId){
             ">
               ${teamManager?.name || ""}
             </div>
+
           </div>
 
           <div style="
@@ -9916,14 +9973,13 @@ function benchBlock(list,managerId){
             font-weight:800;
             color:#c4b5fd;
           ">
-            ${detectFormation(list.filter(x =>
-              x.role === "starter" ||
-              x.lineup_role === "starter" ||
-              x.starter === true
-            ))}
+            ${formation}
           </div>
 
         </div>
+
+
+        <!-- CAMPO -->
 
         <div style="
           position:relative;
@@ -9941,7 +9997,6 @@ function benchBlock(list,managerId){
             0 8px 20px rgba(0,0,0,.18);
         ">
 
-          <!-- linee campo -->
           <div style="
             position:absolute;
             left:0;
@@ -9995,7 +10050,100 @@ function benchBlock(list,managerId){
 
         </div>
 
+
+        <!-- PANCHINA -->
+
         ${benchBlock(list,teamId)}
+
+
+        <!-- ALLENATORE -->
+
+        <div style="
+          margin-top:10px;
+          padding:9px 11px;
+          border-radius:13px;
+          background:rgba(255,255,255,.045);
+          border:1px solid rgba(255,255,255,.08);
+        ">
+
+          <div style="
+            font-size:9px;
+            line-height:1;
+            font-weight:900;
+            letter-spacing:.09em;
+            color:#8b93a5;
+            text-transform:uppercase;
+            margin-bottom:7px;
+          ">
+            ALLENATORE
+          </div>
+
+          <div style="
+            display:flex;
+            align-items:center;
+            gap:8px;
+            min-width:0;
+          ">
+
+            ${
+              coachLogo
+              ? `
+                <img
+                  src="${coachLogo}"
+                  alt=""
+                  style="
+                    width:25px;
+                    height:25px;
+                    object-fit:contain;
+                    flex-shrink:0;
+                    border-radius:6px;
+                    background:rgba(255,255,255,.06);
+                    padding:2px;
+                  "
+                >
+              `
+              : `
+                <div style="
+                  width:25px;
+                  height:25px;
+                  flex-shrink:0;
+                  border-radius:6px;
+                  background:rgba(255,255,255,.06);
+                "></div>
+              `
+            }
+
+            <div style="
+              flex:1;
+              min-width:0;
+              font-size:12px;
+              font-weight:800;
+              color:#fff;
+              white-space:nowrap;
+              overflow:hidden;
+              text-overflow:ellipsis;
+            ">
+              ${coachName}
+            </div>
+
+            <div style="
+              flex-shrink:0;
+              min-width:38px;
+              text-align:right;
+              font-size:14px;
+              font-weight:900;
+              color:#c4b5fd;
+            ">
+              ${
+                coachScore !== null
+                ? coachScore
+                : "—"
+              }
+            </div>
+
+          </div>
+
+        </div>
 
       </div>
     `;
