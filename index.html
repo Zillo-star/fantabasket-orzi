@@ -5292,7 +5292,7 @@ const lineupsResult = await db
           player_id: lp.player_id,
           score: finalScore
         },{
-          onConflict:"lineup_id,player_id"
+          onConflict:"manager_id,matchday_id,player_id"
         });
 
       if(save.error){
