@@ -5051,9 +5051,10 @@ setTimeout(()=>{
 
 window.loadLiveFantasyScores = async function(){
 
-  const day = Number(el("day")?.value || el("day")?.dataset?.day || 1);
+const day = 1;
 
-  const gamesByMatchday = {
+const gamesByMatchday = {
+   
     1: [
       "ita3_a_400","ita3_a_401","ita3_a_402","ita3_a_403",
       "ita3_a_404","ita3_a_406","ita3_a_407","ita3_a_408",
