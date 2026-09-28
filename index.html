@@ -5751,6 +5751,89 @@ window.loadAllFantasyScores = async function(){
         }
       }
 
+/* -------------------------------------------------------
+   RISULTATO ALLENATORE
+------------------------------------------------------- */
+
+if(webTeamName){
+
+  let coachWin = null;
+
+  if(
+    home.includes(webTeamName) ||
+    webTeamName.includes(home)
+  ){
+
+    coachWin =
+      homeScore > awayScore;
+
+  }else if(
+    away.includes(webTeamName) ||
+    webTeamName.includes(away)
+  ){
+
+    coachWin =
+      awayScore > homeScore;
+  }
+
+
+  if(coachWin !== null){
+
+    const margin =
+      Math.abs(
+        homeScore -
+        awayScore
+      );
+
+
+    let coachScore = 0;
+
+
+    if(margin >= 1 && margin <= 5){
+
+      coachScore =
+        coachWin ? 2.5 : -2.5;
+
+    }else if(margin >= 6 && margin <= 11){
+
+      coachScore =
+        coachWin ? 5 : -5;
+
+    }else if(margin >= 12 && margin <= 17){
+
+      coachScore =
+        coachWin ? 7.5 : -7.5;
+
+    }else if(margin >= 18){
+
+      coachScore =
+        coachWin ? 10 : -10;
+
+    }
+
+
+    coachResults.set(
+      realTeamId,
+      {
+        raw_score: coachScore,
+        final_score: coachScore,
+        home_score: homeScore,
+        away_score: awayScore,
+        margin: margin
+      }
+    );
+
+
+    console.log(
+      "ALLENATORE:",
+      teamName,
+      "→",
+      coachScore,
+      "scarto:",
+      margin
+    );
+  }
+}
 
       /*
         Se non riusciamo a determinare il vincitore
