@@ -6966,19 +6966,39 @@ if(coachScoresToSave.length){
   );
 
 window.liveFantasyTimer =
-  setInterval(()=>{
+  setInterval(async ()=>{
 
     if(
       typeof window.loadLiveFantasyScores ===
       "function"
     ){
 
-      window.loadLiveFantasyScores();
+      await window.loadLiveFantasyScores();
+
+    }
+
+    /*
+      Aggiorna automaticamente le schermate
+      che mostrano i risultati.
+    */
+
+    const calendarBox =
+      document.querySelector("#calendar");
+
+    if(calendarBox){
+
+      try{
+        await calendar();
+      }catch(e){
+        console.error(
+          "Errore refresh calendario:",
+          e
+        );
+      }
 
     }
 
   },20000);
-
 async function loadPlayerGames(){
 
 console.log("LOAD PLAYER GAMES PARTITA!");
