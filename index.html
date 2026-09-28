@@ -5370,9 +5370,51 @@ const lineupsResult = await db
 
 for(const coach of coaches){
 
-  const realTeamId = String(coach.real_team_id);
+const realTeamId = String(coach.real_team_id);
 
-const game = teamToGame[realTeamId];
+let game = teamToGame[realTeamId];
+
+/* Se la squadra non è stata trovata tramite i giocatori,
+   cerchiamo direttamente il nome della squadra nei dati WebPont */
+
+if(!game){
+
+  const coachTeamName =
+    String(coach.real_teams?.name || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g,"");
+
+  for(const g of games){
+
+    const w = gamesData[g];
+
+    if(!w?.info)
+      continue;
+
+    const home =
+      String(w.info.home || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g,"");
+
+    const away =
+      String(w.info.away || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g,"");
+
+    if(
+      home.includes(coachTeamName) ||
+      coachTeamName.includes(home) ||
+      away.includes(coachTeamName) ||
+      coachTeamName.includes(away)
+    ){
+      game = g;
+      break;
+    }
+  }
+}
 
     if(!game){
 
