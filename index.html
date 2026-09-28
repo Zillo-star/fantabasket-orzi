@@ -6075,6 +6075,116 @@ if(webTeamName){
       }
     }
 
+/* =======================================================
+   SALVATAGGIO PUNTEGGI ALLENATORI
+   ======================================================= */
+
+const coachScoresToSave = [];
+
+
+for(const lineup of dayLineups){
+
+  if(!lineup?.manager_id){
+    continue;
+  }
+
+
+  /*
+    Recuperiamo l'allenatore associato
+    al fantallenatore.
+  */
+
+  const coach =
+    managerCoaches.find(
+      mc =>
+        mc.manager_id === lineup.manager_id &&
+        mc.active !== false
+    );
+
+
+  if(!coach){
+    console.warn(
+      "Nessun allenatore trovato per manager:",
+      lineup.manager_id
+    );
+
+    continue;
+  }
+
+
+  const result =
+    coachResults.get(
+      coach.real_team_id
+    );
+
+
+  if(!result){
+    console.warn(
+      "Nessun risultato allenatore per:",
+      coach.real_team_id
+    );
+
+    continue;
+  }
+
+
+  coachScoresToSave.push({
+
+    manager_id:
+      lineup.manager_id,
+
+    matchday_id:
+      md.id,
+
+    real_team_id:
+      coach.real_team_id,
+
+    raw_score:
+      round1(result.raw_score),
+
+    final_score:
+      round1(result.final_score)
+
+  });
+}
+
+
+console.log(
+  "Punteggi allenatori da salvare:",
+  coachScoresToSave.length
+);
+
+
+if(coachScoresToSave.length){
+
+  const coachSave =
+    await db
+      .from("fantasy_coach_scores")
+      .upsert(
+        coachScoresToSave,
+        {
+          onConflict:
+            "manager_id,matchday_id,real_team_id"
+        }
+      );
+
+
+  if(coachSave.error){
+
+    console.error(
+      "ERRORE SALVATAGGIO ALLENATORI:",
+      coachSave.error
+    );
+
+  }else{
+
+    console.log(
+      "Punteggi allenatori salvati:",
+      coachScoresToSave.length
+    );
+
+  }
+}
 
     console.log(
       "GIORNATA",
