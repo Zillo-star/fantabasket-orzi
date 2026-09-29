@@ -6617,13 +6617,35 @@ if(webTeamName){
           continue;
         }
 
-
+console.log(
+  "🏀 CONTROLLO VITTORIA:",
+  teamName,
+  "|",
+  homeScore,
+  "-",
+  awayScore,
+  "| winBonus:",
+  winBonus,
+  "| giocatore:",
+  dbPlayer.name,
+  dbPlayer.surname
+);
+         
         const rawScore =
           calculateRawScore(
             wp,
             winBonus
           );
 
+console.log(
+  "📊 PUNTEGGIO:",
+  dbPlayer.name,
+  dbPlayer.surname,
+  "| winBonus:",
+  winBonus,
+  "| rawScore:",
+  rawScore
+);
 
         playerStats.set(
           dbPlayer.id,
