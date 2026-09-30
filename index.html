@@ -6448,11 +6448,26 @@ function findWebPontPlayer(
         }
 
 
-        const possible =
-          findWebPontPlayer(
-            dbCandidate,
-            [wp]
-          );
+console.log(
+  "🔎 PROVA MATCH:",
+  {
+    DB: dbCandidate.name,
+    surname: dbCandidate.surname,
+    WEBPONT: wp.name,
+    team: wp.team
+  }
+);
+
+const possible =
+  findWebPontPlayer(
+    dbCandidate,
+    [wp]
+  );
+
+console.log(
+  "🔎 RISULTATO MATCH:",
+  possible
+);
 
 
         if(possible){
