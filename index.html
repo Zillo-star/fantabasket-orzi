@@ -5917,74 +5917,73 @@ if(leagueMatches.error){
     });
 
 
-    /* SALVA I RISULTATI DELLE PARTITE */
+ /* SALVA I RISULTATI DELLE PARTITE */
 
-    for(const match of (leagueMatches.data || [])){
+for(const match of (leagueMatches.data || [])){
 
-      const homeId =
-        String(match.home_manager_id);
+  const homeId =
+    String(match.home_manager_id);
 
-      const awayId =
-        String(match.away_manager_id);
+  const awayId =
+    String(match.away_manager_id);
 
-      const homeScore =
-        totals[homeId] !== undefined
-          ? Number(totals[homeId].toFixed(1))
-          : null;
+  const homeScore =
+    totals[homeId] !== undefined
+      ? Number(totals[homeId].toFixed(1))
+      : null;
 
-      const awayScore =
-        totals[awayId] !== undefined
-          ? Number(totals[awayId].toFixed(1))
-          : null;
-
-
-      /*
-        Aggiorniamo solo quando almeno uno
-        dei due fantallenatori ha già
-        un punteggio disponibile.
-      */
-
-      if(
-        homeScore === null &&
-        awayScore === null
-      )
-        continue;
+  const awayScore =
+    totals[awayId] !== undefined
+      ? Number(totals[awayId].toFixed(1))
+      : null;
 
 
-      const updateMatch =
-        await db
-          .from("league_matches")
-          .update({
+  /*
+    Aggiorniamo la partita solo quando
+    ENTRAMBI i fantallenatori hanno
+    un punteggio disponibile.
 
-            home_score:
-              homeScore,
+    Questo evita di inserire NULL
+    nei campi home_score / away_score.
+  */
 
-            away_score:
-              awayScore
+  if(
+    homeScore === null ||
+    awayScore === null
+  )
+    continue;
 
-          })
-          .eq("id",match.id);
 
+  const updateMatch =
+    await db
+      .from("league_matches")
+      .update({
 
-      if(updateMatch.error){
-
-        console.error(
-          "ERRORE AGGIORNAMENTO MATCH FANTASY:",
-          updateMatch.error
-        );
-
-      }else{
-
-        console.log(
-          "RISULTATO FANTASY AGGIORNATO:",
+        home_score:
           homeScore,
-          "-",
+
+        away_score:
           awayScore
-        );
 
-      }
+      })
+      .eq("id",match.id);
 
-    }
+
+  if(updateMatch.error){
+
+    console.error(
+      "ERRORE AGGIORNAMENTO MATCH FANTASY:",
+      updateMatch.error
+    );
+
+  }else{
+
+    console.log(
+      "RISULTATO FANTASY AGGIORNATO:",
+      homeScore,
+      "-",
+      awayScore
+    );
 
   }
 
