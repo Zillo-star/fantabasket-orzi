@@ -5135,65 +5135,191 @@ const gamesByMatchday = {
 
   const dbPlayers = playersResult.data || [];
 
-  /* =========================================================
-     3. ASSOCIO GIOCATORI WEBPONT -> SQUADRA REALE
-  ========================================================= */
+/* =========================================================
+   3. ASSOCIO GIOCATORI WEBPONT -> SQUADRA REALE
+========================================================= */
 
-  const teamToGame = {};
-  const playerToGame = {};
+const teamToGame = {};
+const playerToGame = {};
 
-  for(const game of games){
 
-    const w = gamesData[game];
+/* =========================
+   NORMALIZZA NOMI
+========================= */
 
-    if(!w || !Array.isArray(w.players))
-      continue;
+function normalizePlayerName(value){
 
-    for(const wp of w.players){
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g,"")
+    .replace(/[.'’`-]/g," ")
+    .replace(/\s+/g," ")
+    .trim();
 
-      let dbPlayer = null;
+}
 
-      if(wp.webpont_id != null){
 
-        dbPlayer = dbPlayers.find(
-          p => String(p.webpont_id) === String(wp.webpont_id)
+/* =========================
+   CREA VARIANTI DEL NOME DB
+========================= */
+
+function getDbPlayerNames(p){
+
+  const name =
+    normalizePlayerName(p.name);
+
+  const surname =
+    normalizePlayerName(p.surname);
+
+  const full =
+    normalizePlayerName(
+      `${p.name || ""} ${p.surname || ""}`
+    );
+
+  return [
+    name,
+    full,
+    `${surname} ${name}`.trim()
+  ].filter(Boolean);
+
+}
+
+
+/* =========================
+   ASSOCIA
+========================= */
+
+for(const game of games){
+
+  const w = gamesData[game];
+
+  if(!w || !Array.isArray(w.players))
+    continue;
+
+
+  for(const wp of w.players){
+
+    let dbPlayer = null;
+
+
+    /* =========================
+       1. MATCH WEBPONT ID
+    ========================= */
+
+    if(wp.webpont_id != null){
+
+      dbPlayer =
+        dbPlayers.find(
+          p =>
+            p.webpont_id != null &&
+            String(p.webpont_id) ===
+            String(wp.webpont_id)
         );
 
-      }
+    }
 
-      if(!dbPlayer){
 
-        const wpName = String(wp.name || "").trim().toLowerCase();
-        const wpSurname = String(wp.surname || "").trim().toLowerCase();
+    /* =========================
+       2. MATCH NOME + COGNOME
+    ========================= */
 
-        dbPlayer = dbPlayers.find(p =>
-          String(p.name || "").trim().toLowerCase() === wpName &&
-          String(p.surname || "").trim().toLowerCase() === wpSurname
+    if(!dbPlayer){
+
+      const wpName =
+        normalizePlayerName(wp.name);
+
+      const wpSurname =
+        normalizePlayerName(wp.surname);
+
+      const wpFull =
+        normalizePlayerName(
+          `${wp.name || ""} ${wp.surname || ""}`
         );
-      }
 
-      if(dbPlayer){
 
-        playerToGame[dbPlayer.id] = {
-          game,
-          wp
-        };
+      dbPlayer =
+        dbPlayers.find(p => {
 
-        if(dbPlayer.real_team_id){
+          const variants =
+            getDbPlayerNames(p);
 
-          teamToGame[String(dbPlayer.real_team_id)] = game;
+          return (
 
-        }
+            /* nome + cognome separati */
+
+            (
+              wpName &&
+              wpSurname &&
+              variants.includes(
+                `${wpName} ${wpSurname}`
+              )
+            )
+
+            ||
+
+            /* nome completo */
+
+            (
+              wpFull &&
+              variants.includes(wpFull)
+            )
+
+            ||
+
+            /* cognome uguale + nome contenuto */
+
+            (
+              wpSurname &&
+              normalizePlayerName(p.name)
+                .includes(wpSurname) &&
+              !p.surname
+            )
+
+          );
+
+        });
+
+    }
+
+
+    /* =========================
+       3. SALVA COLLEGAMENTO
+    ========================= */
+
+    if(dbPlayer){
+
+      playerToGame[dbPlayer.id] = {
+        game,
+        wp
+      };
+
+
+      if(dbPlayer.real_team_id){
+
+        teamToGame[
+          String(dbPlayer.real_team_id)
+        ] = game;
 
       }
 
     }
+
   }
 
-  console.log(
-    "SQUADRE REALI COLLEGATE:",
-    Object.keys(teamToGame).length
-  );
+}
+
+
+console.log(
+  "GIOCATORI WEBPONT COLLEGATI:",
+  Object.keys(playerToGame).length
+);
+
+console.log(
+  "SQUADRE REALI COLLEGATE:",
+  Object.keys(teamToGame).length
+);
 
   /* =========================================================
      4. CARICO LE FORMAZIONI DELLA GIORNATA
