@@ -5242,89 +5242,265 @@ const lineupsResult = await db
 
   const lineups = lineupsResult.data || [];
 
-  /* =========================================================
-     5. PUNTEGGI GIOCATORI
-  ========================================================= */
+/* =========================================================
+   5. PUNTEGGI GIOCATORI
+========================================================= */
 
-  for(const lineup of lineups){
+for(const lineup of lineups){
 
-    for(const lp of (lineup.lineup_players || [])){
+  for(const lp of (lineup.lineup_players || [])){
 
-      const pg = playerToGame[lp.player_id];
+    const pg = playerToGame[lp.player_id];
 
-      if(!pg)
-        continue;
+    if(!pg)
+      continue;
 
-      const raw = Number(pg.wp?.fantasyScore);
 
-      if(!Number.isFinite(raw))
-        continue;
+    /* =========================
+       DATI PARTITA WEBPONT
+    ========================= */
 
-      let multiplier = 0;
+    const gameInfo =
+      gamesData[pg.game]?.info;
 
-      if(
-        lp.role === "starter" ||
-        lp.role === "sixth"
-      ){
+    if(!gameInfo){
 
-        multiplier = 1;
+      console.warn(
+        "INFO PARTITA NON TROVATA:",
+        pg.game,
+        pg.wp?.name
+      );
 
-      }else if(lp.role === "bench"){
+      continue;
+    }
 
-        multiplier = 0.5;
 
-      }else{
+    const homeScore =
+      Number(gameInfo.homeScore);
 
-        multiplier = 0;
+    const awayScore =
+      Number(gameInfo.awayScore);
 
-      }
+    if(
+      !Number.isFinite(homeScore) ||
+      !Number.isFinite(awayScore)
+    ){
 
-      if(lp.captain)
-        multiplier *= 1.5;
+      console.warn(
+        "RISULTATO NON VALIDO:",
+        pg.game,
+        gameInfo
+      );
 
-      const finalScore =
-        Math.round(raw * multiplier * 10) / 10;
+      continue;
+    }
 
-      const save = await db
+
+    /* =========================
+       PUNTEGGIO BASE WEBPONT
+    ========================= */
+
+    let raw =
+      Number(pg.wp?.fantasyScore);
+
+    if(!Number.isFinite(raw))
+      continue;
+
+
+    /* =========================
+       VITTORIA +3
+       
+       Usiamo direttamente il
+       nome squadra WebPont del
+       giocatore e i nomi WebPont
+       della partita.
+    ========================= */
+
+    const playerTeam =
+      String(pg.wp?.team || "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g,"");
+
+
+    const homeTeam =
+      String(gameInfo.home || "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g,"");
+
+
+    const awayTeam =
+      String(gameInfo.away || "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g,"");
+
+
+    let winBonus = false;
+
+
+    if(
+      playerTeam &&
+      (
+        playerTeam === homeTeam ||
+        homeTeam.includes(playerTeam) ||
+        playerTeam.includes(homeTeam)
+      )
+    ){
+
+      winBonus =
+        homeScore > awayScore;
+
+    }else if(
+      playerTeam &&
+      (
+        playerTeam === awayTeam ||
+        awayTeam.includes(playerTeam) ||
+        playerTeam.includes(awayTeam)
+      )
+    ){
+
+      winBonus =
+        awayScore > homeScore;
+    }
+
+
+    if(winBonus){
+
+      raw += 3;
+
+      console.log(
+        "🏆 VITTORIA +3:",
+        pg.wp?.name,
+        "| SQUADRA:",
+        pg.wp?.team,
+        "| RISULTATO:",
+        homeScore,
+        "-",
+        awayScore,
+        "| RAW:",
+        raw
+      );
+
+    }
+
+
+    /* =========================
+       MOLTIPLICATORE FORMAZIONE
+    ========================= */
+
+    let multiplier = 0;
+
+    if(
+      lp.role === "starter" ||
+      lp.role === "sixth"
+    ){
+
+      multiplier = 1;
+
+    }else if(lp.role === "bench"){
+
+      multiplier = 0.5;
+
+    }else{
+
+      multiplier = 0;
+
+    }
+
+
+    /* =========================
+       CAPITANO
+    ========================= */
+
+    let captainMultiplier = 1;
+
+    if(lp.captain){
+
+      captainMultiplier = 1.5;
+    }
+
+
+    const finalScore =
+      Math.round(
+        raw *
+        multiplier *
+        captainMultiplier *
+        10
+      ) / 10;
+
+
+    /* =========================
+       SALVATAGGIO
+    ========================= */
+
+    const save =
+      await db
         .from("fantasy_scores")
         .upsert({
-          lineup_id: lineup.id,
-          player_id: lp.player_id,
-          score: finalScore
+
+          manager_id:
+            lineup.manager_id,
+
+          matchday_id:
+            matchdayId,
+
+          player_id:
+            lp.player_id,
+
+          raw_score:
+            Math.round(raw * 10) / 10,
+
+          lineup_multiplier:
+            multiplier,
+
+          captain_multiplier:
+            captainMultiplier,
+
+          final_score:
+            finalScore
+
         },{
-          onConflict:"manager_id,matchday_id,player_id"
+          onConflict:
+            "manager_id,matchday_id,player_id"
         });
 
-      if(save.error){
 
-        console.error(
-          "ERRORE SALVATAGGIO FANTASY SCORE:",
-          save.error
-        );
+    if(save.error){
 
-      }else{
+      console.error(
+        "ERRORE SALVATAGGIO FANTASY SCORE:",
+        save.error
+      );
 
-        console.log(
-          "FANTASY SCORE SALVATO:",
-          pg.wp.name || "",
-          pg.wp.surname || "",
-          "GAME:",
-          pg.game,
-          "RAW:",
-          raw,
-          "ROLE:",
-          lp.role,
-          "CAP:",
-          lp.captain,
-          "FINAL:",
-          finalScore
-        );
+    }else{
 
-      }
+      console.log(
+        "FANTASY SCORE SALVATO:",
+        pg.wp?.name || "",
+        "| GAME:",
+        pg.game,
+        "| TEAM:",
+        pg.wp?.team,
+        "| RAW:",
+        Math.round(raw * 10) / 10,
+        "| ROLE:",
+        lp.role,
+        "| CAP:",
+        lp.captain,
+        "| FINAL:",
+        finalScore
+      );
 
     }
 
   }
+
+}
 
   /* =========================================================
      6. CARICO GLI ALLENATORI
