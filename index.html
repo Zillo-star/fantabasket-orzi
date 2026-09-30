@@ -6631,11 +6631,17 @@ console.log(
   dbPlayer.surname
 );
          
-        const rawScore =
-          calculateRawScore(
-            wp,
-            winBonus
-          );
+let rawScore =
+  calculateRawScore(
+    wp,
+    false
+  );
+
+if(winBonus){
+  rawScore += 3;
+}
+
+rawScore = round1(rawScore);
 
 console.log(
   "📊 PUNTEGGIO:",
