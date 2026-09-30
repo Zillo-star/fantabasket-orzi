@@ -6023,36 +6023,41 @@ window.loadAllFantasyScores = async function(){
     }
   }
 
+/* ========================================================= 5. TROVA GIOCATORE WEBPONT ========================================================= */
 
-  /* =========================================================
-     5. TROVA GIOCATORE WEBPONT
-     ========================================================= */
+function findWebPontPlayer(
+  dbPlayer,
+  webPlayers
+){
 
-  function findWebPontPlayer(
-    dbPlayer,
-    webPlayers
-  ){
+  if(!dbPlayer){
+    return null;
+  }
 
-    if(!dbPlayer){
-      return null;
-    }
+  const fullDbName =
+    String(
+      dbPlayer.surname
+        ? `${dbPlayer.name} ${dbPlayer.surname}`
+        : dbPlayer.name || ""
+    )
+    .trim()
+    .toLowerCase();
 
-    const dbSurname =
-      String(dbPlayer.surname || "")
-        .trim()
-        .toLowerCase();
+  if(!fullDbName){
+    return null;
+  }
 
-    const dbInitial =
-      String(dbPlayer.name || "")
-        .trim()
-        .charAt(0)
-        .toLowerCase();
+  const dbParts =
+    fullDbName.split(/\s+/);
 
-    if(!dbSurname){
-      return null;
-    }
+  const dbSurname =
+    dbParts[dbParts.length - 1];
 
-    const matches = webPlayers.filter(wp => {
+  const dbInitial =
+    dbParts[0]?.charAt(0) || "";
+
+  const matches =
+    webPlayers.filter(wp => {
 
       const parts =
         String(wp.name || "")
@@ -6080,24 +6085,24 @@ window.loadAllFantasyScores = async function(){
       );
     });
 
-    if(matches.length === 1){
-      return matches[0];
-    }
-
-    if(matches.length > 1){
-
-      console.warn(
-        "Più giocatori WebPont compatibili:",
-        dbPlayer.name,
-        dbPlayer.surname,
-        matches
-      );
-
-      return matches[0];
-    }
-
-    return null;
+  if(matches.length === 1){
+    return matches[0];
   }
+
+  if(matches.length > 1){
+
+    console.warn(
+      "Più giocatori WebPont compatibili:",
+      dbPlayer.name,
+      dbPlayer.surname,
+      matches
+    );
+
+    return matches[0];
+  }
+
+  return null;
+}
 
 
   /* =========================================================
