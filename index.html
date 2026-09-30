@@ -6452,6 +6452,13 @@ window.loadAllFantasyScores = async function(){
 
         if(possible){
 
+console.log(
+  "MATCH SQUADRA:",
+  dbCandidate.name,
+  "→ WebPont:",
+  wp.team
+);
+      
           webTeamName =
             String(wp.team || "")
               .toLowerCase();
