@@ -6430,87 +6430,192 @@ function findWebPontPlayer(
         associato ai giocatori trovati.
       */
 
-      let webTeamName = null;
+/* =========================
+   VITTORIA +3
+========================= */
+
+const webTeamNames = {
+
+  "7978ce5b-36ac-449b-9c01-fd21cdee6af9":
+    "UCC Assigeco Piacenza",
+
+  "96c8f740-481f-4383-ac4a-4313542fa59f":
+    "A2A Leonessa Brescia",
+
+  "6024cac2-5b3f-402a-ab3c-a27e3d93e144":
+    "Siaz Piazza Armerina",
+
+  "692f6f8e-31c9-43fa-8327-c8231c06abd1":
+    "Adamant Ferrara",
+
+  "b0fb6fdc-e4ac-4107-bc1b-3bb7e8ffe6ba":
+    "LTC Sangiorgese",
+
+  "03b209f2-2b55-4a20-abef-1813f02c3fae":
+    "SAE Scientifica-Soevis Legnano Knights",
+
+  "47c23554-7484-484f-bd17-d87a41393b8e":
+    "TAV Treviglio Brianza Basket",
+
+  "d8052e11-a162-4071-a6b0-39f2cb232373":
+    "Paffoni Fulgor Basket Omegna",
+
+  "7d43f69f-f19e-4097-93a8-22ca9a9304b4":
+    "S4 Energia Vicenza",
+
+  "5968a101-7a1c-47de-aaa4-f5ef4df0b966":
+    "Consorzio Leonardo Dany Quarrata",
+
+  "32aec2a6-d129-4a62-948e-57068ab0a789":
+    "OraSì Ravenna",
+
+  "7648efd7-63bf-471b-a681-b3d9fe68b997":
+    "Moncada Energy Agrigento",
+
+  "787c3b98-acba-4676-bfe5-5dc5b5feb65e":
+    "Scandone Avellino",
+
+  "82adc99d-d11d-49e3-940f-8c1843508779":
+    "Verodol CBD Pielle Livorno",
+
+  "8c0094d3-9dc0-413d-96c7-45eb1676d600":
+    "Consultinvest Loreto Pesaro",
+
+  "9cfb5b9b-412c-48ef-8038-dd746dbcb711":
+    "Virtus Roma",
+
+  "a00a908d-a915-4b57-bd09-eb9bf644f084":
+    "Andrea Costa Imola",
+
+  "c39fd965-726d-4ce0-be75-6d79280b30a0":
+    "Rucker San Vendemiano",
+
+  "ff1f0359-f6d6-4a9e-b11e-53fa06d75a02":
+    "Fabo Herons Montecatini",
+
+  "0091564f-3f72-4744-a504-aa901b0da2fc":
+    "LuxArm Lumezzane",
+
+  "25f7d815-e989-410f-b952-7cdb23cd0d97":
+    "Ristopro Fabriano",
+
+  "27065ca7-1608-4c33-a266-3b974a76e6f2":
+    "Fiorenzuola Bees",
+
+  "389e0b4f-7e01-4531-b98d-b44ac9a681f6":
+    "Sendero Mens Sana Siena",
+
+  "58b4c970-460c-4e20-981a-c3ac8a37f7f5":
+    "Umana San Giobbe Chiusi",
+
+  "86f86ac9-4a68-47e9-9125-c343c3c422fd":
+    "PSA Napoli Est",
+
+  "921c1923-2cac-4426-b3d4-f34f8152c22e":
+    "Tema Sinergie Faenza",
+
+  "9edb5c6a-88a8-4991-b7cf-8271bb833fe9":
+    "Logiman Orzinuovi",
+
+  "e08ea82a-4f1a-4b52-bb61-f70709ed7dac":
+    "Redel Reggio Calabria",
+
+  "fdee30af-40b3-4d81-82c2-d7133f0ead4b":
+    "Rimadesio Desio",
+
+  "b67064bc-d7c5-40f6-a77f-9ce116055b43":
+    "Infodrive Capo d'Orlando",
+
+  "5f8b7500-48ad-4f35-9c95-d3a08e379501":
+    "Liofilchem Roseto",
+
+  "f94df558-7de9-49ff-957d-afb22a82502f":
+    "Benacquista Assicurazioni Latina",
+
+  "cc1e28b4-11c6-4c1f-a60f-eff7245468a1":
+    "Solbat Golfo Piombino",
+
+  "b69e50eb-3ba3-4bf6-b0b1-0e577b6c87b9":
+    "Allianz Pazienza Cestistica San Severo",
+
+  "eba465a8-495a-4de9-8f01-dfe32b346754":
+    "Basketball Club Lucca",
+
+  "3236f0aa-409b-456c-bd6c-d851e5e1228f":
+    "Luiss Roma"
+};
 
 
-      for(const wp of webPlayers){
+/* =========================
+   NOME SQUADRA WEBPONT
+========================= */
 
-        const dbCandidate =
-          dayPlayers.find(
-            lp =>
-              lp.players?.real_team_id ===
-              realTeamId
-          )?.players;
+const webTeamName =
+  webTeamNames[realTeamId] || null;
 
 
-        if(!dbCandidate){
-          continue;
-        }
+/* =========================
+   CALCOLO VITTORIA
+========================= */
+
+let winBonus = false;
+
+if(webTeamName){
+
+  const normalizedWebTeam =
+    webTeamName
+      .toLowerCase()
+      .trim();
+
+  const normalizedHome =
+    home
+      .toLowerCase()
+      .trim();
+
+  const normalizedAway =
+    away
+      .toLowerCase()
+      .trim();
 
 
-console.log(
-  "🔎 PROVA MATCH:",
-  {
-    DB: dbCandidate.name,
-    surname: dbCandidate.surname,
-    WEBPONT: wp.name,
-    team: wp.team
+  if(
+    normalizedHome.includes(normalizedWebTeam) ||
+    normalizedWebTeam.includes(normalizedHome)
+  ){
+
+    winBonus =
+      homeScore > awayScore;
+
+  }else if(
+    normalizedAway.includes(normalizedWebTeam) ||
+    normalizedWebTeam.includes(normalizedAway)
+  ){
+
+    winBonus =
+      awayScore > homeScore;
   }
-);
 
-const possible =
-  findWebPontPlayer(
-    dbCandidate,
-    [wp]
+
+  console.log(
+    "🏀 VITTORIA CHECK:",
+    webTeamName,
+    "|",
+    homeScore,
+    "-",
+    awayScore,
+    "| +3:",
+    winBonus
   );
 
-console.log(
-  "🔎 RISULTATO MATCH:",
-  possible
-);
+}else{
 
+  console.warn(
+    "⚠️ NOME WEBPONT NON MAPPATO:",
+    realTeamId,
+    teamName
+  );
 
-        if(possible){
-
-console.log(
-  "MATCH SQUADRA:",
-  dbCandidate.name,
-  "→ WebPont:",
-  wp.team
-);
-      
-          webTeamName =
-            String(wp.team || "")
-              .toLowerCase();
-
-          break;
-        }
-      }
-
-
-      let winBonus = false;
-
-
-      if(webTeamName){
-
-        if(
-          home.includes(webTeamName) ||
-          webTeamName.includes(home)
-        ){
-
-          winBonus =
-            homeScore > awayScore;
-
-        }else if(
-          away.includes(webTeamName) ||
-          webTeamName.includes(away)
-        ){
-
-          winBonus =
-            awayScore > homeScore;
-
-        }
-      }
+}
 
 /* -------------------------------------------------------
    RISULTATO ALLENATORE
