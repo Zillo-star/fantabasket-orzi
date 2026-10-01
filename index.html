@@ -10333,55 +10333,48 @@ matchdays[Number(x.number)] = {
   });
 
 
-  /* =========================
-     GIORNATA CORRENTE
-  ========================= */
+/* =========================
+   GIORNATA CORRENTE
+========================= */
 
-  let currentDay = null;
+let currentDay = null;
 
-  for(let day of allDays){
+for(let day of allDays){
 
-    let dayMatches = matches.filter(
-      x => Number(x.matchday_number) === day
-    );
+  let matchday = matchdays[day];
 
-    /*
-      La giornata è conclusa quando
-      tutte le partite presenti per quella
-      giornata sono concluse.
+  if(!matchday?.lineup_open_at)
+    continue;
 
-      Non imponiamo 4 partite:
-      così funziona anche la giornata
-      con 3 partite + turno di riposo.
-    */
+  let openDate =
+    new Date(matchday.lineup_open_at);
 
-    let completed =
-      dayMatches.length > 0 &&
-      dayMatches.every(
-        x => x.completed === true
-      );
+  if(
+    Number.isFinite(openDate.getTime()) &&
+    Date.now() >= openDate.getTime()
+  ){
 
-    if(!completed){
+    currentDay = day;
 
-      currentDay = day;
-      break;
+  }else{
 
-    }
+    break;
 
   }
 
+}
 
-  /*
-    Se tutte le giornate sono concluse,
-    selezioniamo l'ultima.
-  */
+/*
+  La giornata 1 non ha lineup_open_at:
+  prima dell'apertura della giornata 2
+  resta quindi la giornata corrente.
+*/
 
-  if(currentDay === null && allDays.length){
+if(currentDay === null && allDays.length){
 
-    currentDay =
-      allDays[allDays.length - 1];
+  currentDay = allDays[0];
 
-  }
+}
 
 
 /* =========================
