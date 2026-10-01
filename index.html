@@ -4702,7 +4702,12 @@ async function lineup(){
 
   let m=await db
     .from("matchdays")
-    .select("id,number,lineup_deadline,status")
+    .select(`
+  id,
+  number,
+  lineup_deadline,
+  lineup_open_at
+`)
     .order("number");
 
   if(m.error)
