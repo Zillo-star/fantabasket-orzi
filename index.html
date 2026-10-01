@@ -10465,14 +10465,22 @@ function renderLineup(managerId,dayNumber){
   let matchdayId = matchday.id;
 
   // ------------------------------------------------------------
-  // DEADLINE
+  // APERTURA / DEADLINE
   // ------------------------------------------------------------
+
+  let openAt = matchday.lineup_open_at
+    ? new Date(matchday.lineup_open_at)
+    : null;
 
   let deadline = matchday.lineup_deadline
     ? new Date(matchday.lineup_deadline)
     : null;
 
-  if(deadline && new Date() < deadline){
+  let now = new Date();
+
+  // GIORNATA NON ANCORA APERTA
+  if(openAt && now < openAt){
+
     return `
       <div style="
         padding:30px 18px;
@@ -10489,7 +10497,7 @@ function renderLineup(managerId,dayNumber){
           font-weight:800;
           margin-bottom:7px;
         ">
-          Formazione non ancora visibile
+          Formazione non ancora aperta
         </div>
 
         <div style="
@@ -10497,10 +10505,19 @@ function renderLineup(managerId,dayNumber){
           font-size:13px;
           line-height:1.5;
         ">
-          Sarà visibile alla chiusura della deadline.
+          La formazione sarà disponibile all'apertura della giornata.
         </div>
       </div>
     `;
+
+  }
+
+  // GIORNATA CHIUSA
+  if(deadline && now >= deadline){
+
+    // La formazione rimane visibile,
+    // ma non sarà modificabile.
+    // Il controllo dei pulsanti verrà gestito più avanti.
   }
 
   // ------------------------------------------------------------
