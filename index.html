@@ -10221,7 +10221,7 @@ let savedLineups = new Set(
 
   const now = new Date();
 
-  for(let day of days){
+  for(let day of (md.data || [])){
 
     const openAt =
       day.lineup_open_at
