@@ -10323,11 +10323,12 @@ let savedLineups = new Set(
 
   (md.data || []).forEach(x => {
 
-    matchdays[Number(x.number)] = {
-      id:x.id,
-      number:Number(x.number),
-      lineup_deadline:x.lineup_deadline
-    };
+matchdays[Number(x.number)] = {
+  id:x.id,
+  number:Number(x.number),
+  lineup_deadline:x.lineup_deadline,
+  lineup_open_at:x.lineup_open_at
+};
 
   });
 
