@@ -4702,12 +4702,7 @@ async function lineup(){
 
   let m=await db
     .from("matchdays")
-    .select(`
-  id,
-  number,
-  lineup_deadline,
-  lineup_open_at
-`)
+    .select("id,number,lineup_deadline,status")
     .order("number");
 
   if(m.error)
@@ -5140,191 +5135,65 @@ const gamesByMatchday = {
 
   const dbPlayers = playersResult.data || [];
 
-/* =========================================================
-   3. ASSOCIO GIOCATORI WEBPONT -> SQUADRA REALE
-========================================================= */
+  /* =========================================================
+     3. ASSOCIO GIOCATORI WEBPONT -> SQUADRA REALE
+  ========================================================= */
 
-const teamToGame = {};
-const playerToGame = {};
+  const teamToGame = {};
+  const playerToGame = {};
 
+  for(const game of games){
 
-/* =========================
-   NORMALIZZA NOMI
-========================= */
+    const w = gamesData[game];
 
-function normalizePlayerName(value){
+    if(!w || !Array.isArray(w.players))
+      continue;
 
-  return String(value || "")
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g,"")
-    .replace(/[.'’`-]/g," ")
-    .replace(/\s+/g," ")
-    .trim();
+    for(const wp of w.players){
 
-}
+      let dbPlayer = null;
 
+      if(wp.webpont_id != null){
 
-/* =========================
-   CREA VARIANTI DEL NOME DB
-========================= */
-
-function getDbPlayerNames(p){
-
-  const name =
-    normalizePlayerName(p.name);
-
-  const surname =
-    normalizePlayerName(p.surname);
-
-  const full =
-    normalizePlayerName(
-      `${p.name || ""} ${p.surname || ""}`
-    );
-
-  return [
-    name,
-    full,
-    `${surname} ${name}`.trim()
-  ].filter(Boolean);
-
-}
-
-
-/* =========================
-   ASSOCIA
-========================= */
-
-for(const game of games){
-
-  const w = gamesData[game];
-
-  if(!w || !Array.isArray(w.players))
-    continue;
-
-
-  for(const wp of w.players){
-
-    let dbPlayer = null;
-
-
-    /* =========================
-       1. MATCH WEBPONT ID
-    ========================= */
-
-    if(wp.webpont_id != null){
-
-      dbPlayer =
-        dbPlayers.find(
-          p =>
-            p.webpont_id != null &&
-            String(p.webpont_id) ===
-            String(wp.webpont_id)
+        dbPlayer = dbPlayers.find(
+          p => String(p.webpont_id) === String(wp.webpont_id)
         );
 
-    }
+      }
 
+      if(!dbPlayer){
 
-    /* =========================
-       2. MATCH NOME + COGNOME
-    ========================= */
+        const wpName = String(wp.name || "").trim().toLowerCase();
+        const wpSurname = String(wp.surname || "").trim().toLowerCase();
 
-    if(!dbPlayer){
-
-      const wpName =
-        normalizePlayerName(wp.name);
-
-      const wpSurname =
-        normalizePlayerName(wp.surname);
-
-      const wpFull =
-        normalizePlayerName(
-          `${wp.name || ""} ${wp.surname || ""}`
+        dbPlayer = dbPlayers.find(p =>
+          String(p.name || "").trim().toLowerCase() === wpName &&
+          String(p.surname || "").trim().toLowerCase() === wpSurname
         );
+      }
 
+      if(dbPlayer){
 
-      dbPlayer =
-        dbPlayers.find(p => {
+        playerToGame[dbPlayer.id] = {
+          game,
+          wp
+        };
 
-          const variants =
-            getDbPlayerNames(p);
+        if(dbPlayer.real_team_id){
 
-          return (
+          teamToGame[String(dbPlayer.real_team_id)] = game;
 
-            /* nome + cognome separati */
-
-            (
-              wpName &&
-              wpSurname &&
-              variants.includes(
-                `${wpName} ${wpSurname}`
-              )
-            )
-
-            ||
-
-            /* nome completo */
-
-            (
-              wpFull &&
-              variants.includes(wpFull)
-            )
-
-            ||
-
-            /* cognome uguale + nome contenuto */
-
-            (
-              wpSurname &&
-              normalizePlayerName(p.name)
-                .includes(wpSurname) &&
-              !p.surname
-            )
-
-          );
-
-        });
-
-    }
-
-
-    /* =========================
-       3. SALVA COLLEGAMENTO
-    ========================= */
-
-    if(dbPlayer){
-
-      playerToGame[dbPlayer.id] = {
-        game,
-        wp
-      };
-
-
-      if(dbPlayer.real_team_id){
-
-        teamToGame[
-          String(dbPlayer.real_team_id)
-        ] = game;
+        }
 
       }
 
     }
-
   }
 
-}
-
-
-console.log(
-  "GIOCATORI WEBPONT COLLEGATI:",
-  Object.keys(playerToGame).length
-);
-
-console.log(
-  "SQUADRE REALI COLLEGATE:",
-  Object.keys(teamToGame).length
-);
+  console.log(
+    "SQUADRE REALI COLLEGATE:",
+    Object.keys(teamToGame).length
+  );
 
   /* =========================================================
      4. CARICO LE FORMAZIONI DELLA GIORNATA
@@ -6048,77 +5917,76 @@ if(leagueMatches.error){
     });
 
 
- /* SALVA I RISULTATI DELLE PARTITE */
+    /* SALVA I RISULTATI DELLE PARTITE */
 
-for(const match of (leagueMatches.data || [])){
+    for(const match of (leagueMatches.data || [])){
 
-  const homeId =
-    String(match.home_manager_id);
+      const homeId =
+        String(match.home_manager_id);
 
-  const awayId =
-    String(match.away_manager_id);
+      const awayId =
+        String(match.away_manager_id);
 
-  const homeScore =
-    totals[homeId] !== undefined
-      ? Number(totals[homeId].toFixed(1))
-      : null;
+      const homeScore =
+        totals[homeId] !== undefined
+          ? Number(totals[homeId].toFixed(1))
+          : null;
 
-  const awayScore =
-    totals[awayId] !== undefined
-      ? Number(totals[awayId].toFixed(1))
-      : null;
-
-
-  /*
-    Aggiorniamo la partita solo quando
-    ENTRAMBI i fantallenatori hanno
-    un punteggio disponibile.
-
-    Questo evita di inserire NULL
-    nei campi home_score / away_score.
-  */
-
-  if(
-    homeScore === null ||
-    awayScore === null
-  )
-    continue;
+      const awayScore =
+        totals[awayId] !== undefined
+          ? Number(totals[awayId].toFixed(1))
+          : null;
 
 
-  const updateMatch =
-    await db
-      .from("league_matches")
-      .update({
+      /*
+        Aggiorniamo solo quando almeno uno
+        dei due fantallenatori ha già
+        un punteggio disponibile.
+      */
 
-        home_score:
+      if(
+        homeScore === null &&
+        awayScore === null
+      )
+        continue;
+
+
+      const updateMatch =
+        await db
+          .from("league_matches")
+          .update({
+
+            home_score:
+              homeScore,
+
+            away_score:
+              awayScore
+
+          })
+          .eq("id",match.id);
+
+
+      if(updateMatch.error){
+
+        console.error(
+          "ERRORE AGGIORNAMENTO MATCH FANTASY:",
+          updateMatch.error
+        );
+
+      }else{
+
+        console.log(
+          "RISULTATO FANTASY AGGIORNATO:",
           homeScore,
-
-        away_score:
+          "-",
           awayScore
+        );
 
-      })
-      .eq("id",match.id);
+      }
 
-
-  if(updateMatch.error){
-
-    console.error(
-      "ERRORE AGGIORNAMENTO MATCH FANTASY:",
-      updateMatch.error
-    );
-
-  }else{
-
-    console.log(
-      "RISULTATO FANTASY AGGIORNATO:",
-      homeScore,
-      "-",
-      awayScore
-    );
+    }
 
   }
-
-}
 
 }
 
@@ -10323,58 +10191,64 @@ let savedLineups = new Set(
 
   (md.data || []).forEach(x => {
 
-matchdays[Number(x.number)] = {
-  id:x.id,
-  number:Number(x.number),
-  lineup_deadline:x.lineup_deadline,
-  lineup_open_at:x.lineup_open_at
-};
+    matchdays[Number(x.number)] = {
+      id:x.id,
+      number:Number(x.number),
+      lineup_deadline:x.lineup_deadline
+    };
 
   });
 
 
-/* =========================
-   GIORNATA CORRENTE
-========================= */
+  /* =========================
+     GIORNATA CORRENTE
+  ========================= */
 
-let currentDay = null;
+  let currentDay = null;
 
-for(let day of allDays){
+  for(let day of allDays){
 
-  let matchday = matchdays[day];
+    let dayMatches = matches.filter(
+      x => Number(x.matchday_number) === day
+    );
 
-  if(!matchday?.lineup_open_at)
-    continue;
+    /*
+      La giornata è conclusa quando
+      tutte le partite presenti per quella
+      giornata sono concluse.
 
-  let openDate =
-    new Date(matchday.lineup_open_at);
+      Non imponiamo 4 partite:
+      così funziona anche la giornata
+      con 3 partite + turno di riposo.
+    */
 
-  if(
-    Number.isFinite(openDate.getTime()) &&
-    Date.now() >= openDate.getTime()
-  ){
+    let completed =
+      dayMatches.length > 0 &&
+      dayMatches.every(
+        x => x.completed === true
+      );
 
-    currentDay = day;
+    if(!completed){
 
-  }else{
+      currentDay = day;
+      break;
 
-    break;
+    }
 
   }
 
-}
 
-/*
-  La giornata 1 non ha lineup_open_at:
-  prima dell'apertura della giornata 2
-  resta quindi la giornata corrente.
-*/
+  /*
+    Se tutte le giornate sono concluse,
+    selezioniamo l'ultima.
+  */
 
-if(currentDay === null && allDays.length){
+  if(currentDay === null && allDays.length){
 
-  currentDay = allDays[0];
+    currentDay =
+      allDays[allDays.length - 1];
 
-}
+  }
 
 
 /* =========================
