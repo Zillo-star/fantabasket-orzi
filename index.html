@@ -10196,51 +10196,36 @@ let savedLineups = new Set(
 
   /* =========================
      GIORNATA CORRENTE
+     IN BASE ALL'APERTURA
   ========================= */
 
   let currentDay = null;
 
-  for(let day of allDays){
+  const now = new Date();
 
-    let dayMatches = matches.filter(
-      x => Number(x.matchday_number) === day
-    );
+  for(let day of days){
 
-    /*
-      La giornata è conclusa quando
-      tutte le partite presenti per quella
-      giornata sono concluse.
+    const openAt =
+      day.lineup_open_at
+        ? new Date(day.lineup_open_at)
+        : null;
 
-      Non imponiamo 4 partite:
-      così funziona anche la giornata
-      con 3 partite + turno di riposo.
-    */
+    const deadline =
+      day.lineup_deadline
+        ? new Date(day.lineup_deadline)
+        : null;
 
-    let completed =
-      dayMatches.length > 0 &&
-      dayMatches.every(
-        x => x.completed === true
-      );
+    if(
+      openAt &&
+      deadline &&
+      now >= openAt &&
+      now < deadline
+    ){
 
-    if(!completed){
-
-      currentDay = day;
+      currentDay = Number(day.number);
       break;
 
     }
-
-  }
-
-
-  /*
-    Se tutte le giornate sono concluse,
-    selezioniamo l'ultima.
-  */
-
-  if(currentDay === null && allDays.length){
-
-    currentDay =
-      allDays[allDays.length - 1];
 
   }
 
