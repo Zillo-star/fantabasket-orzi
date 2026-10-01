@@ -4742,42 +4742,35 @@ async function lineup(){
 
   /* =========================
      TROVA GIORNATA CORRENTE
+     IN BASE ALL'APERTURA
   ========================= */
 
-  let matches=await db
-    .from("league_matches")
-    .select("matchday_number,completed");
+  let now = new Date();
 
-  if(matches.error)
-    return message(matches.error.message,"err");
-
-  let grouped={};
-
-  (matches.data||[]).forEach(x=>{
-
-    if(!grouped[x.matchday_number])
-      grouped[x.matchday_number]=[];
-
-    grouped[x.matchday_number].push(x);
-
-  });
-
-
-  let currentDay=null;
+  let currentDay = null;
 
   for(let day of days){
 
-    let number=day.number;
+    let md = day;
 
-    let dayMatches=grouped[number]||[];
+    let openAt =
+      md.lineup_open_at
+        ? new Date(md.lineup_open_at)
+        : null;
 
-    let completed=
-      dayMatches.length===4 &&
-      dayMatches.every(x=>x.completed===true);
+    let deadline =
+      md.lineup_deadline
+        ? new Date(md.lineup_deadline)
+        : null;
 
-    if(!completed){
+    if(
+      openAt &&
+      deadline &&
+      now >= openAt &&
+      now < deadline
+    ){
 
-      currentDay=number;
+      currentDay = Number(md.number);
       break;
 
     }
