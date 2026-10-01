@@ -8313,21 +8313,54 @@ if(!matchdayId)
     "err"
   );
 
-  let deadline=
-    window.lineupDeadlines?.[matchdayNumber];
+  /*
+    Controlla apertura e deadline della giornata.
+  */
 
-  if(!deadline)
+  let mdCheck = await db
+    .from("matchdays")
+    .select(`
+      lineup_open_at,
+      lineup_deadline
+    `)
+    .eq("id",matchdayId)
+    .single();
+
+  if(mdCheck.error)
     return message(
-      "Deadline non disponibile per questa giornata.",
+      mdCheck.error.message,
       "err"
     );
 
-  if(new Date()>=new Date(deadline))
+  let openAt =
+    mdCheck.data?.lineup_open_at
+      ? new Date(mdCheck.data.lineup_open_at)
+      : null;
+
+  let deadline =
+    mdCheck.data?.lineup_deadline
+      ? new Date(mdCheck.data.lineup_deadline)
+      : null;
+
+  let now = new Date();
+
+  if(!openAt)
+    return message(
+      "Apertura formazione non disponibile per questa giornata.",
+      "err"
+    );
+
+  if(now < openAt)
+    return message(
+      "La formazione per questa giornata non è ancora aperta.",
+      "err"
+    );
+
+  if(deadline && now >= deadline)
     return message(
       "La deadline per questa giornata è scaduta. La formazione non può più essere modificata.",
       "err"
     );
-
   let selects=[
     ...document.querySelectorAll(
       "#lp select[data-p]"
