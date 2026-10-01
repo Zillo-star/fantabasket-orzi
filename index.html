@@ -4740,16 +4740,56 @@ async function lineup(){
   console.log("ROSA + SQUADRE:", r.data);
 
   /* =========================
+     GIORNATA CORRENTE
+     IN BASE ALL'APERTURA
+  ========================= */
+
+  let now = new Date();
+
+  let currentDay = null;
+
+  for(let day of days){
+
+    let openAt =
+      day.lineup_open_at
+        ? new Date(day.lineup_open_at)
+        : null;
+
+    let deadline =
+      day.lineup_deadline
+        ? new Date(day.lineup_deadline)
+        : null;
+
+    if(
+      openAt &&
+      deadline &&
+      now >= openAt &&
+      now < deadline
+    ){
+
+      currentDay = Number(day.number);
+      break;
+
+    }
+
+  }
+
+
+  /* =========================
      GIORNATE DISPONIBILI
   ========================= */
 
-  let currentIndex=
-    days.findIndex(x=>x.number===currentDay);
+  let availableDays =
+    days.filter(day => {
 
-  let availableDays=
-    currentIndex>=0
-      ? days.slice(0,currentIndex+1)
-      : [];
+      let openAt =
+        day.lineup_open_at
+          ? new Date(day.lineup_open_at)
+          : null;
+
+      return openAt && now >= openAt;
+
+    });
 
 
   window.lineupDeadlines={};
