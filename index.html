@@ -10141,13 +10141,14 @@ async function calendar(){
   ].sort((a,b) => a-b);
 
 
-  let md = await db.from("matchdays")
-    .select(`
-      id,
-      number,
-      lineup_deadline
-    `)
-    .in("number",allDays);
+let md = await db.from("matchdays")
+  .select(`
+    id,
+    number,
+    lineup_open_at,
+    lineup_deadline
+  `)
+  .order("number");
 
   if(md.error)
     return message(md.error.message,"err");
