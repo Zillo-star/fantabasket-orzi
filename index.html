@@ -5351,8 +5351,443 @@ console.log(
 
   const dbPlayers = playersResult.data || [];
 
-/* ========================================================= 3. ASSOCIO GIOCATORI WEBPONT -> SQUADRA REALE ========================================================= */ const teamToGame = {}; const playerToGame = {}; /* ========================================================= NORMALIZZA NOME SQUADRA ========================================================= */ function normalizeTeamName(name){ return String(name || "") .trim() .toLowerCase() .normalize("NFD") .replace(/[\u0300-\u036f]/g,"") .replace(/[^a-z0-9 ]/g," ") .replace(/\s+/g," ") .trim(); } /* ========================================================= ALIAS SQUADRE ========================================================= */ const teamAliases = { "leonessa brescia":[ "brescia", "leonessa brescia" ], "pallacanestro vicenza":[ "vicenza" ], "rucker san vendemiano":[ "san vendemiano", "rucker san vendemiano" ], "basket golfo piombino":[ "piombino", "basket golfo piombino" ], "herons montecatini":[ "montecatini", "herons montecatini", "fabo herons montecatini" ], "basketball club lucca":[ "lucca" ], "pielle livorno":[ "livorno", "pielle livorno" ], "virtus lumezzane":[ "lumezzane" ], "assigeco piacenza":[ "piacenza", "assigeco piacenza" ], "sae legnano":[ "legnano", "sae legnano", "sae scientifica" ], "fulgor omegna":[ "omegna" ], "treviglio brianza basket":[ "treviglio" ], "adamant ferrara":[ "ferrara", "adamant ferrara" ], "fortitudo agrigento":[ "agrigento" ], "infodrive capo d'orlando":[ "capo d orlando", "capo dorlando" ], "viola reggio calabria":[ "reggio calabria" ], "janus fabriano":[ "fabriano" ], "loreto pesaro":[ "loreto pesaro", "pesaro" ], "raggisolaris faenza":[ "faenza" ], "scandone avellino":[ "avellino" ], "liofilchem roseto":[ "roseto" ], "mens sana siena":[ "siena", "mens sana" ], "cestistica san severo":[ "san severo" ], "luiss roma":[ "luiss roma", "luiss" ], "basket ravenna":[ "ravenna" ], "dany basket quarrata":[ "quarrata" ], "psa napoli est":[ "napoli est", "psa napoli est" ], "latina basket":[ "latina" ], "san giobbe chiusi":[ "chiusi" ], "aurora desio":[ "desio" ], "andrea costa imola":[ "imola" ], "ltc sangiorgese":[ "sangiorgese", "sangiorgio", "san giorgio" ], "siaz piazza armerina":[ "piazza armerina", "siaz" ], "virtus roma":[ "virtus roma", "roma" ], "fiorenzuola bees":[ "fiorenzuola" ] }; /* ========================================================= ASSOCIA OGNI REAL_TEAM_ID ALLA PARTITA WEBPONT ========================================================= */ for(const p of dbPlayers){ if(!p.real_team_id) continue; const dbTeam = normalizeTeamName( p.real_teams?.name ); const aliases = teamAliases[dbTeam] || []; for(const game of games){ const w = gamesData[game]; if(!w?.info) continue; const home = normalizeTeamName( w.info.home ); const away = normalizeTeamName( w.info.away ); const homeMatch = aliases.some(alias => home.includes( normalizeTeamName(alias) ) ); const awayMatch = aliases.some(alias => away.includes( normalizeTeamName(alias) ) ); if(homeMatch || awayMatch){ teamToGame[ String(p.real_team_id) ] = game; break; } } } console.log( "SQUADRE REALI COLLEGATE:", Object.keys(teamToGame).length ); /* ========================================================= COLLEGA I GIOCATORI WEBPONT ========================================================= */ for(const game of games){ const w = gamesData[game]; if(!w) continue; /* Se WebPont ha i giocatori, proviamo prima ID e nome. */ if(Array.isArray(w.players)){ for(const wp of w.players){ let dbPlayer = null; /* WEBPONT ID */ if(wp.webpont_id != null){ dbPlayer = dbPlayers.find( p => String(p.webpont_id) === String(wp.webpont_id) ); } /* NOME + COGNOME */ if(!dbPlayer){ const wpName = String(wp.name || "") .trim() .toLowerCase(); const wpSurname = String(wp.surname || "") .trim() .toLowerCase(); dbPlayer = dbPlayers.find(p => String(p.name || "") .trim() .toLowerCase() === wpName && String(p.surname || "") .trim() .toLowerCase() === wpSurname ); } if(dbPlayer){ playerToGame[dbPlayer.id] = { game, wp }; } } } } /* ========================================================= FALLBACK GIOCATORE -> PARTITA USANDO LA SQUADRA REALE ========================================================= */ for(const p of dbPlayers){ if(playerToGame[p.id]) continue; if(!p.real_team_id) continue; const game = teamToGame[ String(p.real_team_id) ]; if(!game) continue; const w = gamesData[game]; if(!w) continue; /* Cerchiamo il giocatore nei dati WebPont usando nome/cognome. */ if(!Array.isArray(w.players)) continue; const found = w.players.find(wp => { const wpName = String(wp.name || "") .trim() .toLowerCase(); const wpSurname = String(wp.surname || "") .trim() .toLowerCase(); return ( wpName === String(p.name || "") .trim() .toLowerCase() && wpSurname === String(p.surname || "") .trim() .toLowerCase() ); }); if(found){ playerToGame[p.id] = { game, wp: found }; } } /* ========================================================= CONTROLLO FINALE ========================================================= */ console.log( "GIOCATORI WEBPONT COLLEGATI:", Object.keys(playerToGame).length ); console.table( dbPlayers .filter(p => p.real_team_id) .map(p => ({ giocatore: `${p.name || ""} ${p.surname || ""}`, squadra: p.real_teams?.name, collegato: !!playerToGame[p.id], game: playerToGame[p.id]?.game || "NESSUNA" })) );
-  /* =========================================================
+ /* =========================================================
+    3. ASSOCIO GIOCATORI WEBPONT -> SQUADRA REALE
+ ========================================================= */
+
+const teamToGame = {};
+const playerToGame = {};
+
+/* =========================================================
+   NORMALIZZA NOME SQUADRA
+========================================================= */
+
+function normalizeTeamName(name){
+
+  return String(name || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g,"")
+    .replace(/[^a-z0-9 ]/g," ")
+    .replace(/\s+/g," ")
+    .trim();
+
+}
+
+/* =========================================================
+   ALIAS SQUADRE
+========================================================= */
+
+const teamAliases = {
+
+  "a2a leonessa brescia":[
+    "brescia",
+    "leonessa brescia"
+  ],
+
+  "pallacanestro vicenza":[
+    "vicenza"
+  ],
+
+  "rucker san vendemiano":[
+    "san vendemiano",
+    "rucker san vendemiano"
+  ],
+
+  "basket golfo piombino":[
+    "piombino",
+    "solbat golfo piombino",
+    "basket golfo piombino"
+  ],
+
+  "herons montecatini":[
+    "montecatini",
+    "herons montecatini",
+    "fabo herons montecatini"
+  ],
+
+  "basketball club lucca":[
+    "lucca",
+    "basketball club lucca"
+  ],
+
+  "pielle livorno":[
+    "livorno",
+    "pielle livorno"
+  ],
+
+  "virtus lumezzane":[
+    "lumezzane",
+    "luxarm lumezzane",
+    "virtus lumezzane"
+  ],
+
+  "assigeco piacenza":[
+    "piacenza",
+    "assigeco piacenza",
+    "ucc assigeco piacenza"
+  ],
+
+  "sae legnano":[
+    "legnano",
+    "sae legnano",
+    "sae scientifica",
+    "sae scientifica soevis legnano knights"
+  ],
+
+  "fulgor omegna":[
+    "omegna",
+    "fulgor omegna",
+    "paffoni fulgor basket omegna"
+  ],
+
+  "treviglio brianza basket":[
+    "treviglio",
+    "treviglio brianza basket"
+  ],
+
+  "adamant ferrara":[
+    "ferrara",
+    "adamant ferrara"
+  ],
+
+  "fortitudo agrigento":[
+    "agrigento",
+    "moncada energy agrigento",
+    "fortitudo agrigento"
+  ],
+
+  "infodrive capo d'orlando":[
+    "capo d orlando",
+    "capo dorlando",
+    "infodrive capo dorlando"
+  ],
+
+  "viola reggio calabria":[
+    "reggio calabria",
+    "myenergy reggio calabria"
+  ],
+
+  "janus fabriano":[
+    "fabriano",
+    "ristopro fabriano"
+  ],
+
+  "loreto pesaro":[
+    "loreto pesaro",
+    "pesaro",
+    "consultinvest loreto pesaro"
+  ],
+
+  "raggisolaris faenza":[
+    "faenza",
+    "tema sinergie faenza",
+    "raggisolaris faenza"
+  ],
+
+  "scandone avellino":[
+    "avellino",
+    "felice scandone avellino",
+    "scandone avellino"
+  ],
+
+  "liofilchem roseto":[
+    "roseto",
+    "liofilchem roseto"
+  ],
+
+  "mens sana siena":[
+    "siena",
+    "mens sana",
+    "sendero mens sana siena"
+  ],
+
+  "cestistica san severo":[
+    "san severo",
+    "cestistica san severo",
+    "allianz pazienza cestistica san severo"
+  ],
+
+  "luiss roma":[
+    "luiss roma",
+    "luiss"
+  ],
+
+  "basket ravenna":[
+    "ravenna",
+    "orasì ravenna"
+  ],
+
+  "dany basket quarrata":[
+    "quarrata",
+    "dany basket quarrata",
+    "consorzio leonardo dany quarrata"
+  ],
+
+  "psa napoli est":[
+    "napoli est",
+    "psa napoli est"
+  ],
+
+  "latina basket":[
+    "latina",
+    "benacquista assicurazioni latina"
+  ],
+
+  "san giobbe chiusi":[
+    "chiusi",
+    "san giobbe chiusi",
+    "umana san giobbe chiusi"
+  ],
+
+  "aurora desio":[
+    "desio",
+    "rimadesio desio",
+    "aurora desio"
+  ],
+
+  "andrea costa imola":[
+    "imola",
+    "andrea costa imola"
+  ],
+
+  "ltc sangiorgese":[
+    "sangiorgese",
+    "sangiorgio",
+    "san giorgio",
+    "ltc sangiorgese basket"
+  ],
+
+  "siaz piazza armerina":[
+    "piazza armerina",
+    "siaz",
+    "siaz basket piazza armerina"
+  ],
+
+  "virtus roma":[
+    "virtus roma",
+    "virtus gvm roma 1960"
+  ],
+
+  "fiorenzuola bees":[
+    "fiorenzuola",
+    "fiorenzuola bees"
+  ]
+
+};
+
+
+/* =========================================================
+   1. ASSOCIA REAL_TEAM_ID -> PARTITA WEBPONT
+========================================================= */
+
+for(const p of dbPlayers){
+
+  if(!p.real_team_id)
+    continue;
+
+  const dbTeam =
+    normalizeTeamName(
+      p.real_teams?.name
+    );
+
+  const aliases =
+    teamAliases[dbTeam] || [];
+
+  if(!aliases.length)
+    continue;
+
+  for(const game of games){
+
+    const w =
+      gamesData[game];
+
+    if(!w?.info)
+      continue;
+
+    const home =
+      normalizeTeamName(
+        w.info.home
+      );
+
+    const away =
+      normalizeTeamName(
+        w.info.away
+      );
+
+    const homeMatch =
+      aliases.some(alias =>
+        home === normalizeTeamName(alias) ||
+        home.includes(normalizeTeamName(alias))
+      );
+
+    const awayMatch =
+      aliases.some(alias =>
+        away === normalizeTeamName(alias) ||
+        away.includes(normalizeTeamName(alias))
+      );
+
+    if(homeMatch || awayMatch){
+
+      teamToGame[
+        String(p.real_team_id)
+      ] = game;
+
+      break;
+    }
+
+  }
+
+}
+
+console.log(
+  "SQUADRE REALI COLLEGATE:",
+  Object.keys(teamToGame).length
+);
+
+
+/* =========================================================
+   2. ASSOCIA GIOCATORE -> PARTITA
+   USIAMO PRIMA webpont_id
+========================================================= */
+
+for(const p of dbPlayers){
+
+  if(!p.real_team_id)
+    continue;
+
+  const game =
+    teamToGame[
+      String(p.real_team_id)
+    ];
+
+  if(!game)
+    continue;
+
+  const w =
+    gamesData[game];
+
+  if(!w)
+    continue;
+
+  if(!Array.isArray(w.players))
+    continue;
+
+
+  /* -------------------------------------------------------
+     MATCH PRINCIPALE: WEBPONT ID
+  ------------------------------------------------------- */
+
+  if(p.webpont_id){
+
+    const foundById =
+      w.players.find(
+        wp =>
+          wp.webpont_id != null &&
+          String(wp.webpont_id) ===
+          String(p.webpont_id)
+      );
+
+    if(foundById){
+
+      playerToGame[p.id] = {
+        game,
+        wp: foundById
+      };
+
+      continue;
+    }
+
+  }
+
+
+  /* -------------------------------------------------------
+     FALLBACK: NOME COMPLETO
+  ------------------------------------------------------- */
+
+  const dbFullName =
+    `${p.name || ""} ${p.surname || ""}`
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g,"")
+      .replace(/\s+/g," ");
+
+
+  if(!dbFullName)
+    continue;
+
+
+  const foundByName =
+    w.players.find(wp => {
+
+      const wpFullName =
+        `${wp.name || ""} ${wp.surname || ""}`
+          .trim()
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g,"")
+          .replace(/\s+/g," ");
+
+      return wpFullName === dbFullName;
+
+    });
+
+
+  if(foundByName){
+
+    playerToGame[p.id] = {
+      game,
+      wp: foundByName
+    };
+
+  }
+
+}
+
+
+/* =========================================================
+   CONTROLLO FINALE
+========================================================= */
+
+console.log(
+  "SQUADRE WEBPONT COLLEGATE:",
+  Object.keys(teamToGame).length
+);
+
+console.log(
+  "GIOCATORI WEBPONT COLLEGATI:",
+  Object.keys(playerToGame).length
+);
+
+console.table(
+
+  dbPlayers
+    .filter(p => p.real_team_id)
+    .map(p => ({
+
+      giocatore:
+        `${p.name || ""} ${p.surname || ""}`,
+
+      squadra:
+        p.real_teams?.name,
+
+      webpont_id:
+        p.webpont_id || "NESSUNO",
+
+      collegato:
+        !!playerToGame[p.id],
+
+      game:
+        playerToGame[p.id]?.game ||
+        "NESSUNA"
+
+    }))
+
+); 
+   
+/* =========================================================
      4. CARICO LE FORMAZIONI DELLA GIORNATA
   ========================================================= */
 
