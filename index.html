@@ -5051,26 +5051,64 @@ window.loadLiveFantasyScores = async function(){
 
 let day = Number(window.currentMatchday);
 
+
+/* Se non disponibile, recuperiamo la giornata da Supabase */
+
 if(!Number.isFinite(day) || day <= 0){
 
-  const dayElement =
-    document.getElementById("day");
+  const currentDayResult = await db
+    .from("matchdays")
+    .select("number")
+    .order("number", { ascending: true });
 
-  if(dayElement){
-    day = Number(dayElement.value);
+  if(currentDayResult.error){
+
+    console.error(
+      "ERRORE RECUPERO GIORNATA:",
+      currentDayResult.error
+    );
+
+    return;
   }
+
+  const matchdays = currentDayResult.data || [];
+
+  if(!matchdays.length){
+
+    console.error(
+      "NESSUNA GIORNATA PRESENTE NELLA TABELLA MATCHDAYS"
+    );
+
+    return;
+  }
+
+  /*
+    Per ora prendiamo la prima giornata.
+    La giornata 1 è quella che stiamo caricando.
+  */
+
+  day = Number(matchdays[0].number);
 
 }
 
+
+/* Controllo finale */
+
 if(!Number.isFinite(day) || day <= 0){
 
-  console.warn(
-    "GIORNATA NON VALIDA PER WEBPONT:",
-    window.currentMatchday
+  console.error(
+    "GIORNATA WEBPONT NON VALIDA:",
+    day
   );
 
   return;
 }
+
+
+console.log(
+  "GIORNATA WEBPONT:",
+  day
+);
 
 
 /* =========================================================
