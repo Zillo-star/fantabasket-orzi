@@ -5049,59 +5049,165 @@ setTimeout(()=>{
 window.loadLiveFantasyScores = async function(){
 
 /* =========================================================
-   GIORNATA
+   GIORNATA ATTUALE AUTOMATICA
 ========================================================= */
 
-let day = Number(window.currentMatchday);
+/*
+  La giornata attuale è la prima giornata
+  che non ha ancora tutte le partite fantasy completate.
+*/
+
+let day = null;
+
+const matchdaysResult = await db
+  .from("matchdays")
+  .select("id, number")
+  .order("number", { ascending: true });
+
+if(matchdaysResult.error){
+
+  console.error(
+    "ERRORE RECUPERO GIORNATE:",
+    matchdaysResult.error
+  );
+
+  return;
+}
+
+const allMatchdays = matchdaysResult.data || [];
+
+if(!allMatchdays.length){
+
+  console.error(
+    "NESSUNA GIORNATA PRESENTE"
+  );
+
+  return;
+}
 
 
-/* Se non disponibile, recuperiamo la giornata da Supabase */
+/* Controlliamo le partite della lega */
 
-if(!Number.isFinite(day) || day <= 0){
+const allLeagueMatches = await db
+  .from("league_matches")
+  .select(`
+    id,
+    matchday_number,
+    completed
+  `)
+  .order("matchday_number", { ascending: true });
 
-  const currentDayResult = await db
-    .from("matchdays")
-    .select("number")
-    .order("number", { ascending: true });
+if(allLeagueMatches.error){
 
-  if(currentDayResult.error){
+  console.error(
+    "ERRORE RECUPERO LEAGUE MATCHES:",
+    allLeagueMatches.error
+  );
 
-    console.error(
-      "ERRORE RECUPERO GIORNATA:",
-      currentDayResult.error
+  return;
+}
+
+
+const leagueGames = allLeagueMatches.data || [];
+
+
+/*
+  Troviamo la prima giornata non completamente conclusa.
+*/
+
+for(const md of allMatchdays){
+
+  const matchesOfDay =
+    leagueGames.filter(
+      m => Number(m.matchday_number) === Number(md.number)
     );
 
-    return;
-  }
+  if(!matchesOfDay.length)
+    continue;
 
-  const matchdays = currentDayResult.data || [];
-
-  if(!matchdays.length){
-
-    console.error(
-      "NESSUNA GIORNATA PRESENTE NELLA TABELLA MATCHDAYS"
+  const allCompleted =
+    matchesOfDay.every(
+      m => m.completed === true
     );
 
-    return;
+  if(!allCompleted){
+
+    day = Number(md.number);
+    break;
+
   }
-
-  /*
-    Per ora prendiamo la prima giornata.
-    La giornata 1 è quella che stiamo caricando.
-  */
-
-  day = Number(matchdays[0].number);
 
 }
 
 
-/* Controllo finale */
+/*
+  Se tutte le giornate risultassero completate,
+  manteniamo l'ultima.
+*/
 
-if(!Number.isFinite(day) || day <= 0){
+if(!day){
+
+  day =
+    Number(
+      allMatchdays[allMatchdays.length - 1].number
+    );
+
+}
+
+
+console.log(
+  "================================="
+);
+
+console.log(
+  "GIORNATA ATTUALE AUTOMATICA:",
+  day
+);
+
+console.log(
+  "================================="
+);
+
+
+/* =========================================================
+   DISCOVERY AUTOMATICA WEBPONT
+========================================================= */
+
+const discoveryUrl =
+  "https://fantabasket-webpont.davzil2005.workers.dev" +
+  "?discover=1&start=400&end=500";
+
+
+let discovery;
+
+try{
+
+  const discoveryResponse =
+    await fetch(discoveryUrl);
+
+  discovery =
+    await discoveryResponse.json();
+
+}catch(error){
 
   console.error(
-    "GIORNATA WEBPONT NON VALIDA:",
-    day
+    "ERRORE DISCOVERY WEBPONT:",
+    error
+  );
+
+  return;
+}
+
+
+if(
+  !discovery ||
+  discovery.ok !== true ||
+  !Array.isArray(discovery.games)
+){
+
+  console.error(
+    "DISCOVERY WEBPONT NON VALIDA:",
+    discovery
   );
 
   return;
@@ -5109,37 +5215,26 @@ if(!Number.isFinite(day) || day <= 0){
 
 
 console.log(
-  "GIORNATA WEBPONT:",
-  day
+  "PARTITE TROVATE DA WEBPONT:",
+  discovery.games.length
 );
 
 
-/* =========================================================
-   PARTITE WEBPONT PER GIORNATA
-========================================================= */
+/*
+  Per ora stampiamo tutte le partite trovate.
+  Questo ci permette anche di verificare
+  come WebPont restituisce le date.
+*/
 
-const gamesByMatchday = {
-
-  1: [
-    "ita3_a_400","ita3_a_401","ita3_a_402","ita3_a_403",
-    "ita3_a_404","ita3_a_406","ita3_a_407","ita3_a_408",
-    "ita3_b_400","ita3_b_401","ita3_b_402","ita3_b_403",
-    "ita3_b_404","ita3_b_405","ita3_b_407","ita3_b_408"
-  ]
-
-};
-
-const games = gamesByMatchday[day] || [];
-
-if(!games.length){
-
-  console.warn(
-    "NESSUNA PARTITA WEBPONT PER LA GIORNATA:",
-    day
-  );
-
-  return;
-}
+console.table(
+  discovery.games.map(g => ({
+    game: g.game,
+    group: g.group,
+    home: g.home,
+    away: g.away,
+    date: g.date
+  }))
+);
 
   console.log("=== LIVE FANTASY SCORE ===");
   console.log("Giornata:",day);
