@@ -6137,26 +6137,10 @@ if(leagueMatches.error){
       const updateMatch =
         await db
           .from("league_matches")
-const matchUpdate = {
+.update({
   home_score: homeScore,
   away_score: awayScore
-};
-
-if(homeScore !== null && awayScore !== null){
-  matchUpdate.completed = true;
-}
-
-const { error: updateMatchError } = await db
-  .from("league_matches")
-  .update(matchUpdate)
-  .eq("id", match.id);
-
-if(updateMatchError){
-  console.error(
-    "ERRORE AGGIORNAMENTO MATCH FANTASY:",
-    updateMatchError
-  );
-}
+})
           .eq("id",match.id);
 
 
