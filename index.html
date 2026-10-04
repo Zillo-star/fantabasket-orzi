@@ -5045,19 +5045,60 @@ setTimeout(()=>{
 
 window.loadLiveFantasyScores = async function(){
 
-const day = Number(
-  document.getElementById("day")?.value || 1
-);
+/* =========================================================
+   GIORNATA
+========================================================= */
+
+let day = Number(window.currentMatchday);
+
+if(!Number.isFinite(day) || day <= 0){
+
+  const dayElement =
+    document.getElementById("day");
+
+  if(dayElement){
+    day = Number(dayElement.value);
+  }
+
+}
+
+if(!Number.isFinite(day) || day <= 0){
+
+  console.warn(
+    "GIORNATA NON VALIDA PER WEBPONT:",
+    window.currentMatchday
+  );
+
+  return;
+}
+
+
+/* =========================================================
+   PARTITE WEBPONT PER GIORNATA
+========================================================= */
 
 const gamesByMatchday = {
-   
-    1: [
-      "ita3_a_400","ita3_a_401","ita3_a_402","ita3_a_403",
-      "ita3_a_404","ita3_a_406","ita3_a_407","ita3_a_408",
-      "ita3_b_400","ita3_b_401","ita3_b_402","ita3_b_403",
-      "ita3_b_404","ita3_b_405","ita3_b_407","ita3_b_408"
-    ]
-  };
+
+  1: [
+    "ita3_a_400","ita3_a_401","ita3_a_402","ita3_a_403",
+    "ita3_a_404","ita3_a_406","ita3_a_407","ita3_a_408",
+    "ita3_b_400","ita3_b_401","ita3_b_402","ita3_b_403",
+    "ita3_b_404","ita3_b_405","ita3_b_407","ita3_b_408"
+  ]
+
+};
+
+const games = gamesByMatchday[day] || [];
+
+if(!games.length){
+
+  console.warn(
+    "NESSUNA PARTITA WEBPONT PER LA GIORNATA:",
+    day
+  );
+
+  return;
+}
 
   const games = gamesByMatchday[day] || [];
 
