@@ -5226,6 +5226,16 @@ console.log(
   come WebPont restituisce le date.
 */
 
+console.table(
+  discovery.games.map(g => ({
+    game: g.game,
+    group: g.group,
+    home: g.home,
+    away: g.away,
+    date: g.date
+  }))
+);
+   
 const games = discovery.games
   .filter(g => {
     // Per ora la giornata 1 corrisponde alle partite
