@@ -5045,7 +5045,9 @@ setTimeout(()=>{
 
 window.loadLiveFantasyScores = async function(){
 
-const day = 1;
+const day = Number(
+  document.getElementById("day")?.value || 1
+);
 
 const gamesByMatchday = {
    
