@@ -5285,23 +5285,6 @@ console.log(
   ":",
   games
 );
-   
-const games = discovery.games
-  .filter(g => {
-    // Per ora la giornata 1 corrisponde alle partite
-    // del 26-27 settembre 2026.
-    if(day === 1){
-      return (
-        g.date === "2026-09-26" ||
-        g.date === "2026-09-27"
-      );
-    }
-
-    return true;
-  })
-  .map(g => g.game);
-
-console.log("GAMES WEBPONT GIORNATA", day, ":", games);
 
   console.log("=== LIVE FANTASY SCORE ===");
   console.log("Giornata:",day);
