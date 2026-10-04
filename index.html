@@ -5141,13 +5141,6 @@ if(!games.length){
   return;
 }
 
-  const games = gamesByMatchday[day] || [];
-
-  if(!games.length){
-    console.warn("NESSUNA PARTITA WEBPONT PER LA GIORNATA:",day);
-    return;
-  }
-
   console.log("=== LIVE FANTASY SCORE ===");
   console.log("Giornata:",day);
   console.log("Games:",games);
