@@ -6567,14 +6567,35 @@ if(leagueMatches.error){
         continue;
 
 
-      const updateMatch =
-        await db
-          .from("league_matches")
-.update({
-  home_score: homeScore,
-  away_score: awayScore
-})
-          .eq("id",match.id);
+const updateData = {};
+
+if(
+  Number.isFinite(homeScore)
+){
+  updateData.home_score = homeScore;
+}
+
+if(
+  Number.isFinite(awayScore)
+){
+  updateData.away_score = awayScore;
+}
+
+if(
+  Object.keys(updateData).length === 0
+){
+  console.warn(
+    "NESSUN PUNTEGGIO VALIDO:",
+    match.id
+  );
+  continue;
+}
+
+const updateMatch =
+  await db
+    .from("league_matches")
+    .update(updateData)
+    .eq("id", match.id);
 
 
       if(updateMatch.error){
