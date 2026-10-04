@@ -2151,6 +2151,9 @@ const el=id=>document.getElementById(id);
 function showAuth(){
   document.getElementById("auth").classList.remove("hidden");
 }
+
+window.showAuth = showAuth;
+
 function showPasswordReset(){
 
   el("auth").classList.add("hidden");
