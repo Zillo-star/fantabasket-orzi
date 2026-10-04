@@ -5052,16 +5052,15 @@ window.loadLiveFantasyScores = async function(){
    GIORNATA ATTUALE AUTOMATICA
 ========================================================= */
 
-/*
-  La giornata attuale è la prima giornata
-  che non ha ancora tutte le partite fantasy completate.
-*/
-
 let day = null;
 
 const matchdaysResult = await db
   .from("matchdays")
-  .select("id, number")
+  .select(`
+    id,
+    number,
+    lineup_deadline
+  `)
   .order("number", { ascending: true });
 
 if(matchdaysResult.error){
@@ -5086,54 +5085,29 @@ if(!allMatchdays.length){
 }
 
 
-/* Controlliamo le partite della lega */
-
-const allLeagueMatches = await db
-  .from("league_matches")
-  .select(`
-    id,
-    matchday_number,
-    completed
-  `)
-  .order("matchday_number", { ascending: true });
-
-if(allLeagueMatches.error){
-
-  console.error(
-    "ERRORE RECUPERO LEAGUE MATCHES:",
-    allLeagueMatches.error
-  );
-
-  return;
-}
-
-
-const leagueGames = allLeagueMatches.data || [];
-
-
 /*
-  Troviamo la prima giornata non completamente conclusa.
+  La giornata attuale viene determinata
+  dalla lineup_deadline.
+
+  Prendiamo l'ultima giornata il cui
+  termine formazione è già passato.
 */
+
+const now = new Date();
 
 for(const md of allMatchdays){
 
-  const matchesOfDay =
-    leagueGames.filter(
-      m => Number(m.matchday_number) === Number(md.number)
-    );
+  const deadline =
+    md.lineup_deadline
+      ? new Date(md.lineup_deadline)
+      : null;
 
-  if(!matchesOfDay.length)
-    continue;
-
-  const allCompleted =
-    matchesOfDay.every(
-      m => m.completed === true
-    );
-
-  if(!allCompleted){
+  if(
+    deadline &&
+    deadline <= now
+  ){
 
     day = Number(md.number);
-    break;
 
   }
 
@@ -5141,18 +5115,35 @@ for(const md of allMatchdays){
 
 
 /*
-  Se tutte le giornate risultassero completate,
-  manteniamo l'ultima.
+  Se nessuna deadline è ancora passata,
+  prendiamo la prima giornata.
 */
 
 if(!day){
 
   day =
     Number(
-      allMatchdays[allMatchdays.length - 1].number
+      allMatchdays[0].number
     );
 
 }
+
+
+const currentMatchday =
+  allMatchdays.find(
+    md => Number(md.number) === day
+  );
+
+const currentIndex =
+  allMatchdays.findIndex(
+    md => Number(md.number) === day
+  );
+
+const nextMatchday =
+  currentIndex >= 0 &&
+  currentIndex < allMatchdays.length - 1
+    ? allMatchdays[currentIndex + 1]
+    : null;
 
 
 console.log(
@@ -5162,6 +5153,16 @@ console.log(
 console.log(
   "GIORNATA ATTUALE AUTOMATICA:",
   day
+);
+
+console.log(
+  "DEADLINE GIORNATA:",
+  currentMatchday?.lineup_deadline
+);
+
+console.log(
+  "DEADLINE GIORNATA SUCCESSIVA:",
+  nextMatchday?.lineup_deadline || "NESSUNA"
 );
 
 console.log(
@@ -5220,12 +5221,6 @@ console.log(
 );
 
 
-/*
-  Per ora stampiamo tutte le partite trovate.
-  Questo ci permette anche di verificare
-  come WebPont restituisce le date.
-*/
-
 console.table(
   discovery.games.map(g => ({
     game: g.game,
@@ -5234,6 +5229,61 @@ console.table(
     away: g.away,
     date: g.date
   }))
+);
+
+
+/* =========================================================
+   FILTRO PARTITE DELLA GIORNATA
+========================================================= */
+
+const startDate =
+  currentMatchday?.lineup_deadline
+    ? String(currentMatchday.lineup_deadline).slice(0,10)
+    : null;
+
+const endDate =
+  nextMatchday?.lineup_deadline
+    ? String(nextMatchday.lineup_deadline).slice(0,10)
+    : null;
+
+
+const games = discovery.games
+  .filter(g => {
+
+    const gameDate =
+      String(g.date || "").slice(0,10);
+
+    if(!gameDate || !startDate)
+      return false;
+
+
+    /*
+      La giornata comprende le partite
+      dalla propria deadline fino alla
+      deadline della giornata successiva.
+    */
+
+    if(endDate){
+
+      return (
+        gameDate >= startDate &&
+        gameDate < endDate
+      );
+
+    }
+
+
+    return gameDate >= startDate;
+
+  })
+  .map(g => g.game);
+
+
+console.log(
+  "GAMES WEBPONT GIORNATA",
+  day,
+  ":",
+  games
 );
    
 const games = discovery.games
