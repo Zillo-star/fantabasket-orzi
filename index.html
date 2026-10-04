@@ -5762,6 +5762,30 @@ console.log(
 );
 
 console.table(
+  dbPlayers
+    .filter(p =>
+      [
+        "Luca Valentini",
+        "Nik Raivio",
+        "Marco Giacomini",
+        "Lucas Maglietti",
+        "Andrea Del Debbio"
+      ].some(x =>
+        `${p.name || ""} ${p.surname || ""}`
+          .toLowerCase()
+          .includes(x.toLowerCase())
+      )
+    )
+    .map(p => ({
+      giocatore: `${p.name || ""} ${p.surname || ""}`,
+      squadra: p.real_teams?.name,
+      real_team_id: p.real_team_id,
+      webpont_id: p.webpont_id,
+      game: playerToGame[p.id]?.game || "NESSUNA"
+    }))
+);   
+   
+console.table(
 
   dbPlayers
     .filter(p => p.real_team_id)
