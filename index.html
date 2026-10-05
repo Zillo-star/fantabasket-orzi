@@ -13647,346 +13647,212 @@ setTimeout(() => {
 }
 async function standings(){
 
-  const r =
-    await db
-      .from("league_matches")
-      .select(`
+  let r = await db
+    .from("league_matches")
+    .select(`
+      *,
+      home:home_manager_id(
         id,
-        matchday_number,
-        home_manager_id,
-        away_manager_id,
-        home_score,
-        away_score,
-        home_points,
-        away_points,
-        completed,
-        home:home_manager_id(
-          id,
-          name,
-          team_name
-        ),
-        away:away_manager_id(
-          id,
-          name,
-          team_name
-        )
-      `)
-      .order("matchday_number")
-      .order("id");
-
+        name,
+        team_name,
+        is_bot
+      ),
+      away:away_manager_id(
+        id,
+        name,
+        team_name,
+        is_bot
+      )
+    `);
 
   if(r.error){
-
-    return message(
-      r.error.message,
-      "err"
-    );
-
+    console.error("ERRORE CLASSIFICA:", r.error);
+    return;
   }
 
-
-  const table = {};
-
+  const a = {};
 
   /* =========================
-     CREA SQUADRE
+     CREA SOLO MANAGER UMANI
   ========================= */
 
-  (r.data || []).forEach(match => {
+  (r.data || []).forEach(x => {
 
-    if(!table[match.home_manager_id]){
-
-      table[match.home_manager_id] = {
-
-        teamName:
-          match.home?.team_name ||
-          match.home?.name ||
-          "—",
-
-        managerName:
-          match.home?.name ||
-          "—",
-
-        played: 0,
-        wins: 0,
-        losses: 0,
-
-        points: 0,
-
+    if(x.home && !x.home.is_bot && !a[x.home.id]){
+      a[x.home.id] = {
+        id: x.home.id,
+        name: x.home.name,
+        team_name: x.home.team_name,
+        pg: 0,
+        v: 0,
+        s: 0,
+        p: 0,
         pf: 0,
         ps: 0
-
       };
-
     }
 
-
-    if(!table[match.away_manager_id]){
-
-      table[match.away_manager_id] = {
-
-        teamName:
-          match.away?.team_name ||
-          match.away?.name ||
-          "—",
-
-        managerName:
-          match.away?.name ||
-          "—",
-
-        played: 0,
-        wins: 0,
-        losses: 0,
-
-        points: 0,
-
+    if(x.away && !x.away.is_bot && !a[x.away.id]){
+      a[x.away.id] = {
+        id: x.away.id,
+        name: x.away.name,
+        team_name: x.away.team_name,
+        pg: 0,
+        v: 0,
+        s: 0,
+        p: 0,
         pf: 0,
         ps: 0
-
       };
-
     }
 
   });
 
-
   /* =========================
-     CALCOLO RISULTATI
+     CALCOLA LE PARTITE
+     IL BOT RESTA OPPONENTE
   ========================= */
 
-  (r.data || []).forEach(match => {
+  (r.data || []).forEach(x => {
 
-    if(
-      !match.completed ||
-      match.home_score === null ||
-      match.away_score === null
-    ){
-
+    if(!x.completed)
       return;
 
-    }
+    const homeScore = Number(x.home_score || 0);
+    const awayScore = Number(x.away_score || 0);
 
+    const homeBot = x.home?.is_bot === true;
+    const awayBot = x.away?.is_bot === true;
 
-    const home =
-      table[match.home_manager_id];
+    /* ----- CASA ----- */
 
-    const away =
-      table[match.away_manager_id];
+    if(x.home_manager_id && !homeBot){
 
+      const t = a[x.home_manager_id];
 
-    const homeScore =
-      Number(match.home_score || 0);
+      if(t){
 
-    const awayScore =
-      Number(match.away_score || 0);
+        t.pg++;
 
+        t.pf += homeScore;
+        t.ps += awayScore;
 
-    /* PARTITE */
+        if(homeScore > awayScore){
+          t.v++;
+          t.p += 2;
+        }
+        else if(homeScore < awayScore){
+          t.s++;
+        }
+        else{
+          t.p += 1;
+        }
 
-    home.played++;
-    away.played++;
-
-
-    /* PUNTI FATTI / SUBITI */
-
-    home.pf += homeScore;
-    home.ps += awayScore;
-
-    away.pf += awayScore;
-    away.ps += homeScore;
-
-
-    /* VITTORIA / SCONFITTA */
-
-    if(homeScore > awayScore){
-
-      home.wins++;
-      home.points += 2;
-
-      away.losses++;
+      }
 
     }
-    else if(awayScore > homeScore){
 
-      away.wins++;
-      away.points += 2;
+    /* ----- TRASFERTA ----- */
 
-      home.losses++;
+    if(x.away_manager_id && !awayBot){
 
-    }
-    else{
+      const t = a[x.away_manager_id];
 
-      /* Pareggio di sicurezza */
+      if(t){
 
-      home.points += 1;
-      away.points += 1;
+        t.pg++;
+
+        t.pf += awayScore;
+        t.ps += homeScore;
+
+        if(awayScore > homeScore){
+          t.v++;
+          t.p += 2;
+        }
+        else if(awayScore < homeScore){
+          t.s++;
+        }
+        else{
+          t.p += 1;
+        }
+
+      }
 
     }
 
   });
 
-
   /* =========================
-     DIFFERENZA
+     DIFFERENZA + ORDINAMENTO
   ========================= */
 
-  Object.values(table).forEach(team => {
+  let rows = Object.values(a).map(x => {
 
-    team.diff =
-      team.pf - team.ps;
+    x.diff = x.pf - x.ps;
+
+    return x;
 
   });
 
-
-  /* =========================
-     ORDINAMENTO
-
-     1. Punti classifica
-     2. Differenza PF-PS
-     3. Punti fatti
-  ========================= */
-
-  const rows =
-    Object.values(table)
-      .sort((a,b) => {
-
-        if(b.points !== a.points)
-          return b.points - a.points;
-
-        if(b.diff !== a.diff)
-          return b.diff - a.diff;
-
-        return b.pf - a.pf;
-
-      });
-
+  rows.sort((x,y) =>
+    y.p - x.p ||
+    y.diff - x.diff ||
+    y.pf - x.pf
+  );
 
   /* =========================
      HTML
   ========================= */
 
-  el("content").innerHTML = `
-
+  let h = `
     <div class="card">
+      <h2>🏆 Classifica</h2>
 
-      <h2>Classifica</h2>
-
-      <div style="
-        overflow-x:auto;
-      ">
-
+      <div class="table-wrap">
         <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Squadra</th>
+              <th>PG</th>
+              <th>V</th>
+              <th>S</th>
+              <th>Punti</th>
+              <th>PF</th>
+              <th>PS</th>
+              <th>+/-</th>
+            </tr>
+          </thead>
 
-          <tr>
-
-            <th>#</th>
-
-            <th>Squadra</th>
-
-            <th>PG</th>
-
-            <th>V</th>
-
-            <th>S</th>
-
-            <th>Punti</th>
-
-            <th>PF</th>
-
-            <th>PS</th>
-
-            <th>+/-</th>
-
-          </tr>
-
-
-          ${
-
-            rows.map((x,i) => `
-
-              <tr>
-
-                <td>
-                  <b>${i + 1}</b>
-                </td>
-
-
-                <td>
-
-                  <b>
-                    ${x.teamName}
-                  </b>
-
-                  <br>
-
-                  <small class="muted">
-                    ${x.managerName}
-                  </small>
-
-                </td>
-
-
-                <td>
-                  ${x.played}
-                </td>
-
-
-                <td>
-                  ${x.wins}
-                </td>
-
-
-                <td>
-                  ${x.losses}
-                </td>
-
-
-                <td>
-                  <b>
-                    ${x.points}
-                  </b>
-                </td>
-
-
-                <td>
-                  ${x.pf.toFixed(1)}
-                </td>
-
-
-                <td>
-                  ${x.ps.toFixed(1)}
-                </td>
-
-
-                <td>
-                  ${x.diff > 0 ? "+" : ""}
-                  ${x.diff.toFixed(1)}
-                </td>
-
-              </tr>
-
-            `).join("")
-
-          }
-
-        </table>
-
-      </div>
-
-
-      <p class="muted">
-
-        Classifica:
-        vittoria 2 punti · sconfitta 0.
-        In caso di parità:
-        differenza punti → punti fatti.
-
-      </p>
-
-    </div>
-
+          <tbody>
   `;
 
+  rows.forEach((x,i) => {
+
+    h += `
+      <tr>
+        <td>${i+1}</td>
+        <td><b>${x.team_name || x.name}</b></td>
+        <td>${x.pg}</td>
+        <td>${x.v}</td>
+        <td>${x.s}</td>
+        <td><b>${x.p}</b></td>
+        <td>${x.pf.toFixed(1)}</td>
+        <td>${x.ps.toFixed(1)}</td>
+        <td>${x.diff.toFixed(1)}</td>
+      </tr>
+    `;
+
+  });
+
+  h += `
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("app").innerHTML = h;
 }
 async function admin(){
 if(!me.is_admin)return;
