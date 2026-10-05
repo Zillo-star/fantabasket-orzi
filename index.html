@@ -5922,7 +5922,10 @@ async function lineup(){
 
   if(r.error)
     return message(r.error.message,"err");
-
+   
+window.currentRosterPlayers =
+  r.data || [];
+   
   console.log("ROSA + SQUADRE:", r.data);
 
 /* =========================
