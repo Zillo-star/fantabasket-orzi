@@ -2351,51 +2351,74 @@ nav button.nav-item[data-page="Admin"].active::after{
 }   
 
 /* =========================
-   ALLINEAMENTO CENTRALE
-========================= */
-
-.formation-slot,
-.formation-slot-player,
-.formation-slot-name,
-.formation-slot-firstname,
-.formation-slot-surname,
-.formation-slot-team,
-.formation-slot-score,
-.formation-slot-game,
-.formation-slot-empty{
-  text-align:center !important;
-}
-
-.formation-slot-player{
-  align-items:center !important;
-  justify-content:center !important;
-  width:100%;
-}
-
-.formation-slot-name{
-  align-items:center !important;
-  justify-content:center !important;
-  width:100%;
-}
-
-.formation-slot-firstname,
-.formation-slot-surname,
-.formation-slot-team{
-  width:100%;
-  text-align:center !important;
-}
-
-/* =========================
-   TOGLIE IL TRATTINO VIOLA
+   PEDINE FORMAZIONE
 ========================= */
 
 .formation-slot{
-  border-left:none !important;
+  text-align:center !important;
+  border-left:0 !important;
+  box-shadow:none !important;
 }
 
+/* Nome e cognome SEMPRE su due righe */
+.formation-slot-name{
+  display:block !important;
+  width:100% !important;
+  text-align:center !important;
+}
+
+.formation-slot-firstname{
+  display:block !important;
+  width:100% !important;
+  text-align:center !important;
+  line-height:1.05 !important;
+}
+
+.formation-slot-surname{
+  display:block !important;
+  width:100% !important;
+  text-align:center !important;
+  line-height:1.05 !important;
+}
+
+/* Squadra */
+.formation-slot-team{
+  display:block !important;
+  width:100% !important;
+  text-align:center !important;
+  margin-top:4px !important;
+}
+
+/* Punteggio */
+.formation-slot-score{
+  display:block !important;
+  width:100% !important;
+  text-align:center !important;
+}
+
+/* Avversaria: manteniamo casa/trasferta */
+.formation-slot-game{
+  display:block !important;
+  width:100% !important;
+  text-align:center !important;
+}
+
+/* Elimina qualsiasi elemento grafico laterale */
 .formation-slot::before,
 .formation-slot::after{
+  content:none !important;
   display:none !important;
+}
+
+/* Contenuto interno tutto centrato */
+.formation-slot-player{
+  width:100% !important;
+  text-align:center !important;
+}
+
+.formation-slot-empty{
+  width:100% !important;
+  text-align:center !important;
 }
    
 </style></head><body>
