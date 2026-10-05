@@ -6732,16 +6732,64 @@ if(leagueMatches.error){
 
 const updateData = {};
 
+
+/* =========================
+   PUNTEGGI FANTASY
+========================= */
+
 if(
   Number.isFinite(homeScore)
 ){
-  updateData.home_score = homeScore;
+  updateData.home_score =
+    homeScore;
 }
 
 if(
   Number.isFinite(awayScore)
 ){
-  updateData.away_score = awayScore;
+  updateData.away_score =
+    awayScore;
+}
+
+
+/* =========================
+   PARTITA COMPLETA
+========================= */
+
+if(
+  Number.isFinite(homeScore) &&
+  Number.isFinite(awayScore)
+){
+
+  updateData.completed =
+    true;
+
+
+  /* =========================
+     PUNTI CLASSIFICA
+     Vittoria = 2
+     Sconfitta = 0
+  ========================= */
+
+  if(homeScore > awayScore){
+
+    updateData.home_points = 2;
+    updateData.away_points = 0;
+
+  }else if(awayScore > homeScore){
+
+    updateData.home_points = 0;
+    updateData.away_points = 2;
+
+  }else{
+
+    /* Sicurezza: in teoria il
+       basket non può finire pari */
+    updateData.home_points = 1;
+    updateData.away_points = 1;
+
+  }
+
 }
 
 if(
