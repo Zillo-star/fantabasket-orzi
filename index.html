@@ -5066,6 +5066,79 @@ window.formationState = {
   captain: ""
 };
 
+window.formationEditingSlot = null;
+
+function formationEditSlot(type,index){
+
+  window.formationEditingSlot = {
+    type,
+    index
+  };
+
+  renderFormationBuilder();
+
+}
+
+
+function formationChoosePlayer(
+  type,
+  index,
+  playerId
+){
+
+  let oldPlayerId="";
+
+  if(type==="starter"){
+
+    oldPlayerId =
+      window.formationState.starters[index] || "";
+
+    window.formationState.starters[index] =
+      playerId;
+
+  }
+  else if(type==="sixth"){
+
+    oldPlayerId =
+      window.formationState.sixth || "";
+
+    window.formationState.sixth =
+      playerId;
+
+  }
+  else{
+
+    oldPlayerId =
+      window.formationState.bench[index] || "";
+
+    window.formationState.bench[index] =
+      playerId;
+
+  }
+
+
+  /* se sto sostituendo il capitano */
+  if(
+    oldPlayerId &&
+    oldPlayerId !== playerId &&
+    window.formationState.captain===oldPlayerId
+  ){
+
+    window.formationState.captain="";
+  }
+
+
+  window.formationEditingSlot=null;
+
+
+  renderFormationBuilder();
+
+
+  setTimeout(()=>{
+    loadPlayerGames();
+  },50);
+
+}   
 
 /* =========================================================
    MODULI
