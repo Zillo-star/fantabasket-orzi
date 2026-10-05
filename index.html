@@ -6070,123 +6070,41 @@ if(currentDay===null && days.length){
     </div>
 
 
-    <div id="lp">
+<div id="lp">
 
-      ${(r.data||[]).map(x=>`
+  <div
+    id="formationBuilder"
+    class="formation-builder"
+  >
+  </div>
 
-        <div
-          class="card"
-          data-player-id="${x.player_id}"
-          data-webpont-id="${x.players?.webpont_id || ""}"
-          data-logo-url="${x.players.real_teams?.logo_url || ""}"
-          data-real-team="${x.players.real_team_id || ""}"
-          data-real-team-name="${x.players.real_teams?.name || ""}"
-          data-photo-url="${x.players.photo_url || ""}"
-        >
-
-          <div style="
-            display:flex;
-            justify-content:space-between;
-            align-items:flex-start;
-            gap:12px;
-          ">
-
-            <div>
-
-              <b>
-                ${
-                  [
-                    x.players?.name,
-                    x.players?.surname
-                  ]
-                  .filter(Boolean)
-                  .join(" ")
-                  || "Giocatore"
-                }
-              </b>
-
-              · ${x.players.position}
-              · ${x.players.real_teams?.name || "Squadra non disponibile"}
-
-            </div>
+</div>
 
 
-            <div
-              data-live-score="${x.player_id}"
-              style="
-                min-width:55px;
-                text-align:right;
-                font-size:20px;
-                font-weight:800;
-                color:#a78bfa;
-              "
-            >
-              —
-            </div>
-
-          </div>
+<div
+  id="lineupStatus"
+  class="muted"
+  style="margin-top:12px"
+>
+</div>
 
 
-          <div
-            class="muted"
-            style="margin-top:4px;font-size:13px"
-            data-game-player="${x.player_id}"
-          >
-            Caricamento avversaria...
-          </div>
+<button
+  id="saveLineupBtn"
+  onclick="saveLineup()"
+>
+  💾 Salva formazione
+</button>
 
 
-          <div
-            data-live-detail="${x.player_id}"
-            class="muted"
-            style="
-              margin-top:4px;
-              font-size:12px;
-            "
-          >
-          </div>
+<p class="muted">
 
+  5 titolari · 1 sesto uomo al 100%
+  · 4 panchinari al 50%
+  · 3 fuori
+  · 1 capitano ×1,5
 
-          <select
-            data-p="${x.player_id}"
-            data-pos="${x.players.position}"
-            onchange="handleLineupRoleChange(this); loadLiveFantasyScores()">
-
-            <option value="out">
-              Fuori
-            </option>
-
-            <option value="starter">
-              Titolare · 100%
-            </option>
-
-            <option value="sixth">
-              Sesto uomo · 100%
-            </option>
-
-            <option value="bench">
-              Panchina · 50%
-            </option>
-
-          </select>
-
-
-          <label>
-
-            <input
-              type="checkbox"
-              data-captain="${x.player_id}"
-              onchange="checkCaptain(this); updateLineupSummary(); loadLiveFantasyScores()">
-
-            Capitano
-
-          </label>
-
-        </div>
-
-      `).join("")}
-
-    </div>
+</p>
 
 
     <div id="lineupStatus"
