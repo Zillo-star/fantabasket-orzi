@@ -2506,6 +2506,82 @@ nav button.nav-item[data-page="Admin"].active::after{
   opacity:1;
   background:rgba(255,255,255,.08) !important;
 }   
+
+/* =========================
+   AZIONI PEDINA
+========================= */
+
+.formation-slot-actions{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:5px;
+  margin-top:5px;
+}
+
+
+/* CAPITANO */
+
+.formation-slot-captain{
+  width:26px !important;
+  height:24px !important;
+
+  min-width:26px !important;
+  min-height:24px !important;
+
+  margin:0 !important;
+  padding:0 !important;
+
+  border:0 !important;
+  border-radius:7px !important;
+
+  background:transparent !important;
+
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+
+  font-size:14px !important;
+  line-height:1 !important;
+
+  cursor:pointer;
+}
+
+.formation-slot-captain:hover{
+  background:rgba(255,255,255,.08) !important;
+}
+
+
+/* RIMUOVI */
+
+.formation-remove-player{
+  width:26px !important;
+  height:24px !important;
+
+  min-width:26px !important;
+  min-height:24px !important;
+
+  margin:0 !important;
+  padding:0 !important;
+
+  border:0 !important;
+  border-radius:7px !important;
+
+  background:transparent !important;
+
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+
+  font-size:12px !important;
+  line-height:1 !important;
+
+  cursor:pointer;
+}
+
+.formation-remove-player:hover{
+  background:rgba(255,0,0,.12) !important;
+}   
    
 </style></head><body>
 <header><div><b>🏀 FantaBasket Orzi</b><div id="who" class="muted">Non autenticato</div></div><div id="authBtn"><button onclick="showAuth()">Accedi</button></div></header>
@@ -5694,40 +5770,48 @@ else{
       ${picker}
 
 
-      ${
-        player
-        ? `
+${
+  player
+  ? `
 
-          <button
-            type="button"
-            class="formation-slot-captain"
-            onclick="
-              formationCaptainChanged(
-                '${playerId}',
-                ${window.formationState.captain===playerId
-                  ? "false"
-                  : "true"
-                }
-              )
-            "
-          >
+    <div class="formation-slot-actions">
 
-            ${
-              window.formationState.captain===playerId
-                ? "👑 C"
-                : "♔ C"
+      <button
+        type="button"
+        class="formation-slot-captain"
+        onclick="
+          formationCaptainChanged(
+            '${playerId}',
+            ${window.formationState.captain===playerId
+              ? "false"
+              : "true"
             }
+          )
+        "
+        title="Capitano"
+      >
+        👑
+      </button>
 
-          </button>
 
-        `
-        : ""
-      }
+      <button
+        type="button"
+        class="formation-remove-player"
+        onclick="
+          formationRemovePlayer(
+            '${type}',
+            ${index}
+          )
+        "
+        title="Togli giocatore"
+      >
+        ❌
+      </button>
 
     </div>
 
-  `;
-
+  `
+  : ""
 }
 
 /* =========================================================
