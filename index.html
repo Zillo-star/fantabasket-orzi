@@ -2351,22 +2351,59 @@ nav button.nav-item[data-page="Admin"].active::after{
 }   
 
 /* =========================
-   PEDINE FORMAZIONE
+   FORMATION SLOT - CENTRATO
 ========================= */
 
 .formation-slot{
   text-align:center !important;
-  border-left:0 !important;
+
+  border-left:none !important;
+  border-left-width:0 !important;
+  border-left-color:transparent !important;
+
+  border-inline-start:none !important;
+  border-inline-start-width:0 !important;
+  border-inline-start-color:transparent !important;
+
+  box-shadow:none !important;
+  background-image:none !important;
+
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+
+/* elimina eventuale segno laterale generato da CSS */
+.formation-slot::before,
+.formation-slot::after{
+  content:none !important;
+  display:none !important;
+  border:0 !important;
   box-shadow:none !important;
 }
 
-/* Nome e cognome SEMPRE su due righe */
-.formation-slot-name{
-  display:block !important;
+/* contenuto */
+.formation-slot-player{
   width:100% !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
   text-align:center !important;
 }
 
+/* nome */
+.formation-slot-name{
+  width:100% !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+}
+
+/* nome */
 .formation-slot-firstname{
   display:block !important;
   width:100% !important;
@@ -2374,6 +2411,7 @@ nav button.nav-item[data-page="Admin"].active::after{
   line-height:1.05 !important;
 }
 
+/* cognome */
 .formation-slot-surname{
   display:block !important;
   width:100% !important;
@@ -2381,44 +2419,38 @@ nav button.nav-item[data-page="Admin"].active::after{
   line-height:1.05 !important;
 }
 
-/* Squadra */
+/* squadra */
 .formation-slot-team{
   display:block !important;
   width:100% !important;
   text-align:center !important;
-  margin-top:4px !important;
+  margin-top:3px !important;
 }
 
-/* Punteggio */
+/* punteggio */
 .formation-slot-score{
-  display:block !important;
   width:100% !important;
   text-align:center !important;
 }
 
-/* Avversaria: manteniamo casa/trasferta */
+/* avversaria */
 .formation-slot-game{
-  display:block !important;
   width:100% !important;
   text-align:center !important;
 }
 
-/* Elimina qualsiasi elemento grafico laterale */
-.formation-slot::before,
-.formation-slot::after{
-  content:none !important;
-  display:none !important;
+/* selettore giocatore */
+.formation-slot select{
+  text-align:center !important;
+  text-align-last:center !important;
+  width:100% !important;
 }
 
-/* Contenuto interno tutto centrato */
-.formation-slot-player{
-  width:100% !important;
-  text-align:center !important;
-}
-
-.formation-slot-empty{
-  width:100% !important;
-  text-align:center !important;
+/* capitano */
+.formation-slot-captain{
+  align-self:center !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
 }
    
 </style></head><body>
