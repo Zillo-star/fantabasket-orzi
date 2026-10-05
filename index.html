@@ -5534,22 +5534,19 @@ function renderFormationSlot(
   if(type==="starter"){
 
     playerId =
-      window.formationState
-        .starters[index] || "";
+      window.formationState.starters[index] || "";
 
   }
   else if(type==="sixth"){
 
     playerId =
-      window.formationState
-        .sixth || "";
+      window.formationState.sixth || "";
 
   }
   else{
 
     playerId =
-      window.formationState
-        .bench[index] || "";
+      window.formationState.bench[index] || "";
 
   }
 
@@ -5558,26 +5555,19 @@ function renderFormationSlot(
     formationPlayer(playerId);
 
 
-const editing =
-  !player;
-
-
   let body="";
 
 
   if(player){
 
     const firstName =
-      player.players?.name ||
-      "";
+      player.players?.name || "";
 
     const surname =
-      player.players?.surname ||
-      "";
+      player.players?.surname || "";
 
     const team =
-      player.players?.real_teams?.name ||
-      "Squadra";
+      player.players?.real_teams?.name || "Squadra";
 
 
     body=`
@@ -5618,13 +5608,7 @@ const editing =
     body=`
 
       <div class="formation-slot-empty">
-
-        ${
-          type==="starter"
-            ? "Scegli giocatore"
-            : "Scegli giocatore"
-        }
-
+        Scegli giocatore
       </div>
 
     `;
@@ -5632,59 +5616,39 @@ const editing =
   }
 
 
-let picker="";
+  let picker="";
 
 
-if(!player){
+  if(!player){
 
-  picker=`
+    picker=`
 
-    <select
-      data-builder-type="${type}"
-      data-builder-index="${index}"
-      onchange="
-        formationChoosePlayer(
-          '${type}',
-          ${index},
-          this.value
-        )
-      "
-    >
+      <select
+        data-builder-type="${type}"
+        data-builder-index="${index}"
+        onchange="
+          formationChoosePlayer(
+            '${type}',
+            ${index},
+            this.value
+          )
+        "
+      >
 
-      ${
-        formationPlayerOptions(
-          type==="starter"
-            ? position
-            : null,
-          playerId
-        )
-      }
+        ${
+          formationPlayerOptions(
+            type==="starter"
+              ? position
+              : null,
+            playerId
+          )
+        }
 
-    </select>
+      </select>
 
-  `;
+    `;
 
-}
-else{
-
-  picker=`
-
-    <button
-      type="button"
-      class="formation-remove-player"
-      onclick="
-        formationRemovePlayer(
-          '${type}',
-          ${index}
-        )
-      "
-    >
-      ✕ Togli giocatore
-    </button>
-
-  `;
-
-}
+  }
 
 
   return `
@@ -5696,68 +5660,63 @@ else{
 
       ${body}
 
-${picker}
+      ${picker}
 
 
-${
-  player
-  ? `
+      ${
+        player
+        ? `
 
-    <div class="formation-slot-actions">
+          <div class="formation-slot-actions">
 
-      <button
-        type="button"
-        class="formation-slot-captain ${
-          window.formationState.captain===playerId
-            ? "active"
-            : ""
-        }"
-        onclick="
-          formationCaptainChanged(
-            '${playerId}',
-            ${window.formationState.captain===playerId
-              ? "false"
-              : "true"
-            }
-          )
-        "
-        title="Capitano"
-      >
-        👑
-      </button>
+            <button
+              type="button"
+              class="formation-slot-captain ${
+                window.formationState.captain===playerId
+                  ? "active"
+                  : ""
+              }"
+              onclick="
+                formationCaptainChanged(
+                  '${playerId}',
+                  ${
+                    window.formationState.captain===playerId
+                      ? "false"
+                      : "true"
+                  }
+                )
+              "
+              title="Capitano"
+            >
+              👑
+            </button>
 
 
-      <button
-        type="button"
-        class="formation-remove-player"
-        onclick="
-          formationRemovePlayer(
-            '${type}',
-            ${index}
-          )
-        "
-        title="Rimuovi giocatore"
-      >
-        ❌
-      </button>
+            <button
+              type="button"
+              class="formation-remove-player"
+              onclick="
+                formationRemovePlayer(
+                  '${type}',
+                  ${index}
+                )
+              "
+              title="Rimuovi giocatore"
+            >
+              ❌
+            </button>
+
+          </div>
+
+        `
+        : ""
+      }
 
     </div>
 
-  `
-  : ""
-}
-
-</div>
-
-`;
+  `;
 
 }
-   
-/* =========================================================
-   RENDER BUILDER
-========================================================= */
-
-function renderFormationBuilder(){
    
 /* =========================================================
    RENDER BUILDER
