@@ -6089,11 +6089,18 @@ if(!pg){
        PUNTEGGIO BASE WEBPONT
     ========================= */
 
-    let raw =
-      Number(pg.wp?.fantasyScore);
+let raw =
+  Number(pg.wp?.fantasyScore);
 
-    if(!Number.isFinite(raw))
-      continue;
+if(!Number.isFinite(raw)){
+
+  /* È A REFERTO, ma non ha statistiche:
+     consideriamo 0 e permettiamo comunque
+     il +3 della vittoria. */
+
+  raw = 0;
+
+}
 
 
     /* =========================
