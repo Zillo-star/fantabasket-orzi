@@ -9379,15 +9379,13 @@ console.log("PARTITE GIORNATA:", games.data);
 
       let playerId=box.dataset.gamePlayer;
 
-      let playerCard=
-        document.querySelector(
-          `select[data-p="${playerId}"]`
-        )?.closest(".card");
+let playerCard =
+  box.closest(".formation-slot");
 
-      if(!playerCard)
-        return;
+if(!playerCard)
+  return;
 
-let teamId=
+let teamId =
   playerCard.dataset.realTeam;
 
 if(!teamId)
