@@ -5767,58 +5767,61 @@ else{
 
       ${body}
 
-      ${picker}
+${picker}
 
 
-      ${
-        player
-        ? `
+${
+  player
+  ? `
 
-          <div class="formation-slot-actions">
+    <div class="formation-slot-actions">
 
-            <button
-              type="button"
-              class="formation-slot-captain"
-              onclick="
-                formationCaptainChanged(
-                  '${playerId}',
-                  ${window.formationState.captain===playerId
-                    ? "false"
-                    : "true"
-                  }
-                )
-              "
-              title="Capitano"
-            >
-              👑
-            </button>
+      <button
+        type="button"
+        class="formation-slot-captain ${
+          window.formationState.captain===playerId
+            ? "active"
+            : ""
+        }"
+        onclick="
+          formationCaptainChanged(
+            '${playerId}',
+            ${window.formationState.captain===playerId
+              ? "false"
+              : "true"
+            }
+          )
+        "
+        title="Capitano"
+      >
+        👑
+      </button>
 
 
-            <button
-              type="button"
-              class="formation-remove-player"
-              onclick="
-                formationRemovePlayer(
-                  '${type}',
-                  ${index}
-                )
-              "
-              title="Togli giocatore"
-            >
-              ❌
-            </button>
-
-          </div>
-
-        `
-        : ""
-      }
+      <button
+        type="button"
+        class="formation-remove-player"
+        onclick="
+          formationRemovePlayer(
+            '${type}',
+            ${index}
+          )
+        "
+        title="Rimuovi giocatore"
+      >
+        ❌
+      </button>
 
     </div>
 
-  `;
-
+  `
+  : ""
 }
+
+</div>
+
+`;
+   
 /* =========================================================
    RENDER BUILDER
 ========================================================= */
