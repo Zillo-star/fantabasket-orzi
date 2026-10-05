@@ -5526,91 +5526,68 @@ function renderFormationBuilder(){
   `;
 
 
-  positions.forEach(
-    (position,index)=>{
+positions.forEach(
+  (position,index)=>{
 
-      const [
-        row,
-        column
-      ] =
-        coords[index];
-
-
-      html+=`
-
-        <div
-          style="
-            grid-row:${row};
-            grid-column:${column};
-          "
-        >
-
-          ${renderFormationSlot(
-            "starter",
-            index,
-            position
-          )}
-
-        </div>
-
-      `;
-
-    }
-  );
+    const [
+      row,
+      column
+    ] =
+      coords[index];
 
 
-  html+=`
+    /* QUANTI GIOCATORI CI SONO NELLA STESSA RIGA */
+    const sameRow =
+      coords
+        .map((p,i)=>({
+          row:p[0],
+          column:p[1],
+          index:i
+        }))
+        .filter(x=>x.row===row)
+        .sort((a,b)=>a.column-b.column);
 
-    </div>
+
+    const count =
+      sameRow.length;
 
 
-    <div class="formation-extra">
+    const rank =
+      sameRow.findIndex(
+        x=>x.index===index
+      );
 
-      <div class="formation-extra-box">
 
-        <div class="formation-extra-title">
-          6️⃣ Sesto uomo · 100%
-        </div>
+    const span =
+      6 / count;
+
+
+    const start =
+      1 + (rank * span);
+
+
+    html+=`
+
+      <div
+        style="
+          grid-row:${row};
+          grid-column:${start} / span ${span};
+          width:100%;
+        "
+      >
 
         ${renderFormationSlot(
-          "sixth",
-          0,
-          null
+          "starter",
+          index,
+          position
         )}
 
       </div>
 
+    `;
 
-      <div class="formation-extra-box">
-
-        <div class="formation-extra-title">
-          🪑 Panchina · 50%
-        </div>
-
-        <div class="formation-bench-grid">
-
-          ${[0,1,2,3]
-            .map(i =>
-              renderFormationSlot(
-                "bench",
-                i,
-                null
-              )
-            )
-            .join("")
-          }
-
-        </div>
-
-      </div>
-
-    </div>
-
-
-    <div id="formationBuilderSummary">
-    </div>
-
-  `;
+  }
+);
 
 
   box.innerHTML=html;
