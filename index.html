@@ -11011,40 +11011,74 @@ let savedLineups = new Set(
   });
 
 
-  /* =========================
-     GIORNATA CORRENTE
-     IN BASE ALL'APERTURA
-  ========================= */
+/* =========================
+   GIORNATA CORRENTE
+========================= */
 
-  let currentDay = null;
+/*
+  Nel CALENDARIO la giornata resta
+  "ATTUALE" fino alla deadline della
+  giornata SUCCESSIVA.
 
-  const now = new Date();
+  Esempio:
+  G2 resta attuale fino alla deadline G3.
+  Quando scade la deadline G3,
+  diventa attuale G3.
+*/
 
-  for(let day of (md.data || [])){
+let currentDay = null;
 
-    const openAt =
-      day.lineup_open_at
-        ? new Date(day.lineup_open_at)
-        : null;
+const now = new Date();
 
-    const deadline =
-      day.lineup_deadline
-        ? new Date(day.lineup_deadline)
-        : null;
+for(let i = 0; i < allDays.length; i++){
 
-    if(
-      openAt &&
-      deadline &&
-      now >= openAt &&
-      now < deadline
-    ){
+  const currentDayNumber =
+    allDays[i];
 
-      currentDay = Number(day.number);
-      break;
+  const nextDayNumber =
+    allDays[i + 1];
 
-    }
+  /* Ultima giornata */
+  if(nextDayNumber === undefined){
+
+    currentDay =
+      currentDayNumber;
+
+    break;
 
   }
+
+  const nextMatchday =
+    matchdays[nextDayNumber];
+
+  const nextDeadline =
+    nextMatchday?.lineup_deadline
+      ? new Date(nextMatchday.lineup_deadline)
+      : null;
+
+  if(
+    nextDeadline &&
+    Number.isFinite(nextDeadline.getTime()) &&
+    now < nextDeadline
+  ){
+
+    currentDay =
+      currentDayNumber;
+
+    break;
+
+  }
+
+}
+
+
+/* Sicurezza */
+if(currentDay === null){
+
+  currentDay =
+    allDays[0];
+
+}
 
 
 /* =========================
