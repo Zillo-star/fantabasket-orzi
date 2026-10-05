@@ -9545,30 +9545,10 @@ if(!teamId)
 
       }
 
-     let dateText="";
-
-if(game.scheduled_at){
-
-  let d=new Date(game.scheduled_at);
-
-  dateText=
-    d.toLocaleDateString("it-IT",{
-      day:"2-digit",
-      month:"2-digit"
-    });
-
-}
-
 box.innerHTML=`
 
   ${game.home ? "🏠" : "✈️"}
   <b>vs ${game.opponent}</b>
-
-  ${
-    dateText
-    ? `<div class="muted">${dateText}</div>`
-    : ""
-  }
 
 `;
 
