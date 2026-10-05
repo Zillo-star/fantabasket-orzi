@@ -5606,59 +5606,59 @@ const editing =
   }
 
 
-  let picker="";
+let picker="";
 
 
-  if(editing){
+if(!player){
 
-    picker=`
+  picker=`
 
-      <select
-        data-builder-type="${type}"
-        data-builder-index="${index}"
-        onchange="
-          formationChoosePlayer(
-            '${type}',
-            ${index},
-            this.value
-          )
-        "
-      >
+    <select
+      data-builder-type="${type}"
+      data-builder-index="${index}"
+      onchange="
+        formationChoosePlayer(
+          '${type}',
+          ${index},
+          this.value
+        )
+      "
+    >
 
-        ${
-          formationPlayerOptions(
-            type==="starter"
-              ? position
-              : null,
-            playerId
-          )
-        }
+      ${
+        formationPlayerOptions(
+          type==="starter"
+            ? position
+            : null,
+          playerId
+        )
+      }
 
-      </select>
+    </select>
 
-    `;
+  `;
 
-  }
-  else{
+}
+else{
 
-    picker=`
+  picker=`
 
-      <button
-        type="button"
-        class="formation-change-player"
-        onclick="
-          formationEditSlot(
-            '${type}',
-            ${index}
-          )
-        "
-      >
-        ↔ Cambia
-      </button>
+    <button
+      type="button"
+      class="formation-remove-player"
+      onclick="
+        formationRemovePlayer(
+          '${type}',
+          ${index}
+        )
+      "
+    >
+      ✕ Togli giocatore
+    </button>
 
-    `;
+  `;
 
-  }
+}
 
 
   return `
