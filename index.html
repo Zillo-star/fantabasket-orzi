@@ -6663,6 +6663,24 @@ if(leagueMatches.error){
     .eq("matchday_id", matchdayId);
 
 
+  /* =========================
+     MANAGER + BOT
+  ========================= */
+
+  const managersResult = await db
+    .from("managers")
+    .select(`
+      id,
+      is_bot
+    `);
+
+  const botIds = new Set(
+    (managersResult.data || [])
+      .filter(x => x.is_bot === true)
+      .map(x => String(x.id))
+  );
+
+
   if(
     !playerScores.error &&
     !coachScores.error
@@ -6670,11 +6688,14 @@ if(leagueMatches.error){
 
     const totals = {};
 
-    /* GIOCATORI */
+    /* =========================
+       GIOCATORI
+    ========================= */
 
     (playerScores.data || []).forEach(x => {
 
-      const id = String(x.manager_id);
+      const id =
+        String(x.manager_id);
 
       totals[id] =
         (totals[id] || 0) +
@@ -6683,11 +6704,14 @@ if(leagueMatches.error){
     });
 
 
-    /* ALLENATORI */
+    /* =========================
+       ALLENATORI
+    ========================= */
 
     (coachScores.data || []).forEach(x => {
 
-      const id = String(x.manager_id);
+      const id =
+        String(x.manager_id);
 
       totals[id] =
         (totals[id] || 0) +
@@ -6696,9 +6720,25 @@ if(leagueMatches.error){
     });
 
 
-    /* SALVA I RISULTATI DELLE PARTITE */
+    /* =========================
+       FANTABOT = 1 PUNTO
+    ========================= */
 
-    for(const match of (leagueMatches.data || [])){
+    botIds.forEach(id => {
+
+      totals[id] = 1;
+
+    });
+
+
+    /* =========================
+       SALVA RISULTATI PARTITE
+    ========================= */
+
+    for(
+      const match of
+      (leagueMatches.data || [])
+    ){
 
       const homeId =
         String(match.home_manager_id);
@@ -6706,107 +6746,82 @@ if(leagueMatches.error){
       const awayId =
         String(match.away_manager_id);
 
+
       const homeScore =
         totals[homeId] !== undefined
-          ? Number(totals[homeId].toFixed(1))
+          ? Number(
+              totals[homeId].toFixed(1)
+            )
           : null;
+
 
       const awayScore =
         totals[awayId] !== undefined
-          ? Number(totals[awayId].toFixed(1))
+          ? Number(
+              totals[awayId].toFixed(1)
+            )
           : null;
 
 
       /*
-        Aggiorniamo solo quando almeno uno
-        dei due fantallenatori ha già
-        un punteggio disponibile.
+        La partita viene considerata
+        COMPLETA solo quando entrambi
+        hanno un punteggio.
       */
 
       if(
-        homeScore === null &&
+        homeScore === null ||
         awayScore === null
-      )
+      ){
+
         continue;
 
-
-const updateData = {};
-
-
-/* =========================
-   PUNTEGGI FANTASY
-========================= */
-
-if(
-  Number.isFinite(homeScore)
-){
-  updateData.home_score =
-    homeScore;
-}
-
-if(
-  Number.isFinite(awayScore)
-){
-  updateData.away_score =
-    awayScore;
-}
+      }
 
 
-/* =========================
-   PARTITA COMPLETA
-========================= */
+      const updateData = {
 
-if(
-  Number.isFinite(homeScore) &&
-  Number.isFinite(awayScore)
-){
+        home_score:
+          homeScore,
 
-  updateData.completed =
-    true;
+        away_score:
+          awayScore,
+
+        completed:
+          true
+
+      };
 
 
-  /* =========================
-     PUNTI CLASSIFICA
-     Vittoria = 2
-     Sconfitta = 0
-  ========================= */
+      /* =========================
+         PUNTI CLASSIFICA
+      ========================= */
 
-  if(homeScore > awayScore){
+      if(homeScore > awayScore){
 
-    updateData.home_points = 2;
-    updateData.away_points = 0;
+        updateData.home_points = 2;
+        updateData.away_points = 0;
 
-  }else if(awayScore > homeScore){
+      }
+      else if(awayScore > homeScore){
 
-    updateData.home_points = 0;
-    updateData.away_points = 2;
+        updateData.home_points = 0;
+        updateData.away_points = 2;
 
-  }else{
+      }
+      else{
 
-    /* Sicurezza: in teoria il
-       basket non può finire pari */
-    updateData.home_points = 1;
-    updateData.away_points = 1;
+        updateData.home_points = 1;
+        updateData.away_points = 1;
 
-  }
+      }
 
-}
 
-if(
-  Object.keys(updateData).length === 0
-){
-  console.warn(
-    "NESSUN PUNTEGGIO VALIDO:",
-    match.id
-  );
-  continue;
-}
-
-const updateMatch =
-  await db
-    .from("league_matches")
-    .update(updateData)
-    .eq("id", match.id);
+      const updateMatch =
+        await db
+          .from("league_matches")
+          .update(updateData)
+          .eq("id", match.id);
 
 
       if(updateMatch.error){
@@ -6820,9 +6835,16 @@ const updateMatch =
 
         console.log(
           "RISULTATO FANTASY AGGIORNATO:",
-          homeScore,
-          "-",
-          awayScore
+          {
+            match: match.id,
+            homeScore,
+            awayScore,
+            completed: true,
+            homePoints:
+              updateData.home_points,
+            awayPoints:
+              updateData.away_points
+          }
         );
 
       }
