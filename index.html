@@ -5253,13 +5253,9 @@ function renderFormationSlot(
 
 
   const slotLabel =
-    type==="starter"
-      ? position
-      : (
-          type==="sixth"
-            ? "6° UOMO"
-            : `PANCHINA ${index+1}`
-        );
+    type==="sixth"
+      ? "6° UOMO"
+      : "";
 
 
   let body="";
@@ -5281,26 +5277,9 @@ function renderFormationSlot(
       "Squadra";
 
 
-    const logo =
-      player.players?.real_teams?.logo_url ||
-      "";
-
-
     body=`
 
       <div class="formation-slot-player">
-
-        ${
-          logo
-          ? `
-            <img
-              class="formation-slot-logo"
-              src="${logo}"
-              alt=""
-            >
-          `
-          : ""
-        }
 
         <div class="formation-slot-name">
 
@@ -5354,7 +5333,6 @@ function renderFormationSlot(
           type==="starter"
           ? "Scegli giocatore"
           : "Nessun giocatore"
-
         }
 
       </div>
@@ -5371,9 +5349,15 @@ function renderFormationSlot(
       data-real-team="${player?.players?.real_team_id || ""}"
     >
 
-      <div class="formation-slot-label">
-        ${slotLabel}
-      </div>
+      ${
+        slotLabel
+        ? `
+          <div class="formation-slot-label">
+            ${slotLabel}
+          </div>
+        `
+        : ""
+      }
 
       ${body}
 
