@@ -4930,6 +4930,954 @@ async function roster(){
   window.renderAllRosters();
 
 }
+
+/* =========================================================
+   BUILDER FORMAZIONE
+========================================================= */
+
+window.formationState = {
+  module: "2G-2A-1C",
+  starters: ["","","","",""],
+  sixth: "",
+  bench: ["","","",""],
+  captain: ""
+};
+
+
+/* =========================================================
+   MODULI
+========================================================= */
+
+const formationModules = {
+
+  "2G-2A-1C": [
+    "G","G","A","A","C"
+  ],
+
+  "1G-3A-1C": [
+    "G","A","A","A","C"
+  ],
+
+  "1G-2A-2C": [
+    "G","A","A","C","C"
+  ],
+
+  "2G-1A-2C": [
+    "G","G","A","C","C"
+  ],
+
+  "3G-1A-1C": [
+    "G","G","G","A","C"
+  ]
+
+};
+
+
+/* =========================================================
+   POSIZIONE VISIVA
+========================================================= */
+
+const formationSlotPositions = {
+
+  "2G-2A-1C": [
+    [3,1],
+    [3,3],
+    [2,1],
+    [2,3],
+    [1,2]
+  ],
+
+  "1G-3A-1C": [
+    [3,2],
+    [2,1],
+    [2,2],
+    [2,3],
+    [1,2]
+  ],
+
+  "1G-2A-2C": [
+    [3,2],
+    [2,1],
+    [2,3],
+    [1,1],
+    [1,3]
+  ],
+
+  "2G-1A-2C": [
+    [3,1],
+    [3,3],
+    [2,2],
+    [1,1],
+    [1,3]
+  ],
+
+  "3G-1A-1C": [
+    [3,1],
+    [3,2],
+    [3,3],
+    [2,2],
+    [1,2]
+  ]
+
+};
+
+
+/* =========================================================
+   PLAYER MAP
+========================================================= */
+
+function formationPlayer(playerId){
+
+  return (
+    window.currentRosterPlayers || []
+  ).find(
+    x => String(x.player_id) === String(playerId)
+  ) || null;
+
+}
+
+
+/* =========================================================
+   SELEZIONATI
+========================================================= */
+
+function formationSelectedIds(){
+
+  return [
+    ...(window.formationState?.starters || []),
+    window.formationState?.sixth,
+    ...(window.formationState?.bench || [])
+  ]
+  .filter(Boolean);
+
+}
+
+
+/* =========================================================
+   LIMITE STESSA SQUADRA
+========================================================= */
+
+function formationTeamCount(
+  teamId,
+  ignorePlayerId=null
+){
+
+  let count=0;
+
+  formationSelectedIds()
+    .forEach(id=>{
+
+      if(
+        ignorePlayerId &&
+        String(id) ===
+        String(ignorePlayerId)
+      )
+        return;
+
+      const p=
+        formationPlayer(id);
+
+      if(
+        p &&
+        String(p.players?.real_team_id)
+        ===
+        String(teamId)
+      ){
+
+        count++;
+
+      }
+
+    });
+
+  return count;
+
+}
+
+
+/* =========================================================
+   GIOCATORI DISPONIBILI
+========================================================= */
+
+function formationAvailablePlayers(
+  requiredPosition=null,
+  currentPlayerId=""
+){
+
+  const selectedOther =
+    formationSelectedIds()
+      .filter(
+        id =>
+          String(id)!==
+          String(currentPlayerId)
+      );
+
+  return (
+    window.currentRosterPlayers || []
+  )
+  .filter(x=>{
+
+    const id=
+      String(x.player_id);
+
+    if(
+      selectedOther.includes(id)
+    )
+      return false;
+
+    if(
+      requiredPosition &&
+      x.players?.position !==
+      requiredPosition
+    )
+      return false;
+
+    const teamId=
+      x.players?.real_team_id;
+
+    if(
+      teamId &&
+      formationTeamCount(
+        teamId,
+        currentPlayerId
+      ) >= 2
+    )
+      return false;
+
+    return true;
+
+  });
+
+}
+
+
+/* =========================================================
+   OPTION MENU
+========================================================= */
+
+function formationPlayerOptions(
+  requiredPosition,
+  selectedId
+){
+
+  const players =
+    formationAvailablePlayers(
+      requiredPosition,
+      selectedId
+    );
+
+  let html=`
+    <option value="">
+      — Scegli giocatore —
+    </option>
+  `;
+
+  players.forEach(x=>{
+
+    const id=
+      String(x.player_id);
+
+    const name =
+      [
+        x.players?.name,
+        x.players?.surname
+      ]
+      .filter(Boolean)
+      .join(" ");
+
+    const team =
+      x.players?.real_teams?.name ||
+      "";
+
+    html+=`
+
+      <option
+        value="${id}"
+        ${id===String(selectedId)
+          ?"selected"
+          :""
+        }
+      >
+
+        ${name}
+        ${team ? ` · ${team}` : ""}
+
+      </option>
+
+    `;
+
+  });
+
+  return html;
+
+}
+
+
+/* =========================================================
+   SLOT
+========================================================= */
+
+function renderFormationSlot(
+  type,
+  index,
+  position=null
+){
+
+  let playerId="";
+
+  if(type==="starter"){
+
+    playerId =
+      window.formationState
+        .starters[index] || "";
+
+  }
+  else if(type==="sixth"){
+
+    playerId =
+      window.formationState
+        .sixth || "";
+
+  }
+  else{
+
+    playerId =
+      window.formationState
+        .bench[index] || "";
+
+  }
+
+
+  const player =
+    formationPlayer(playerId);
+
+
+  const slotLabel =
+    type==="starter"
+      ? position
+      : (
+          type==="sixth"
+            ? "6° UOMO"
+            : `PANCHINA ${index+1}`
+        );
+
+
+  let body="";
+
+
+  if(player){
+
+    const name =
+      [
+        player.players?.name,
+        player.players?.surname
+      ]
+      .filter(Boolean)
+      .join(" ");
+
+
+    const team =
+      player.players?.real_teams?.name ||
+      "Squadra";
+
+
+    const logo =
+      player.players?.real_teams?.logo_url ||
+      "";
+
+
+    body=`
+
+      <div class="formation-slot-player">
+
+        ${
+          logo
+          ? `
+            <img
+              class="formation-slot-logo"
+              src="${logo}"
+              alt=""
+            >
+          `
+          : ""
+        }
+
+        <div class="formation-slot-name">
+
+          <b>
+            ${name}
+          </b>
+
+          <div class="formation-slot-team">
+            ${team}
+          </div>
+
+        </div>
+
+
+        <div
+          class="formation-slot-score"
+          data-live-score="${player.player_id}"
+        >
+          —
+        </div>
+
+      </div>
+
+
+      <div
+        class="formation-slot-game"
+        data-game-player="${player.player_id}"
+      >
+        🏀 Caricamento partita...
+      </div>
+
+
+      <div
+        class="formation-slot"
+        style="
+          display:none;
+        "
+        data-real-team="${player.players?.real_team_id || ""}"
+      ></div>
+
+    `;
+
+  }
+  else{
+
+    body=`
+
+      <div class="formation-slot-empty">
+
+        ${
+          type==="starter"
+          ? "Scegli giocatore"
+          : "Nessun giocatore"
+
+        }
+
+      </div>
+
+    `;
+
+  }
+
+
+  return `
+
+    <div
+      class="formation-slot"
+      data-real-team="${player?.players?.real_team_id || ""}"
+    >
+
+      <div class="formation-slot-label">
+        ${slotLabel}
+      </div>
+
+      ${body}
+
+
+      <select
+        data-builder-type="${type}"
+        data-builder-index="${index}"
+        onchange="
+          formationSlotChanged(
+            '${type}',
+            ${index},
+            this.value
+          )
+        "
+      >
+
+        ${
+          formationPlayerOptions(
+            type==="starter"
+              ? position
+              : null,
+            playerId
+          )
+        }
+
+      </select>
+
+
+      ${
+        player
+        ? `
+
+          <div class="formation-slot-captain">
+
+            <label>
+
+              <input
+                type="checkbox"
+                ${window.formationState.captain===playerId
+                  ?"checked"
+                  :""
+                }
+                onchange="
+                  formationCaptainChanged(
+                    '${playerId}',
+                    this.checked
+                  )
+                "
+              >
+
+              👑 Capitano
+
+            </label>
+
+          </div>
+
+        `
+        : ""
+      }
+
+    </div>
+
+  `;
+
+}
+
+
+/* =========================================================
+   RENDER BUILDER
+========================================================= */
+
+function renderFormationBuilder(){
+
+  const box =
+    el("formationBuilder");
+
+  if(!box)
+    return;
+
+
+  const module =
+    window.formationState.module;
+
+
+  const positions =
+    formationModules[module];
+
+
+  const coords =
+    formationSlotPositions[module];
+
+
+  let html=`
+
+    <div class="formation-module-box">
+
+      <label>
+        Modulo
+      </label>
+
+      <select
+        id="formationModuleSelect"
+        onchange="
+          formationModuleChanged(this.value)
+        "
+      >
+
+  `;
+
+
+  Object.keys(
+    formationModules
+  ).forEach(m=>{
+
+    html+=`
+
+      <option
+        value="${m}"
+        ${m===module
+          ?"selected"
+          :""
+        }
+      >
+        ${m}
+      </option>
+
+    `;
+
+  });
+
+
+  html+=`
+
+      </select>
+
+    </div>
+
+
+    <div class="formation-court">
+
+  `;
+
+
+  positions.forEach(
+    (position,index)=>{
+
+      const [
+        row,
+        column
+      ] =
+        coords[index];
+
+
+      html+=`
+
+        <div
+          style="
+            grid-row:${row};
+            grid-column:${column};
+          "
+        >
+
+          ${renderFormationSlot(
+            "starter",
+            index,
+            position
+          )}
+
+        </div>
+
+      `;
+
+    }
+  );
+
+
+  html+=`
+
+    </div>
+
+
+    <div class="formation-extra">
+
+      <div class="formation-extra-box">
+
+        <div class="formation-extra-title">
+          6️⃣ Sesto uomo · 100%
+        </div>
+
+        ${renderFormationSlot(
+          "sixth",
+          0,
+          null
+        )}
+
+      </div>
+
+
+      <div class="formation-extra-box">
+
+        <div class="formation-extra-title">
+          🪑 Panchina · 50%
+        </div>
+
+        <div class="formation-bench-grid">
+
+          ${[0,1,2,3]
+            .map(i =>
+              renderFormationSlot(
+                "bench",
+                i,
+                null
+              )
+            )
+            .join("")
+          }
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div id="formationBuilderSummary">
+    </div>
+
+  `;
+
+
+  box.innerHTML=html;
+
+
+  updateLineupSummary();
+
+}
+
+
+/* =========================================================
+   CAMBIO MODULO
+========================================================= */
+
+function formationModuleChanged(module){
+
+  const hasPlayers =
+    formationSelectedIds().length > 0;
+
+
+  if(
+    hasPlayers &&
+    !confirm(
+      "Cambiare modulo azzererà i 5 slot dei titolari. " +
+      "Sesto uomo e panchina resteranno invariati. Continuare?"
+    )
+  ){
+
+    const select=
+      el("formationModuleSelect");
+
+    if(select)
+      select.value =
+        window.formationState.module;
+
+    return;
+
+  }
+
+
+  window.formationState.module =
+    module;
+
+  window.formationState.starters =
+    ["","","","",""];
+
+  window.formationState.captain =
+    "";
+
+
+  renderFormationBuilder();
+
+}
+
+
+/* =========================================================
+   CAMBIO SLOT
+========================================================= */
+
+function formationSlotChanged(
+  type,
+  index,
+  playerId
+){
+
+  if(type==="starter"){
+
+    window.formationState
+      .starters[index] =
+        playerId || "";
+
+  }
+  else if(type==="sixth"){
+
+    window.formationState
+      .sixth =
+        playerId || "";
+
+  }
+  else{
+
+    window.formationState
+      .bench[index] =
+        playerId || "";
+
+  }
+
+
+  const selected =
+    new Set(
+      formationSelectedIds()
+    );
+
+
+  if(
+    window.formationState.captain &&
+    !selected.has(
+      String(
+        window.formationState.captain
+      )
+    )
+  ){
+
+    window.formationState.captain =
+      "";
+
+  }
+
+
+  renderFormationBuilder();
+
+
+  setTimeout(
+    ()=>loadPlayerGames(),
+    50
+  );
+
+}
+
+
+/* =========================================================
+   CAMBIO CAPITANO
+========================================================= */
+
+function formationCaptainChanged(
+  playerId,
+  checked
+){
+
+  if(checked){
+
+    window.formationState.captain =
+      playerId;
+
+  }
+  else if(
+    String(
+      window.formationState.captain
+    ) ===
+    String(playerId)
+  ){
+
+    window.formationState.captain =
+      "";
+
+  }
+
+
+  renderFormationBuilder();
+
+}
+
+
+/* =========================================================
+   RIEPILOGO
+========================================================= */
+
+function updateLineupSummary(){
+
+  const box =
+    el("formationBuilderSummary");
+
+  if(!box)
+    return;
+
+
+  const state =
+    window.formationState;
+
+
+  const starters =
+    state.starters
+      .filter(Boolean);
+
+
+  const sixth =
+    state.sixth
+      ? 1
+      : 0;
+
+
+  const bench =
+    state.bench
+      .filter(Boolean)
+      .length;
+
+
+  const selected =
+    formationSelectedIds();
+
+
+  const selectedSet =
+    new Set(
+      selected.map(String)
+    );
+
+
+  const out =
+    (window.currentRosterPlayers || [])
+      .filter(
+        x =>
+          !selectedSet.has(
+            String(x.player_id)
+          )
+      );
+
+
+  const outNames =
+    out.map(x =>
+      [
+        x.players?.name,
+        x.players?.surname
+      ]
+      .filter(Boolean)
+      .join(" ")
+    );
+
+
+  box.innerHTML=`
+
+    <div class="formation-summary-box">
+
+      <div class="formation-summary-line">
+
+        <span class="formation-summary-pill">
+          🏀 ${state.module}
+        </span>
+
+        <span class="formation-summary-pill">
+          Titolari ${starters.length}/5
+        </span>
+
+        <span class="formation-summary-pill">
+          Sesto ${sixth}/1
+        </span>
+
+        <span class="formation-summary-pill">
+          Panchina ${bench}/4
+        </span>
+
+        <span class="formation-summary-pill">
+          👑 ${
+            state.captain
+              ? "Scelto"
+              : "Manca"
+          }
+        </span>
+
+      </div>
+
+
+      ${
+        outNames.length
+        ? `
+
+          <div
+            class="muted"
+            style="
+              margin-top:8px;
+              font-size:10px;
+            "
+          >
+            Fuori:
+            ${outNames.join(" · ")}
+          </div>
+
+        `
+        : ""
+      }
+
+    </div>
+
+  `;
+
+}   
+   
 async function lineup(){
 
   /* =========================
