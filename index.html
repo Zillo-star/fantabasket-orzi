@@ -5292,18 +5292,14 @@ function renderFormationSlot(
           x=>x.index===index
         );
 
-      const span =
-        6 / count;
+const span =
+  6 / count;
 
-      const start =
-        1 + (rank * span);
-
-      gridStyle =
-        `
-          grid-row:${row};
-          grid-column:${start} / span ${span};
-        `;
-    }
+gridStyle =
+  `
+    grid-row:${row};
+    grid-column:span ${span};
+  }
   }
 
 
