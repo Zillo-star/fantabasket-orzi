@@ -13647,128 +13647,340 @@ setTimeout(() => {
 }
 async function standings(){
 
-  let r=await db
-    .from("league_matches")
-    .select(`
-      *,
-      home:home_manager_id(
+  const r =
+    await db
+      .from("league_matches")
+      .select(`
         id,
-        name,
-        team_name
-      ),
-      away:away_manager_id(
-        id,
-        name,
-        team_name
-      )
-    `);
+        matchday_number,
+        home_manager_id,
+        away_manager_id,
+        home_score,
+        away_score,
+        home_points,
+        away_points,
+        completed,
+        home:home_manager_id(
+          id,
+          name,
+          team_name
+        ),
+        away:away_manager_id(
+          id,
+          name,
+          team_name
+        )
+      `)
+      .order("matchday_number")
+      .order("id");
 
-  if(r.error)
+
+  if(r.error){
+
     return message(
       r.error.message,
       "err"
     );
 
-  let a={};
+  }
 
-  (r.data||[]).forEach(x=>{
 
-    if(!a[x.home_manager_id]){
+  const table = {};
 
-      a[x.home_manager_id]={
+
+  /* =========================
+     CREA SQUADRE
+  ========================= */
+
+  (r.data || []).forEach(match => {
+
+    if(!table[match.home_manager_id]){
+
+      table[match.home_manager_id] = {
+
         teamName:
-          x.home?.team_name ||
-          x.home?.name ||
+          match.home?.team_name ||
+          match.home?.name ||
           "—",
 
         managerName:
-          x.home?.name ||
+          match.home?.name ||
           "—",
 
-        p:0
+        played: 0,
+        wins: 0,
+        losses: 0,
+
+        points: 0,
+
+        pf: 0,
+        ps: 0
+
       };
 
     }
 
-    if(!a[x.away_manager_id]){
 
-      a[x.away_manager_id]={
+    if(!table[match.away_manager_id]){
+
+      table[match.away_manager_id] = {
+
         teamName:
-          x.away?.team_name ||
-          x.away?.name ||
+          match.away?.team_name ||
+          match.away?.name ||
           "—",
 
         managerName:
-          x.away?.name ||
+          match.away?.name ||
           "—",
 
-        p:0
+        played: 0,
+        wins: 0,
+        losses: 0,
+
+        points: 0,
+
+        pf: 0,
+        ps: 0
+
       };
 
     }
-
-    a[x.home_manager_id].p+=
-      Number(x.home_points||0);
-
-    a[x.away_manager_id].p+=
-      Number(x.away_points||0);
 
   });
 
-  let rows=
-    Object.values(a)
-      .sort((x,y)=>y.p-x.p);
 
-  el("content").innerHTML=`
+  /* =========================
+     CALCOLO RISULTATI
+  ========================= */
+
+  (r.data || []).forEach(match => {
+
+    if(
+      !match.completed ||
+      match.home_score === null ||
+      match.away_score === null
+    ){
+
+      return;
+
+    }
+
+
+    const home =
+      table[match.home_manager_id];
+
+    const away =
+      table[match.away_manager_id];
+
+
+    const homeScore =
+      Number(match.home_score || 0);
+
+    const awayScore =
+      Number(match.away_score || 0);
+
+
+    /* PARTITE */
+
+    home.played++;
+    away.played++;
+
+
+    /* PUNTI FATTI / SUBITI */
+
+    home.pf += homeScore;
+    home.ps += awayScore;
+
+    away.pf += awayScore;
+    away.ps += homeScore;
+
+
+    /* VITTORIA / SCONFITTA */
+
+    if(homeScore > awayScore){
+
+      home.wins++;
+      home.points += 2;
+
+      away.losses++;
+
+    }
+    else if(awayScore > homeScore){
+
+      away.wins++;
+      away.points += 2;
+
+      home.losses++;
+
+    }
+    else{
+
+      /* Pareggio di sicurezza */
+
+      home.points += 1;
+      away.points += 1;
+
+    }
+
+  });
+
+
+  /* =========================
+     DIFFERENZA
+  ========================= */
+
+  Object.values(table).forEach(team => {
+
+    team.diff =
+      team.pf - team.ps;
+
+  });
+
+
+  /* =========================
+     ORDINAMENTO
+
+     1. Punti classifica
+     2. Differenza PF-PS
+     3. Punti fatti
+  ========================= */
+
+  const rows =
+    Object.values(table)
+      .sort((a,b) => {
+
+        if(b.points !== a.points)
+          return b.points - a.points;
+
+        if(b.diff !== a.diff)
+          return b.diff - a.diff;
+
+        return b.pf - a.pf;
+
+      });
+
+
+  /* =========================
+     HTML
+  ========================= */
+
+  el("content").innerHTML = `
 
     <div class="card">
 
       <h2>Classifica</h2>
 
-      <table>
+      <div style="
+        overflow-x:auto;
+      ">
 
-        <tr>
-          <th>#</th>
-          <th>Squadra</th>
-          <th>Punti</th>
-        </tr>
-
-        ${rows.map((x,i)=>`
+        <table>
 
           <tr>
 
-            <td>
-              ${i+1}
-            </td>
+            <th>#</th>
 
-            <td>
+            <th>Squadra</th>
 
-              <b>
-                ${x.teamName}
-              </b>
+            <th>PG</th>
 
-              <br>
+            <th>V</th>
 
-              <small class="muted">
-                ${x.managerName}
-              </small>
+            <th>S</th>
 
-            </td>
+            <th>Punti</th>
 
-            <td>
-              <b>
-                ${x.p}
-              </b>
-            </td>
+            <th>PF</th>
+
+            <th>PS</th>
+
+            <th>+/-</th>
 
           </tr>
 
-        `).join("")}
 
-      </table>
+          ${
+
+            rows.map((x,i) => `
+
+              <tr>
+
+                <td>
+                  <b>${i + 1}</b>
+                </td>
+
+
+                <td>
+
+                  <b>
+                    ${x.teamName}
+                  </b>
+
+                  <br>
+
+                  <small class="muted">
+                    ${x.managerName}
+                  </small>
+
+                </td>
+
+
+                <td>
+                  ${x.played}
+                </td>
+
+
+                <td>
+                  ${x.wins}
+                </td>
+
+
+                <td>
+                  ${x.losses}
+                </td>
+
+
+                <td>
+                  <b>
+                    ${x.points}
+                  </b>
+                </td>
+
+
+                <td>
+                  ${x.pf.toFixed(1)}
+                </td>
+
+
+                <td>
+                  ${x.ps.toFixed(1)}
+                </td>
+
+
+                <td>
+                  ${x.diff > 0 ? "+" : ""}
+                  ${x.diff.toFixed(1)}
+                </td>
+
+              </tr>
+
+            `).join("")
+
+          }
+
+        </table>
+
+      </div>
+
 
       <p class="muted">
-        Spareggi: scontri diretti → punteggi nelle singole giornate → punteggi negli scontri diretti.
+
+        Classifica:
+        vittoria 2 punti · sconfitta 0.
+        In caso di parità:
+        differenza punti → punti fatti.
+
       </p>
 
     </div>
