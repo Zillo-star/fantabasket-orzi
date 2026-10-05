@@ -5271,59 +5271,6 @@ function renderFormationSlot(
   const player =
     formationPlayer(playerId);
 
-
-  let gridStyle="";
-
-  /* =========================
-     LARGHEZZA TITOLARI
-  ========================= */
-
-  if(type==="starter"){
-
-    const module =
-      window.formationState.module;
-
-    const positions =
-      formationSlotPositions[module] || [];
-
-    const current =
-      positions[index];
-
-    if(current){
-
-      const row =
-        current[0];
-
-      const sameRow =
-        positions
-          .map((p,i)=>({
-            row:p[0],
-            col:p[1],
-            index:i
-          }))
-          .filter(x=>x.row===row)
-          .sort((a,b)=>a.col-b.col);
-
-      const count =
-        sameRow.length;
-
-      const rank =
-        sameRow.findIndex(
-          x=>x.index===index
-        );
-
-const span =
-  6 / count;
-
-gridStyle =
-  `
-    grid-row:${row};
-    grid-column:span ${span};
-  `;
-}
-}
-
-
   let body="";
 
 
