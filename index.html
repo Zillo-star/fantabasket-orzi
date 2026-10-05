@@ -9458,92 +9458,116 @@ box.innerHTML=`
 }
 async function loadSavedLineup(){
 
-  let select=el("day");
+  let select=
+    el("day");
 
   if(!select)
     return;
 
-  let selected=select.options[select.selectedIndex];
+
+  let selected=
+    select.options[
+      select.selectedIndex
+    ];
 
   if(!selected)
     return;
 
-  let matchdayId=selected.value;
-  let matchdayNumber=Number(selected.dataset.number);
 
-  let isCurrentDay=
-  matchdayNumber===window.currentLineupDay;
+  let matchdayId=
+    selected.value;
 
-  console.log("MATCHDAY ID:",matchdayId);
-  console.log("MATCHDAY NUMBER:",matchdayNumber);
+  let matchdayNumber=
+    Number(
+      selected.dataset.number
+    );
 
-  /*
-    Aggiorna deadline e countdown.
-  */
 
- if(isCurrentDay){
+  let isCurrentDay =
+    matchdayNumber ===
+    Number(window.currentLineupDay);
 
-  updateLineupDeadline();
 
-}else{
+  console.log(
+    "MATCHDAY ID:",
+    matchdayId
+  );
 
-  updateLineupLock(null);
+  console.log(
+    "MATCHDAY NUMBER:",
+    matchdayNumber
+  );
 
-}
 
-  /*
-    Cerca la formazione già salvata.
-  */
+  /* =========================
+     STATO INIZIALE
+  ========================= */
 
-  let x=await db.from("lineups")
-    .select("id")
-    .eq("manager_id",me.id)
-    .eq("matchday_id",matchdayId)
-    .maybeSingle();
+  window.formationState = {
+
+    module:
+      "2G-2A-1C",
+
+    starters:
+      ["","","","",""],
+
+    sixth:
+      "",
+
+    bench:
+      ["","","",""],
+
+    captain:
+      ""
+
+  };
+
+
+  /* =========================
+     FORMAZIONE SALVATA
+  ========================= */
+
+  let x=
+    await db
+      .from("lineups")
+      .select("id")
+      .eq("manager_id",me.id)
+      .eq("matchday_id",matchdayId)
+      .maybeSingle();
+
 
   if(x.error)
-    return message(x.error.message,"err");
+    return message(
+      x.error.message,
+      "err"
+    );
 
-  /*
-    Azzera la schermata prima di caricare
-    la formazione della giornata scelta.
-  */
 
-  document.querySelectorAll("#lp select[data-p]")
-    .forEach(s=>s.value="out");
-
-  document.querySelectorAll("#lp input[data-captain]")
-    .forEach(c=>c.checked=false);
-
-  /*
-    Nessuna formazione ancora salvata.
-  */
+  /* =========================
+     NESSUNA FORMAZIONE
+  ========================= */
 
   if(!x.data){
 
-    let status=el("lineupStatus");
+    renderFormationBuilder();
 
-    if(status)
-      status.textContent=
+    let status=
+      el("lineupStatus");
+
+    if(status){
+
+      status.textContent =
         "Nessuna formazione salvata per questa giornata.";
 
-    /*
-      Se è la giornata attuale,
-      applichiamo la deadline.
+    }
 
-      Se è una giornata precedente,
-      rimane bloccata.
-    */
 
     if(isCurrentDay){
 
-      let deadline=
-        window.lineupDeadlines?.[matchdayNumber];
+      updateLineupDeadline();
 
-      if(deadline)
-        updateLineupLock(new Date(deadline));
-
-    }else{
+    }
+    else{
 
       updateLineupLock(null);
 
@@ -9553,69 +9577,176 @@ async function loadSavedLineup(){
 
   }
 
-  /*
-    Carica i giocatori della formazione.
-  */
 
-  let lp=await db.from("lineup_players")
-    .select("player_id,role,captain")
-    .eq("lineup_id",x.data.id);
+  /* =========================
+     GIOCATORI SALVATI
+  ========================= */
+
+  let lp=
+    await db
+      .from("lineup_players")
+      .select(
+        "player_id,role,captain"
+      )
+      .eq(
+        "lineup_id",
+        x.data.id
+      );
+
 
   if(lp.error)
-    return message(lp.error.message,"err");
-
-  /*
-    Applica ruoli e capitano.
-  */
-
-  (lp.data||[]).forEach(p=>{
-
-    let playerSelect=document.querySelector(
-      `#lp select[data-p="${p.player_id}"]`
+    return message(
+      lp.error.message,
+      "err"
     );
 
-    if(playerSelect)
-      playerSelect.value=p.role;
 
-    let captain=document.querySelector(
-      `#lp input[data-captain="${p.player_id}"]`
+  const rows=
+    lp.data || [];
+
+
+  const starters =
+    rows.filter(
+      x => x.role==="starter"
     );
 
-    if(captain)
-      captain.checked=!!p.captain;
+  const sixth =
+    rows.find(
+      x => x.role==="sixth"
+    );
 
-  });
+  const bench =
+    rows.filter(
+      x => x.role==="bench"
+    );
 
-  let status=el("lineupStatus");
 
-  if(status)
-    status.textContent="Formazione salvata.";
+  /* =========================
+     TROVA MODULO
+  ========================= */
 
-  /*
-    Applica nuovamente il blocco corretto
-    in base alla deadline.
-  */
+  const g =
+    starters.filter(
+      x =>
+        formationPlayer(
+          x.player_id
+        )?.players?.position==="G"
+    ).length;
+
+  const a =
+    starters.filter(
+      x =>
+        formationPlayer(
+          x.player_id
+        )?.players?.position==="A"
+    ).length;
+
+  const c =
+    starters.filter(
+      x =>
+        formationPlayer(
+          x.player_id
+        )?.players?.position==="C"
+    ).length;
+
+
+  let module =
+    "2G-2A-1C";
+
+
+  if(g===1 && a===3 && c===1)
+    module="1G-3A-1C";
+
+  else if(g===1 && a===2 && c===2)
+    module="1G-2A-2C";
+
+  else if(g===2 && a===1 && c===2)
+    module="2G-1A-2C";
+
+  else if(g===3 && a===1 && c===1)
+    module="3G-1A-1C";
+
+  else if(g===2 && a===2 && c===1)
+    module="2G-2A-1C";
+
+
+  window.formationState = {
+
+    module,
+
+    starters:
+      starters
+        .slice(0,5)
+        .map(
+          x => String(x.player_id)
+        )
+        .concat(
+          ["","","","",""]
+        )
+        .slice(0,5),
+
+    sixth:
+      sixth
+        ? String(sixth.player_id)
+        : "",
+
+    bench:
+      bench
+        .slice(0,4)
+        .map(
+          x => String(x.player_id)
+        )
+        .concat(
+          ["","","",""]
+        )
+        .slice(0,4),
+
+    captain:
+      (
+        rows.find(
+          x => x.captain === true
+        )?.player_id
+        || ""
+      )
+
+  };
+
+
+  /* =========================
+     RENDER
+  ========================= */
+
+  renderFormationBuilder();
+
+
+  let status=
+    el("lineupStatus");
+
+
+  if(status){
+
+    status.textContent =
+      "Formazione salvata.";
+
+  }
+
+
+  /* =========================
+     DEADLINE
+  ========================= */
 
   if(isCurrentDay){
 
-    let deadline=
-      window.lineupDeadlines?.[matchdayNumber];
+    updateLineupDeadline();
 
-    if(deadline)
-      updateLineupLock(new Date(deadline));
-
-  }else{
+  }
+  else{
 
     updateLineupLock(null);
 
   }
+
 }
-
-
-/*
-  Aggiorna deadline e countdown.
-*/
-
 function updateLineupDeadline(){
 
   let select=el("day");
