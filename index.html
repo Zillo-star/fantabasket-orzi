@@ -5526,6 +5526,13 @@ function renderFormationBuilder(){
   `;
 
 
+const rows = {
+  1: [],
+  2: [],
+  3: []
+};
+
+
 positions.forEach(
   (position,index)=>{
 
@@ -5535,59 +5542,68 @@ positions.forEach(
     ] =
       coords[index];
 
+    rows[row].push({
+      position,
+      index,
+      column
+    });
 
-    /* QUANTI GIOCATORI CI SONO NELLA STESSA RIGA */
-    const sameRow =
-      coords
-        .map((p,i)=>({
-          row:p[0],
-          column:p[1],
-          index:i
-        }))
-        .filter(x=>x.row===row)
-        .sort((a,b)=>a.column-b.column);
+  }
+);
 
 
-    const count =
-      sameRow.length;
+Object.keys(rows).forEach(row=>{
+
+  const players =
+    rows[row]
+      .sort((a,b)=>a.column-b.column);
 
 
-    const rank =
-      sameRow.findIndex(
-        x=>x.index===index
-      );
+  if(!players.length)
+    return;
 
 
-    const span =
-      6 / count;
+  html+=`
+
+    <div
+      class="formation-court-row"
+      style="
+        grid-row:${row};
+        grid-column:1 / -1;
+      "
+    >
+
+  `;
 
 
-    const start =
-      1 + (rank * span);
-
+  players.forEach(item=>{
 
     html+=`
 
       <div
-        style="
-          grid-row:${row};
-          grid-column:${start} / span ${span};
-          width:100%;
-        "
+        class="formation-court-player"
       >
 
         ${renderFormationSlot(
           "starter",
-          index,
-          position
+          item.index,
+          item.position
         )}
 
       </div>
 
     `;
 
-  }
-);
+  });
+
+
+  html+=`
+
+    </div>
+
+  `;
+
+});
 
 
   box.innerHTML=html;
