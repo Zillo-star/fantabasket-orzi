@@ -2292,6 +2292,192 @@ nav button.nav-item[data-page="Admin"].active::after{
   background:rgba(255,255,255,.05);
 }
 
+
+/* =========================
+   CAMPO
+========================= */
+
+.formation-court-row{
+  display:flex;
+  width:100%;
+  min-width:0;
+  gap:10px;
+}
+
+.formation-court-player{
+  flex:1 1 0;
+  min-width:0;
+  width:0;
+  display:flex;
+}
+
+.formation-court-player .formation-slot{
+  width:100%;
+  min-width:0;
+  box-sizing:border-box;
+}
+
+
+/* =========================
+   PEDINA
+========================= */
+
+.formation-slot{
+  text-align:center !important;
+  border-left:none !important;
+  border-left-width:0 !important;
+  border-inline-start:none !important;
+  border-inline-start-width:0 !important;
+  box-shadow:none !important;
+  background-image:none !important;
+
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+
+.formation-slot::before,
+.formation-slot::after{
+  content:none !important;
+  display:none !important;
+}
+
+
+/* =========================
+   CONTENUTO
+========================= */
+
+.formation-slot-player{
+  width:100% !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+}
+
+.formation-slot-name{
+  width:100% !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+}
+
+.formation-slot-firstname,
+.formation-slot-surname,
+.formation-slot-team{
+  display:block !important;
+  width:100% !important;
+  text-align:center !important;
+}
+
+.formation-slot-firstname,
+.formation-slot-surname{
+  line-height:1.05 !important;
+}
+
+.formation-slot-team{
+  margin-top:3px !important;
+}
+
+.formation-slot-game{
+  width:100% !important;
+  text-align:center !important;
+}
+
+.formation-slot select{
+  width:100% !important;
+  text-align:center !important;
+  text-align-last:center !important;
+}
+
+
+/* =========================
+   AZIONI: CORONA + X
+========================= */
+
+.formation-slot-actions{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:6px;
+  margin-top:6px;
+}
+
+
+/* CORONA */
+
+.formation-slot-captain{
+  width:28px !important;
+  height:25px !important;
+  min-width:28px !important;
+  min-height:25px !important;
+
+  padding:0 !important;
+  margin:0 !important;
+
+  border:1px solid #6d5dfc !important;
+  border-radius:8px !important;
+
+  background:#6d5dfc !important;
+  color:white !important;
+
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+
+  font-size:14px !important;
+  line-height:1 !important;
+
+  cursor:pointer;
+}
+
+.formation-slot-captain.active{
+  background:white !important;
+  color:#6d5dfc !important;
+  border-color:white !important;
+}
+
+
+/* X ROSSA */
+
+.formation-remove-player{
+  width:28px !important;
+  height:25px !important;
+  min-width:28px !important;
+  min-height:25px !important;
+
+  padding:0 !important;
+  margin:0 !important;
+
+  border:1px solid #e74c3c !important;
+  border-radius:8px !important;
+
+  background:#e74c3c !important;
+  color:white !important;
+
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+
+  font-size:12px !important;
+  line-height:1 !important;
+
+  cursor:pointer;
+}
+
+.formation-remove-player:hover{
+  background:#c0392b !important;
+}
+
+
+/* =========================
+   MOBILE
+========================= */
+
 @media(max-width:700px){
 
   .formation-court{
@@ -2320,278 +2506,10 @@ nav button.nav-item[data-page="Admin"].active::after{
     padding:7px;
   }
 
-  .formation-slot-name b{
-    font-size:10px;
-  }
-
   .formation-slot-team{
     font-size:9px;
   }
 
-}   
-
-.formation-court-row{
-  display:flex;
-  width:100%;
-  min-width:0;
-  gap:10px;
-}
-
-.formation-court-player{
-  flex:1 1 0;
-  min-width:0;
-  width:0;
-  display:flex;
-}
-
-.formation-court-player .formation-slot{
-  width:100%;
-  min-width:0;
-  box-sizing:border-box;
-}   
-
-/* =========================
-   FORMATION SLOT - CENTRATO
-========================= */
-
-.formation-slot{
-  text-align:center !important;
-
-  border-left:none !important;
-  border-left-width:0 !important;
-  border-left-color:transparent !important;
-
-  border-inline-start:none !important;
-  border-inline-start-width:0 !important;
-  border-inline-start-color:transparent !important;
-
-  box-shadow:none !important;
-  background-image:none !important;
-
-  display:flex !important;
-  flex-direction:column !important;
-  align-items:center !important;
-  justify-content:center !important;
-}
-
-/* elimina eventuale segno laterale generato da CSS */
-.formation-slot::before,
-.formation-slot::after{
-  content:none !important;
-  display:none !important;
-  border:0 !important;
-  box-shadow:none !important;
-}
-
-/* contenuto */
-.formation-slot-player{
-  width:100% !important;
-  display:flex !important;
-  flex-direction:column !important;
-  align-items:center !important;
-  justify-content:center !important;
-  text-align:center !important;
-}
-
-/* nome */
-.formation-slot-name{
-  width:100% !important;
-  display:flex !important;
-  flex-direction:column !important;
-  align-items:center !important;
-  justify-content:center !important;
-  text-align:center !important;
-}
-
-/* nome */
-.formation-slot-firstname{
-  display:block !important;
-  width:100% !important;
-  text-align:center !important;
-  line-height:1.05 !important;
-}
-
-/* cognome */
-.formation-slot-surname{
-  display:block !important;
-  width:100% !important;
-  text-align:center !important;
-  line-height:1.05 !important;
-}
-
-/* squadra */
-.formation-slot-team{
-  display:block !important;
-  width:100% !important;
-  text-align:center !important;
-  margin-top:3px !important;
-}
-
-/* punteggio */
-.formation-slot-score{
-  width:100% !important;
-  text-align:center !important;
-}
-
-/* avversaria */
-.formation-slot-game{
-  width:100% !important;
-  text-align:center !important;
-}
-
-/* selettore giocatore */
-.formation-slot select{
-  text-align:center !important;
-  text-align-last:center !important;
-  width:100% !important;
-}
-
-/* capitano */
-.formation-slot-captain{
-  align-self:center !important;
-  margin-left:auto !important;
-  margin-right:auto !important;
-}
-
-/* =========================
-   CAMBIA GIOCATORE
-========================= */
-
-.formation-change-player{
-  border:0 !important;
-  background:transparent !important;
-  padding:3px 7px !important;
-  margin:5px auto 0 auto !important;
-
-  color:inherit !important;
-  opacity:.7;
-
-  font-size:10px !important;
-  font-weight:700;
-
-  border-radius:7px;
-
-  cursor:pointer;
-}
-
-.formation-change-player:hover{
-  opacity:1;
-  background:rgba(255,255,255,.08) !important;
-}
-
-/* quando compare la selezione */
-.formation-slot select{
-  width:100%;
-  text-align:center !important;
-  text-align-last:center !important;
-}
-
-.formation-remove-player{
-  border:0 !important;
-  background:transparent !important;
-  color:inherit !important;
-  opacity:.65;
-
-  font-size:9px !important;
-  font-weight:700;
-
-  padding:3px 6px !important;
-  margin:5px auto 0 auto !important;
-
-  cursor:pointer;
-  border-radius:6px;
-}
-
-.formation-remove-player:hover{
-  opacity:1;
-  background:rgba(255,255,255,.08) !important;
-}   
-
-/* =========================
-   PULSANTI DELLA PEDINA
-========================= */
-
-.formation-slot-actions{
-  display:flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  gap:6px;
-
-  margin-top:6px;
-}
-
-
-/* =========================
-   CAPITANO
-========================= */
-
-.formation-slot-captain{
-  width:28px !important;
-  height:25px !important;
-
-  min-width:28px !important;
-  min-height:25px !important;
-
-  padding:0 !important;
-  margin:0 !important;
-
-  border:1px solid #6d5dfc !important;
-  border-radius:8px !important;
-
-  background:#6d5dfc !important;
-  color:white !important;
-
-  display:flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-
-  font-size:14px !important;
-  line-height:1 !important;
-
-  cursor:pointer;
-}
-
-/* CAPITANO ATTIVO */
-
-.formation-slot-captain.active{
-  background:white !important;
-  color:#6d5dfc !important;
-  border-color:white !important;
-}
-
-
-/* =========================
-   RIMUOVI GIOCATORE
-========================= */
-
-.formation-remove-player{
-  width:28px !important;
-  height:25px !important;
-
-  min-width:28px !important;
-  min-height:25px !important;
-
-  padding:0 !important;
-  margin:0 !important;
-
-  border:1px solid #e74c3c !important;
-  border-radius:8px !important;
-
-  background:#e74c3c !important;
-  color:white !important;
-
-  display:flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-
-  font-size:12px !important;
-  line-height:1 !important;
-
-  cursor:pointer;
-}
-
-.formation-remove-player:hover{
-  background:#c0392b !important;
 }
    
 </style></head><body>
