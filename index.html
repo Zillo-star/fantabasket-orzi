@@ -5922,10 +5922,127 @@ for(const lineup of lineups){
 
   for(const lp of (lineup.lineup_players || [])){
 
-    const pg = playerToGame[lp.player_id];
+const pg = playerToGame[lp.player_id];
 
-    if(!pg)
-      continue;
+
+/* =========================================================
+   GIOCATORE NON PRESENTE A REFERTO
+   ========================================================= */
+
+if(!pg){
+
+  let multiplier = 0;
+
+  if(
+    lp.role === "starter" ||
+    lp.role === "sixth"
+  ){
+
+    multiplier = 1;
+
+  }else if(lp.role === "bench"){
+
+    multiplier = 0.5;
+
+  }
+
+
+  let captainMultiplier =
+    lp.captain
+      ? 1.5
+      : 1;
+
+
+  /* Nessun referto = ZERO ASSOLUTO
+     Nessun +3 */
+  const raw = 0;
+
+  const finalScore = 0;
+
+
+  const save =
+    await db
+      .from("fantasy_scores")
+      .upsert({
+
+        manager_id:
+          lineup.manager_id,
+
+        matchday_id:
+          matchdayId,
+
+        player_id:
+          lp.player_id,
+
+        raw_score:
+          0,
+
+        lineup_multiplier:
+          multiplier,
+
+        captain_multiplier:
+          captainMultiplier,
+
+        final_score:
+          0
+
+      },{
+        onConflict:
+          "manager_id,matchday_id,player_id"
+      });
+
+
+  if(save.error){
+
+    console.error(
+      "ERRORE SALVATAGGIO ZERO:",
+      save.error,
+      lp.player_id
+    );
+
+  }else{
+
+    console.log(
+      "GIOCATORE NON A REFERTO → 0:",
+      lp.player_id,
+      "| ROLE:",
+      lp.role,
+      "| CAP:",
+      lp.captain
+    );
+
+  }
+
+
+  /* Aggiorna il display della mia formazione */
+  if(
+    lineup.manager_id === me.id
+  ){
+
+    const scoreBox =
+      document.querySelector(
+        `[data-live-score="${lp.player_id}"]`
+      );
+
+    if(scoreBox){
+
+      if(lp.role === "out"){
+
+        scoreBox.textContent = "—";
+
+      }else{
+
+        scoreBox.textContent = "0.0";
+
+      }
+
+    }
+
+  }
+
+
+  continue;
+}
 
 
     /* =========================
