@@ -13715,12 +13715,15 @@ async function standings(){
 
   (r.data || []).forEach(x => {
 
-    if(!x.completed)
-      return;
+const homeScore = Number(x.home_score);
+const awayScore = Number(x.away_score);
 
-    const homeScore = Number(x.home_score || 0);
-    const awayScore = Number(x.away_score || 0);
-
+if(
+  !Number.isFinite(homeScore) ||
+  !Number.isFinite(awayScore)
+){
+  return;
+}
     const homeBot = x.home?.is_bot === true;
     const awayBot = x.away?.is_bot === true;
 
