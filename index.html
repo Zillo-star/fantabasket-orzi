@@ -5086,30 +5086,59 @@ if(!allMatchdays.length){
 
 
 /*
-  La giornata attuale viene determinata
-  dalla lineup_deadline.
-
-  Prendiamo l'ultima giornata il cui
-  termine formazione è già passato.
+  La giornata live è quella che resta
+  ATTUALE fino alla deadline della
+  giornata successiva.
 */
 
 const now = new Date();
 
-for(const md of allMatchdays){
+for(let i = 0; i < allMatchdays.length; i++){
 
-  const deadline =
-    md.lineup_deadline
-      ? new Date(md.lineup_deadline)
+  const current =
+    allMatchdays[i];
+
+  const next =
+    allMatchdays[i + 1];
+
+  /* Ultima giornata */
+  if(!next){
+
+    day =
+      Number(current.number);
+
+    break;
+
+  }
+
+  const nextDeadline =
+    next.lineup_deadline
+      ? new Date(next.lineup_deadline)
       : null;
 
   if(
-    deadline &&
-    deadline <= now
+    nextDeadline &&
+    Number.isFinite(nextDeadline.getTime()) &&
+    now < nextDeadline
   ){
 
-    day = Number(md.number);
+    day =
+      Number(current.number);
+
+    break;
 
   }
+
+}
+
+
+/* Sicurezza */
+if(!day){
+
+  day =
+    Number(
+      allMatchdays[0].number
+    );
 
 }
 
