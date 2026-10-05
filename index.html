@@ -2349,6 +2349,54 @@ nav button.nav-item[data-page="Admin"].active::after{
   min-width:0;
   box-sizing:border-box;
 }   
+
+/* =========================
+   ALLINEAMENTO CENTRALE
+========================= */
+
+.formation-slot,
+.formation-slot-player,
+.formation-slot-name,
+.formation-slot-firstname,
+.formation-slot-surname,
+.formation-slot-team,
+.formation-slot-score,
+.formation-slot-game,
+.formation-slot-empty{
+  text-align:center !important;
+}
+
+.formation-slot-player{
+  align-items:center !important;
+  justify-content:center !important;
+  width:100%;
+}
+
+.formation-slot-name{
+  align-items:center !important;
+  justify-content:center !important;
+  width:100%;
+}
+
+.formation-slot-firstname,
+.formation-slot-surname,
+.formation-slot-team{
+  width:100%;
+  text-align:center !important;
+}
+
+/* =========================
+   TOGLIE IL TRATTINO VIOLA
+========================= */
+
+.formation-slot{
+  border-left:none !important;
+}
+
+.formation-slot::before,
+.formation-slot::after{
+  display:none !important;
+}
    
 </style></head><body>
 <header><div><b>🏀 FantaBasket Orzi</b><div id="who" class="muted">Non autenticato</div></div><div id="authBtn"><button onclick="showAuth()">Accedi</button></div></header>
