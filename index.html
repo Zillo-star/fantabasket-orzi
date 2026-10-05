@@ -2452,6 +2452,39 @@ nav button.nav-item[data-page="Admin"].active::after{
   margin-left:auto !important;
   margin-right:auto !important;
 }
+
+/* =========================
+   CAMBIA GIOCATORE
+========================= */
+
+.formation-change-player{
+  border:0 !important;
+  background:transparent !important;
+  padding:3px 7px !important;
+  margin:5px auto 0 auto !important;
+
+  color:inherit !important;
+  opacity:.7;
+
+  font-size:10px !important;
+  font-weight:700;
+
+  border-radius:7px;
+
+  cursor:pointer;
+}
+
+.formation-change-player:hover{
+  opacity:1;
+  background:rgba(255,255,255,.08) !important;
+}
+
+/* quando compare la selezione */
+.formation-slot select{
+  width:100%;
+  text-align:center !important;
+  text-align-last:center !important;
+}
    
 </style></head><body>
 <header><div><b>🏀 FantaBasket Orzi</b><div id="who" class="muted">Non autenticato</div></div><div id="authBtn"><button onclick="showAuth()">Accedi</button></div></header>
@@ -5421,6 +5454,7 @@ function renderFormationSlot(
 
   let playerId="";
 
+
   if(type==="starter"){
 
     playerId =
@@ -5446,6 +5480,16 @@ function renderFormationSlot(
 
   const player =
     formationPlayer(playerId);
+
+
+  const editing =
+    !player ||
+    (
+      window.formationEditingSlot &&
+      window.formationEditingSlot.type===type &&
+      window.formationEditingSlot.index===index
+    );
+
 
   let body="";
 
@@ -5506,8 +5550,8 @@ function renderFormationSlot(
 
         ${
           type==="starter"
-          ? "Scegli giocatore"
-          : "Nessun giocatore"
+            ? "Scegli giocatore"
+            : "Scegli giocatore"
         }
 
       </div>
@@ -5517,21 +5561,18 @@ function renderFormationSlot(
   }
 
 
-  return `
+  let picker="";
 
-    <div
-      class="formation-slot"
-      data-real-team="${player?.players?.real_team_id || ""}"
-    >
 
-      ${body}
+  if(editing){
 
+    picker=`
 
       <select
         data-builder-type="${type}"
         data-builder-index="${index}"
         onchange="
-          formationSlotChanged(
+          formationChoosePlayer(
             '${type}',
             ${index},
             this.value
@@ -5550,6 +5591,42 @@ function renderFormationSlot(
 
       </select>
 
+    `;
+
+  }
+  else{
+
+    picker=`
+
+      <button
+        type="button"
+        class="formation-change-player"
+        onclick="
+          formationEditSlot(
+            '${type}',
+            ${index}
+          )
+        "
+      >
+        ↔ Cambia
+      </button>
+
+    `;
+
+  }
+
+
+  return `
+
+    <div
+      class="formation-slot"
+      data-real-team="${player?.players?.real_team_id || ""}"
+    >
+
+      ${body}
+
+      ${picker}
+
 
       ${
         player
@@ -5561,7 +5638,10 @@ function renderFormationSlot(
             onclick="
               formationCaptainChanged(
                 '${playerId}',
-                ${window.formationState.captain===playerId ? "false" : "true"}
+                ${window.formationState.captain===playerId
+                  ? "false"
+                  : "true"
+                }
               )
             "
           >
