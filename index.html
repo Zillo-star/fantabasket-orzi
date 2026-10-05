@@ -5572,6 +5572,67 @@ Object.keys(rows).forEach(row=>{
 });
 
 
+});
+
+
+/* =========================
+   SESTO UOMO + PANCHINA
+========================= */
+
+html+=`
+
+  </div>
+
+
+  <div class="formation-extra">
+
+    <div class="formation-extra-box">
+
+      <div class="formation-extra-title">
+        Sesto uomo · 100%
+      </div>
+
+      ${renderFormationSlot(
+        "sixth",
+        0,
+        null
+      )}
+
+    </div>
+
+
+    <div class="formation-extra-box">
+
+      <div class="formation-extra-title">
+        🪑 Panchina · 50%
+      </div>
+
+      <div class="formation-bench-grid">
+
+        ${[0,1,2,3]
+          .map(i =>
+            renderFormationSlot(
+              "bench",
+              i,
+              null
+            )
+          )
+          .join("")
+        }
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <div id="formationBuilderSummary">
+  </div>
+
+`;
+
+
   box.innerHTML=html;
 
 
