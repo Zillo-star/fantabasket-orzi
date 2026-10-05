@@ -4743,52 +4743,28 @@ async function lineup(){
   console.log("ROSA + SQUADRE:", r.data);
 
 /* =========================
-   GIORNATA CORRENTE
+   TROVA GIORNATA CORRENTE
 ========================= */
 
-/*
-  La giornata resta ATTUALE fino alla
-  scadenza della deadline della giornata
-  SUCCESSIVA.
+let currentDay=null;
 
-  Esempio:
-  - deadline G2 passata
-  - deadline G3 non ancora passata
-  => G2 resta ATTUALE
+for(let day of days){
 
-  Quando scade la deadline G3:
-  => G3 diventa ATTUALE
-*/
+  if(!day.lineup_open_at)
+    continue;
 
-let currentDay = null;
-
-const now = new Date();
-
-for(let i = 0; i < days.length; i++){
-
-  const current = days[i];
-  const next = days[i + 1];
-
-  /* Ultima giornata */
-  if(!next){
-
-    currentDay = current.number;
-    break;
-
-  }
-
-  const nextDeadline =
-    next.lineup_deadline
-      ? new Date(next.lineup_deadline)
-      : null;
+  let openDate =
+    new Date(day.lineup_open_at);
 
   if(
-    nextDeadline &&
-    Number.isFinite(nextDeadline.getTime()) &&
-    now < nextDeadline
+    Number.isFinite(openDate.getTime()) &&
+    Date.now() >= openDate.getTime()
   ){
 
-    currentDay = current.number;
+    currentDay=day.number;
+
+  }else{
+
     break;
 
   }
@@ -4796,11 +4772,16 @@ for(let i = 0; i < days.length; i++){
 }
 
 
-/* Sicurezza */
-if(currentDay === null && days.length){
+/*
+  La giornata 1 non ha lineup_open_at:
+  prima dell'apertura della giornata 2
+  deve comunque essere quella attuale.
+*/
 
-  currentDay =
-    days[days.length - 1].number;
+if(currentDay===null && days.length){
+
+  currentDay=
+    days[0].number;
 
 }
 
