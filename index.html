@@ -5331,13 +5331,13 @@ function renderFormationSlot(
 
         <div class="formation-slot-name">
 
-          <b class="formation-slot-firstname">
+          <div class="formation-slot-firstname">
             ${firstName}
-          </b>
+          </div>
 
-          <b class="formation-slot-surname">
+          <div class="formation-slot-surname">
             ${surname}
-          </b>
+          </div>
 
           <div class="formation-slot-team">
             ${team}
@@ -5355,6 +5355,13 @@ function renderFormationSlot(
 
       </div>
 
+
+      <div
+        class="formation-slot-game"
+        data-game-player="${player.player_id}"
+      >
+        🏀 Caricamento partita...
+      </div>
 
     `;
 
@@ -5417,30 +5424,24 @@ function renderFormationSlot(
         player
         ? `
 
-          <div class="formation-slot-captain">
+          <button
+            type="button"
+            class="formation-slot-captain"
+            onclick="
+              formationCaptainChanged(
+                '${playerId}',
+                ${window.formationState.captain===playerId ? "false" : "true"}
+              )
+            "
+          >
 
-            <label>
+            ${
+              window.formationState.captain===playerId
+                ? "👑 C"
+                : "♔ C"
+            }
 
-              <input
-                type="checkbox"
-                ${
-                  window.formationState.captain===playerId
-                    ? "checked"
-                    : ""
-                }
-                onchange="
-                  formationCaptainChanged(
-                    '${playerId}',
-                    this.checked
-                  )
-                "
-              >
-
-              👑 Capitano
-
-            </label>
-
-          </div>
+          </button>
 
         `
         : ""
@@ -5451,7 +5452,6 @@ function renderFormationSlot(
   `;
 
 }
-
 
 /* =========================================================
    RENDER BUILDER
