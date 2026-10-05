@@ -4742,40 +4742,67 @@ async function lineup(){
 
   console.log("ROSA + SQUADRE:", r.data);
 
-  /* =========================
-     GIORNATA CORRENTE
-     IN BASE ALL'APERTURA
-  ========================= */
+/* =========================
+   GIORNATA CORRENTE
+========================= */
 
-  let now = new Date();
+/*
+  La giornata resta ATTUALE fino alla
+  scadenza della deadline della giornata
+  SUCCESSIVA.
 
-  let currentDay = null;
+  Esempio:
+  - deadline G2 passata
+  - deadline G3 non ancora passata
+  => G2 resta ATTUALE
 
-  for(let day of days){
+  Quando scade la deadline G3:
+  => G3 diventa ATTUALE
+*/
 
-    let openAt =
-      day.lineup_open_at
-        ? new Date(day.lineup_open_at)
-        : null;
+let currentDay = null;
 
-    let deadline =
-      day.lineup_deadline
-        ? new Date(day.lineup_deadline)
-        : null;
+const now = new Date();
 
-    if(
-      openAt &&
-      deadline &&
-      now >= openAt &&
-      now < deadline
-    ){
+for(let i = 0; i < days.length; i++){
 
-      currentDay = Number(day.number);
-      break;
+  const current = days[i];
+  const next = days[i + 1];
 
-    }
+  /* Ultima giornata */
+  if(!next){
+
+    currentDay = current.number;
+    break;
 
   }
+
+  const nextDeadline =
+    next.lineup_deadline
+      ? new Date(next.lineup_deadline)
+      : null;
+
+  if(
+    nextDeadline &&
+    Number.isFinite(nextDeadline.getTime()) &&
+    now < nextDeadline
+  ){
+
+    currentDay = current.number;
+    break;
+
+  }
+
+}
+
+
+/* Sicurezza */
+if(currentDay === null && days.length){
+
+  currentDay =
+    days[days.length - 1].number;
+
+}
 
 
   /* =========================
