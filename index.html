@@ -6054,10 +6054,7 @@ function formationSlotChanged(
    CAMBIO CAPITANO
 ========================================================= */
 
-function formationCaptainChanged(
-  playerId,
-  checked
-){
+function formationCaptainChanged(playerId, checked){
 
   if(checked){
 
@@ -6065,23 +6062,27 @@ function formationCaptainChanged(
       playerId;
 
   }
-  else if(
-    String(
-      window.formationState.captain
-    ) ===
-    String(playerId)
-  ){
+  else{
 
-    window.formationState.captain =
-      "";
+    if(
+      window.formationState.captain === playerId
+    ){
+
+      window.formationState.captain = "";
+
+    }
 
   }
 
 
   renderFormationBuilder();
 
-}
 
+  setTimeout(()=>{
+    loadPlayerGames();
+  },50);
+
+}
 
 /* =========================================================
    RIEPILOGO
