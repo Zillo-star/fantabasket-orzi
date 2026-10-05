@@ -5171,7 +5171,57 @@ function formationChoosePlayer(
     loadPlayerGames();
   },50);
 
-}   
+} 
+
+function formationRemovePlayer(type,index){
+
+  let playerId="";
+
+  if(type==="starter"){
+
+    playerId =
+      window.formationState.starters[index] || "";
+
+    window.formationState.starters[index] = "";
+
+  }
+  else if(type==="sixth"){
+
+    playerId =
+      window.formationState.sixth || "";
+
+    window.formationState.sixth = "";
+
+  }
+  else{
+
+    playerId =
+      window.formationState.bench[index] || "";
+
+    window.formationState.bench[index] = "";
+
+  }
+
+
+  /* se era il capitano, lo tolgo */
+  if(
+    playerId &&
+    window.formationState.captain === playerId
+  ){
+
+    window.formationState.captain = "";
+
+  }
+
+
+  renderFormationBuilder();
+
+
+  setTimeout(()=>{
+    loadPlayerGames();
+  },50);
+
+}
 
 /* =========================================================
    MODULI
