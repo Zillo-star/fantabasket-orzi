@@ -5252,10 +5252,59 @@ function renderFormationSlot(
     formationPlayer(playerId);
 
 
-  const slotLabel =
-    type==="sixth"
-      ? "6° UOMO"
-      : "";
+  let gridStyle="";
+
+  /* =========================
+     LARGHEZZA TITOLARI
+  ========================= */
+
+  if(type==="starter"){
+
+    const module =
+      window.formationState.module;
+
+    const positions =
+      formationSlotPositions[module] || [];
+
+    const current =
+      positions[index];
+
+    if(current){
+
+      const row =
+        current[0];
+
+      const sameRow =
+        positions
+          .map((p,i)=>({
+            row:p[0],
+            col:p[1],
+            index:i
+          }))
+          .filter(x=>x.row===row)
+          .sort((a,b)=>a.col-b.col);
+
+      const count =
+        sameRow.length;
+
+      const rank =
+        sameRow.findIndex(
+          x=>x.index===index
+        );
+
+      const span =
+        6 / count;
+
+      const start =
+        1 + (rank * span);
+
+      gridStyle =
+        `
+          grid-row:${row};
+          grid-column:${start} / span ${span};
+        `;
+    }
+  }
 
 
   let body="";
@@ -5263,14 +5312,13 @@ function renderFormationSlot(
 
   if(player){
 
-    const name =
-      [
-        player.players?.name,
-        player.players?.surname
-      ]
-      .filter(Boolean)
-      .join(" ");
+    const firstName =
+      player.players?.name ||
+      "";
 
+    const surname =
+      player.players?.surname ||
+      "";
 
     const team =
       player.players?.real_teams?.name ||
@@ -5283,8 +5331,12 @@ function renderFormationSlot(
 
         <div class="formation-slot-name">
 
-          <b>
-            ${name}
+          <b class="formation-slot-firstname">
+            ${firstName}
+          </b>
+
+          <b class="formation-slot-surname">
+            ${surname}
           </b>
 
           <div class="formation-slot-team">
@@ -5303,22 +5355,6 @@ function renderFormationSlot(
 
       </div>
 
-
-      <div
-        class="formation-slot-game"
-        data-game-player="${player.player_id}"
-      >
-        🏀 Caricamento partita...
-      </div>
-
-
-      <div
-        class="formation-slot"
-        style="
-          display:none;
-        "
-        data-real-team="${player.players?.real_team_id || ""}"
-      ></div>
 
     `;
 
@@ -5347,17 +5383,8 @@ function renderFormationSlot(
     <div
       class="formation-slot"
       data-real-team="${player?.players?.real_team_id || ""}"
+      style="${gridStyle}"
     >
-
-      ${
-        slotLabel
-        ? `
-          <div class="formation-slot-label">
-            ${slotLabel}
-          </div>
-        `
-        : ""
-      }
 
       ${body}
 
@@ -5396,9 +5423,10 @@ function renderFormationSlot(
 
               <input
                 type="checkbox"
-                ${window.formationState.captain===playerId
-                  ?"checked"
-                  :""
+                ${
+                  window.formationState.captain===playerId
+                    ? "checked"
+                    : ""
                 }
                 onchange="
                   formationCaptainChanged(
