@@ -5532,13 +5532,8 @@ function renderFormationSlot(
     formationPlayer(playerId);
 
 
-  const editing =
-    !player ||
-    (
-      window.formationEditingSlot &&
-      window.formationEditingSlot.type===type &&
-      window.formationEditingSlot.index===index
-    );
+const editing =
+  !player;
 
 
   let body="";
