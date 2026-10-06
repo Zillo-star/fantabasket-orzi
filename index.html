@@ -5748,6 +5748,85 @@ function renderFormationSlot(
   `;
 
 }
+
+function renderOutPlayers(){
+
+  const selectedIds =
+    new Set([
+      ...(window.formationState.starters || []),
+      window.formationState.sixth || "",
+      ...(window.formationState.bench || [])
+    ].filter(Boolean));
+
+
+  const outPlayers =
+    (window.currentRosterPlayers || [])
+      .filter(p =>
+        !selectedIds.has(p.player_id)
+      );
+
+
+  if(!outPlayers.length){
+
+    return `
+      <div class="formation-out-empty">
+        Nessun giocatore fuori
+      </div>
+    `;
+
+  }
+
+
+  return outPlayers.map(player=>{
+
+    const name =
+      player.players?.name || "";
+
+    const surname =
+      player.players?.surname || "";
+
+    const team =
+      player.players?.real_teams?.name ||
+      "Squadra";
+
+
+    return `
+
+      <div
+        class="formation-out-player"
+        data-out-player="${player.player_id}"
+      >
+
+        <div class="formation-out-name">
+
+          <span>
+            ${name}
+          </span>
+
+          <span>
+            ${surname}
+          </span>
+
+        </div>
+
+        <div class="formation-out-team">
+          ${team}
+        </div>
+
+        <div
+          class="formation-out-game"
+          data-game-player="${player.player_id}"
+        >
+          🏀 Caricamento partita...
+        </div>
+
+      </div>
+
+    `;
+
+  }).join("");
+
+}   
    
 /* =========================================================
    RENDER BUILDER
