@@ -10898,276 +10898,408 @@ async function saveLineup(){
   let select=el("day");
 
   if(!select)
-    return message(
-      "Seleziona una giornata.",
-      "err"
-    );
+    return;
 
-  let selected=
-    select.options[select.selectedIndex];
+
+  let selected=select.options[select.selectedIndex];
 
   if(!selected)
+    return;
+
+
+  let matchdayId=selected.value;
+  let matchdayNumber=Number(selected.dataset.number);
+
+
+  /* =========================
+     CONTROLLO GIORNATA
+  ========================= */
+
+  if(
+    matchdayNumber === window.currentLineupDay
+  ){
+
+    if(
+      window.lineupLocked ||
+      (
+        window.lineupDeadlines?.[matchdayNumber] &&
+        new Date() >=
+        new Date(
+          window.lineupDeadlines[matchdayNumber]
+        )
+      )
+    ){
+
+      return message(
+        "La formazione è bloccata",
+        "err"
+      );
+
+    }
+
+  }
+
+
+  /* =========================
+     STATO FORMAZIONE
+  ========================= */
+
+  const state =
+    window.formationState;
+
+
+  if(!state){
+
     return message(
-      "Seleziona una giornata.",
+      "Formazione non disponibile",
       "err"
     );
 
-let matchdayId=selected.value;
+  }
 
-let matchdayNumber=
-  Number(selected.dataset.number);
 
-console.log("SAVE MATCHDAY ID:",matchdayId);
-console.log(
-  "SAVE MATCHDAY NUMBER:",
-  matchdayNumber
-);
+  const starters =
+    (state.starters || [])
+      .filter(Boolean);
 
-/*
-  La giornata deve avere l'UUID.
-*/
+  const sixth =
+    state.sixth || "";
 
-if(!matchdayId)
-  return message(
-    "ID giornata non valido.",
-    "err"
-  );
+  const bench =
+    (state.bench || [])
+      .filter(Boolean);
 
-  /*
-    Controlla apertura e deadline della giornata.
-  */
+  const captain =
+    state.captain || "";
 
-  let mdCheck = await db
-    .from("matchdays")
-    .select(`
-      lineup_open_at,
-      lineup_deadline
-    `)
-    .eq("id",matchdayId)
-    .single();
 
-  if(mdCheck.error)
+  /* =========================
+     5 TITOLARI
+  ========================= */
+
+  if(starters.length !== 5){
+
     return message(
-      mdCheck.error.message,
+      "Devi scegliere 5 titolari",
       "err"
     );
 
-  let openAt =
-    mdCheck.data?.lineup_open_at
-      ? new Date(mdCheck.data.lineup_open_at)
-      : null;
+  }
 
-  let deadline =
-    mdCheck.data?.lineup_deadline
-      ? new Date(mdCheck.data.lineup_deadline)
-      : null;
 
-  let now = new Date();
+  /* =========================
+     SESTO UOMO
+  ========================= */
 
-  if(!openAt)
+  if(!sixth){
+
     return message(
-      "Apertura formazione non disponibile per questa giornata.",
+      "Devi scegliere il sesto uomo",
       "err"
     );
 
-  if(now < openAt)
+  }
+
+
+  /* =========================
+     4 PANCHINARI
+  ========================= */
+
+  if(bench.length !== 4){
+
     return message(
-      "La formazione per questa giornata non è ancora aperta.",
+      "Devi scegliere 4 panchinari",
       "err"
     );
 
-  if(deadline && now >= deadline)
-    return message(
-      "La deadline per questa giornata è scaduta. La formazione non può più essere modificata.",
-      "err"
-    );
-  let selects=[
-    ...document.querySelectorAll(
-      "#lp select[data-p]"
-    )
+  }
+
+
+  /* =========================
+     NESSUN DOPPIONE
+  ========================= */
+
+  const selectedIds = [
+    ...starters,
+    sixth,
+    ...bench
   ];
 
-  if(selects.length!==13)
+  const uniqueIds =
+    new Set(selectedIds);
+
+  if(
+    uniqueIds.size !== 10
+  ){
+
     return message(
-      "La rosa deve avere 13 giocatori.",
+      "Non puoi selezionare due volte lo stesso giocatore",
       "err"
     );
 
-  let starters=
-    selects.filter(
-      s=>s.value==="starter"
-    );
+  }
 
-  let sixth=
-    selects.filter(
-      s=>s.value==="sixth"
-    );
 
-  let bench=
-    selects.filter(
-      s=>s.value==="bench"
-    );
+  /* =========================
+     CAPITANO
+  ========================= */
 
-  let out=
-    selects.filter(
-      s=>s.value==="out"
-    );
+  if(
+    !captain ||
+    !uniqueIds.has(captain)
+  ){
 
-  if(starters.length!==5)
     return message(
-      "Devi avere 5 titolari.",
+      "Devi scegliere un capitano",
       "err"
     );
 
-  if(sixth.length!==1)
+  }
+
+
+  /* =========================
+     CONTROLLO MASSIMO 2
+     DELLA STESSA SQUADRA
+  ========================= */
+
+  const teamCounts={};
+
+
+  selectedIds.forEach(playerId=>{
+
+    const player =
+      formationPlayer(playerId);
+
+    const teamId =
+      player?.players?.real_team_id || "";
+
+
+    if(!teamId)
+      return;
+
+
+    teamCounts[teamId] =
+      (teamCounts[teamId] || 0) + 1;
+
+  });
+
+
+  for(
+    const teamId in teamCounts
+  ){
+
+    if(
+      teamCounts[teamId] > 2
+    ){
+
+      return message(
+        "Non puoi avere più di 2 giocatori della stessa squadra",
+        "err"
+      );
+
+    }
+
+  }
+
+
+  /* =========================
+     CONTROLLO MODULO
+  ========================= */
+
+  const modulePositions =
+    formationModules[state.module];
+
+  if(
+    !modulePositions ||
+    modulePositions.length !== 5
+  ){
+
     return message(
-      "Devi avere 1 sesto uomo.",
+      "Modulo non valido",
       "err"
     );
 
-  if(bench.length!==4)
-    return message(
-      "Devi avere 4 panchinari.",
-      "err"
-    );
+  }
 
-  if(out.length!==3)
-    return message(
-      "Devi avere 3 giocatori fuori.",
-      "err"
-    );
 
-  let g=
-    starters.filter(
-      s=>s.dataset.pos==="G"
-    ).length;
+  for(let i=0;i<5;i++){
 
-  let a=
-    starters.filter(
-      s=>s.dataset.pos==="A"
-    ).length;
+    const player =
+      formationPlayer(starters[i]);
 
-  let c=
-    starters.filter(
-      s=>s.dataset.pos==="C"
-    ).length;
+    const expected =
+      modulePositions[i];
 
-let moduloValido=
-  (g===2&&a===2&&c===1) ||
-  (g===1&&a===3&&c===1) ||
-  (g===1&&a===2&&c===2) ||
-  (g===2&&a===1&&c===2) ||
-  (g===3&&a===1&&c===1);
+    const actual =
+      player?.players?.position;
 
-if(!moduloValido)
-  return message(
-    "Modulo non valido. Moduli consentiti: 2G-2A-1C, 1G-3A-1C, 1G-2A-2C, 2G-1A-2C, 3G-1A-1C.",
-    "err"
-  );
 
-  let captains=[
-    ...document.querySelectorAll(
-      'input[data-captain]:checked'
-    )
-  ];
+    if(
+      actual !== expected
+    ){
 
-  if(captains.length!==1)
-    return message(
-      "Devi scegliere un capitano.",
-      "err"
-    );
+      return message(
+        "I ruoli dei titolari non corrispondono al modulo",
+        "err"
+      );
 
-  let captainId=
-    captains[0].dataset.captain;
+    }
 
-  /*
-    Cerca la formazione esistente.
-  */
+  }
 
-  let old=await db.from("lineups")
-    .select("id")
-    .eq("manager_id",me.id)
-    .eq("matchday_id",matchdayId)
-    .maybeSingle();
 
-  if(old.error)
+  /* =========================
+     TROVA / CREA LINEUP
+  ========================= */
+
+  let old =
+    await db
+      .from("lineups")
+      .select("id")
+      .eq("manager_id",me.id)
+      .eq("matchday_id",matchdayId)
+      .maybeSingle();
+
+
+  if(old.error){
+
     return message(
       old.error.message,
       "err"
     );
 
-  let lid=old.data?.id;
+  }
 
-  /*
-    Se non esiste, la crea.
-  */
 
-  if(!lid){
+  let lineupId =
+    old.data?.id || "";
 
-    let x=await db.from("lineups")
-      .insert({
-        manager_id:me.id,
-        matchday_id:matchdayId
-      })
-      .select("id")
-      .single();
 
-    if(x.error)
+  if(!lineupId){
+
+    let created =
+      await db
+        .from("lineups")
+        .insert({
+          manager_id:me.id,
+          matchday_id:matchdayId
+        })
+        .select("id")
+        .single();
+
+
+    if(created.error){
+
       return message(
-        x.error.message,
+        created.error.message,
         "err"
       );
 
-    lid=x.data.id;
+    }
+
+
+    lineupId =
+      created.data.id;
 
   }
 
-  /*
-    Cancella i giocatori precedenti.
-  */
 
-  let d=await db.from("lineup_players")
-    .delete()
-    .eq("lineup_id",lid);
+  /* =========================
+     CANCELLA VECCHIA FORMAZIONE
+  ========================= */
 
-  if(d.error)
+  let deleted =
+    await db
+      .from("lineup_players")
+      .delete()
+      .eq("lineup_id",lineupId);
+
+
+  if(deleted.error){
+
     return message(
-      d.error.message,
+      deleted.error.message,
       "err"
     );
 
-  /*
-    Inserisce la formazione aggiornata.
-  */
+  }
 
-  let vals=selects.map(s=>({
 
-    lineup_id:lid,
-    player_id:s.dataset.p,
-    role:s.value,
-    captain:s.dataset.p===captainId
+  /* =========================
+     COSTRUISCE I 13
+  ========================= */
 
-  }));
+  const roles={};
 
-  let x=await db.from("lineup_players")
-    .insert(vals);
 
-  if(x.error)
+  starters.forEach(
+    playerId=>{
+      roles[playerId]="starter";
+    }
+  );
+
+
+  roles[sixth]="sixth";
+
+
+  bench.forEach(
+    playerId=>{
+      roles[playerId]="bench";
+    }
+  );
+
+
+  /* tutti gli altri della rosa = OUT */
+
+  const values =
+    (window.currentRosterPlayers || [])
+      .map(row=>{
+
+        const playerId =
+          row.player_id;
+
+        return {
+          lineup_id:lineupId,
+          player_id:playerId,
+          role:roles[playerId] || "out",
+          captain:
+            playerId===captain
+        };
+
+      });
+
+
+  if(values.length !== 13){
+
     return message(
-      x.error.message,
+      "La rosa deve avere 13 giocatori",
       "err"
     );
+
+  }
+
+
+  let inserted =
+    await db
+      .from("lineup_players")
+      .insert(values);
+
+
+  if(inserted.error){
+
+    return message(
+      inserted.error.message,
+      "err"
+    );
+
+  }
+
 
   message(
-    "Formazione salvata correttamente.",
+    "✅ Formazione salvata",
     "ok"
   );
 
-  /*
-    Ricarica la formazione dal database,
-    così la schermata rappresenta
-    esattamente ciò che è stato salvato.
-  */
 
   await loadSavedLineup();
 
