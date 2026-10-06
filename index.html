@@ -10913,35 +10913,23 @@ function playerRow(x){
 }
 
 
-  let html=`
+let html = "";
 
-    <h3 style="margin-top:0">
-      🏀 Formazione attuale
-    </h3>
-
-  `;
+const saved =
+  window.formationSaved === true;
 
 
-  if(modulo){
-
-    html+=`
-      <div style="
-        margin-bottom:12px;
-        font-size:16px;
-      ">
-        <b>Modulo: ${modulo}</b>
+html += saved
+  ? `
+      <div class="formation-status-pill formation-status-saved">
+        🟢 Formazione già salvata
       </div>
+    `
+  : `
+      <div class="formation-status-pill formation-status-missing">
+        🔴 Formazione non inserita
+    </div>
     `;
-
-  }else{
-
-    html+=`
-      <div class="muted" style="margin-bottom:12px;">
-        Modulo non ancora completo.
-      </div>
-    `;
-
-  }
 
 
   if(groups.starter.length){
