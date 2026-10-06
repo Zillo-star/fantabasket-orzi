@@ -9876,11 +9876,15 @@ console.log("PARTITE GIORNATA:", games.data);
 let playerCard =
   box.closest(".formation-slot");
 
-if(!playerCard)
-  return;
+let outPlayer =
+  box.closest(".formation-out-player");
+
 
 let teamId =
-  playerCard.dataset.realTeam;
+  playerCard?.dataset.realTeam ||
+  outPlayer?.dataset.realTeam ||
+  "";
+
 
 if(!teamId)
   return;
