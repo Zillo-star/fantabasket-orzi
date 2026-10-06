@@ -2665,6 +2665,11 @@ nav button.nav-item[data-page="Admin"].active::after{
   }
 
 }
+
+.formation-out-box{
+  grid-column:1 / -1 !important;
+  width:100% !important;
+}
    
 </style></head><body>
 <header><div><b>🏀 FantaBasket Orzi</b><div id="who" class="muted">Non autenticato</div></div><div id="authBtn"><button onclick="showAuth()">Accedi</button></div></header>
@@ -10192,46 +10197,97 @@ setTimeout(()=>{
     module="2G-2A-1C";
 
 
-  window.formationState = {
+/* =========================
+   ORDINE CORRETTO TITOLARI
+   C → A → G
+========================= */
 
-    module,
+let orderedStarters = [];
 
-    starters:
-      starters
-        .slice(0,5)
-        .map(
-          x => String(x.player_id)
-        )
-        .concat(
-          ["","","","",""]
-        )
-        .slice(0,5),
+let remainingStarters =
+  [...starters];
 
-    sixth:
-      sixth
-        ? String(sixth.player_id)
-        : "",
 
-    bench:
-      bench
-        .slice(0,4)
-        .map(
-          x => String(x.player_id)
-        )
-        .concat(
-          ["","","",""]
-        )
-        .slice(0,4),
+const modulePositions =
+  formationModules[module] || [];
 
-    captain:
-      (
-        rows.find(
-          x => x.captain === true
-        )?.player_id
-        || ""
+
+modulePositions.forEach(position=>{
+
+  const foundIndex =
+    remainingStarters.findIndex(row=>{
+
+      const player =
+        formationPlayer(
+          String(row.player_id)
+        );
+
+      return (
+        player?.players?.position === position
+      );
+
+    });
+
+
+  if(foundIndex >= 0){
+
+    orderedStarters.push(
+      String(
+        remainingStarters[foundIndex].player_id
       )
+    );
 
-  };
+    remainingStarters.splice(
+      foundIndex,
+      1
+    );
+
+  }
+  else{
+
+    orderedStarters.push("");
+
+  }
+
+});
+
+
+window.formationState = {
+
+  module,
+
+  starters:
+    orderedStarters
+      .concat(
+        ["","","","",""]
+      )
+      .slice(0,5),
+
+  sixth:
+    sixth
+      ? String(sixth.player_id)
+      : "",
+
+  bench:
+    bench
+      .slice(0,4)
+      .map(
+        x => String(x.player_id)
+      )
+      .concat(
+        ["","","",""]
+      )
+      .slice(0,4),
+
+  captain:
+    String(
+      rows.find(
+        x => x.captain === true
+      )?.player_id
+      || ""
+    )
+
+};
 
 
   /* =========================
