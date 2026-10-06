@@ -2542,6 +2542,57 @@ nav button.nav-item[data-page="Admin"].active::after{
   overflow:visible !important;
   border-radius:0 !important;
 }   
+
+/* =========================
+   GIOCATORI FUORI
+========================= */
+
+.formation-out-list{
+  width:100%;
+  display:flex;
+  flex-direction:column;
+}
+
+.formation-out-player{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+
+  padding:7px 4px;
+
+  border-bottom:1px solid rgba(255,255,255,.07);
+
+  font-size:11px;
+  text-align:center;
+}
+
+.formation-out-player:last-child{
+  border-bottom:0;
+}
+
+.formation-out-name{
+  display:flex;
+  gap:4px;
+  justify-content:center;
+  font-weight:700;
+}
+
+.formation-out-team{
+  opacity:.7;
+}
+
+.formation-out-game{
+  opacity:.75;
+}
+
+.formation-out-empty{
+  text-align:center;
+  opacity:.6;
+  font-size:11px;
+  padding:8px;
+}   
    
 </style></head><body>
 <header><div><b>🏀 FantaBasket Orzi</b><div id="who" class="muted">Non autenticato</div></div><div id="authBtn"><button onclick="showAuth()">Accedi</button></div></header>
