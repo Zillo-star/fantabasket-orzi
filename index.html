@@ -5843,10 +5843,11 @@ function renderOutPlayers(){
 
     return `
 
-      <div
-        class="formation-out-player"
-        data-out-player="${player.player_id}"
-      >
+<div
+  class="formation-out-player"
+  data-out-player="${player.player_id}"
+  data-real-team="${player.players?.real_team_id || ""}"
+>
 
         <div class="formation-out-name">
 
