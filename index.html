@@ -5896,13 +5896,8 @@ function renderFormationBuilder(){
   const module =
     window.formationState.module;
 
-
   const positions =
-    formationModules[module];
-
-
-  const coords =
-    formationSlotPositions[module];
+    formationModules[module] || [];
 
 
   let html=`
@@ -5932,8 +5927,8 @@ function renderFormationBuilder(){
       <option
         value="${m}"
         ${m===module
-          ?"selected"
-          :""
+          ? "selected"
+          : ""
         }
       >
         ${m}
@@ -5944,7 +5939,7 @@ function renderFormationBuilder(){
   });
 
 
-html+=`
+  html+=`
 
       </select>
 
@@ -5953,80 +5948,61 @@ html+=`
 
     <div class="formation-extra-box formation-starters-box">
 
-<div class="formation-extra-box formation-starters-box">
-
-  <div class="formation-extra-title">
-    🔥 Titolari · 100%
-  </div>
-
-  <div class="formation-court">
-
-  `;
+      <div class="formation-extra-title">
+        🔥 Titolari · 100%
+      </div>
 
 
-const rows = {
-  1: [],
-  2: [],
-  3: []
-};
-
-
-positions.forEach(
-  (position,index)=>{
-
-    const [
-      row,
-      column
-    ] =
-      coords[index];
-
-    rows[row].push({
-      position,
-      index,
-      column
-    });
-
-  }
-);
-
-
-Object.keys(rows).forEach(row=>{
-
-  const players =
-    rows[row]
-      .sort((a,b)=>a.column-b.column);
-
-
-  if(!players.length)
-    return;
-
-
-  html+=`
-
-    <div
-      class="formation-court-row"
-      style="
-        grid-row:${row};
-        grid-column:1 / -1;
-      "
-    >
+      <div class="formation-court">
 
   `;
 
 
-  players.forEach(item=>{
+  /* =========================
+     3 RIGHE FISSE:
+     CENTRI
+     ALI
+     GUARDIE
+  ========================= */
+
+  ["C","A","G"].forEach(role=>{
+
+    const rowPlayers =
+      positions
+        .map((position,index)=>({
+          position,
+          index
+        }))
+        .filter(x=>x.position===role);
+
 
     html+=`
 
-      <div
-        class="formation-court-player"
-      >
+      <div class="formation-court-row">
 
-        ${renderFormationSlot(
-          "starter",
-          item.index,
-          item.position
-        )}
+    `;
+
+
+    rowPlayers.forEach(item=>{
+
+      html+=`
+
+        <div class="formation-court-player">
+
+          ${renderFormationSlot(
+            "starter",
+            item.index,
+            item.position
+          )}
+
+        </div>
+
+      `;
+
+    });
+
+
+    html+=`
 
       </div>
 
@@ -6037,93 +6013,87 @@ Object.keys(rows).forEach(row=>{
 
   html+=`
 
+      </div>
+
+    </div>
+
+
+    <div class="formation-extra">
+
+      <div class="formation-extra-box">
+
+        <div class="formation-extra-title">
+          6️⃣ Sesto uomo · 100%
+        </div>
+
+        ${renderFormationSlot(
+          "sixth",
+          0,
+          null
+        )}
+
+      </div>
+
+
+      <div class="formation-extra-box">
+
+        <div class="formation-extra-title">
+          🪑 Panchina · 50%
+        </div>
+
+        <div class="formation-bench-grid">
+
+          ${[0,1,2,3]
+            .map(i =>
+              renderFormationSlot(
+                "bench",
+                i,
+                null
+              )
+            )
+            .join("")
+          }
+
+        </div>
+
+      </div>
+
+
+      <div class="formation-extra-box formation-out-box">
+
+        <div class="formation-extra-title">
+          🚫 Fuori
+        </div>
+
+        <div class="formation-out-list">
+
+          ${renderOutPlayers()}
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div id="formationBuilderSummary">
     </div>
 
   `;
 
-});
+
+  box.innerHTML=html;
 
 
-/* =========================
-   CHIUSURA CAMPO
-========================= */
-
-html+=`
-
-  </div>
-
-  </div>
+  updateLineupSummary();
 
 
-  <div class="formation-extra">
-
-    <div class="formation-extra-box">
-
-      <div class="formation-extra-title">
-        6️⃣ Sesto uomo · 100%
-      </div>
-
-      ${renderFormationSlot(
-        "sixth",
-        0,
-        null
-      )}
-
-    </div>
-
-
-    <div class="formation-extra-box">
-
-      <div class="formation-extra-title">
-        🪑 Panchina · 50%
-      </div>
-
-      <div class="formation-bench-grid">
-
-        ${[0,1,2,3]
-          .map(i =>
-            renderFormationSlot(
-              "bench",
-              i,
-              null
-            )
-          )
-          .join("")
-        }
-
-      </div>
-
-    </div>
-
-  </div>
-
-<div class="formation-extra-box formation-out-box">
-
-  <div class="formation-extra-title">
-    🚫 Fuori
-  </div>
-
-  <div class="formation-out-list">
-
-    ${renderOutPlayers()}
-
-  </div>
-
-</div>
-
-  <div id="formationBuilderSummary">
-  </div>
-
-`;
-
-
-box.innerHTML=html;
-
-
-updateLineupSummary();
+  /* carica subito avversarie */
+  setTimeout(()=>{
+    loadPlayerGames();
+  },100);
 
 }
-
 
 /* =========================================================
    CAMBIO MODULO
