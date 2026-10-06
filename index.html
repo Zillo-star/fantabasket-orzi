@@ -2512,16 +2512,36 @@ nav button.nav-item[data-page="Admin"].active::after{
 
 }
 
-.formation-court-wrapper{
-  border-radius:18px;
-  overflow:hidden;
+/* =========================
+   TITOLARI COME GLI ALTRI RIQUADRI
+========================= */
+
+.formation-starters-box{
+  width:100%;
+  box-sizing:border-box;
 }
 
-.formation-court-wrapper .formation-extra-title{
-  text-align:center;
-  padding:10px 12px 4px;
-  margin:0;
+.formation-starters-box .formation-court{
+  border:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  border-radius:0 !important;
+  margin:0 !important;
 }
+
+.formation-starters-box .formation-extra-title{
+  text-align:center;
+  margin:0 0 8px 0;
+}
+
+/* neutralizza il vecchio wrapper senza doverlo cancellare */
+.formation-court-wrapper{
+  border:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  overflow:visible !important;
+  border-radius:0 !important;
+}   
    
 </style></head><body>
 <header><div><b>🏀 FantaBasket Orzi</b><div id="who" class="muted">Non autenticato</div></div><div id="authBtn"><button onclick="showAuth()">Accedi</button></div></header>
