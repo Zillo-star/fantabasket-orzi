@@ -10047,6 +10047,10 @@ async function loadSavedLineup(){
 
       updateLineupLock(null);
 
+setTimeout(()=>{
+  loadPlayerGames();
+},100);
+       
     }
 
     return;
