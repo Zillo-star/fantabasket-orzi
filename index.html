@@ -10606,7 +10606,12 @@ window.liveFantasyTimer =
       await window.loadLiveFantasyScores();
 
     }
-
+if(
+  typeof refreshDashboardFantasyTotal ===
+  "function"
+){
+  await refreshDashboardFantasyTotal();
+}
     /*
       Aggiorna automaticamente le schermate
       che mostrano i risultati.
