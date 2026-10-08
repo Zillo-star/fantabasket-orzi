@@ -10645,6 +10645,46 @@ window.liveFantasyTimer =
       await window.loadLiveFantasyScores();
 
     }
+
+window.liveFantasyTimer =
+  setInterval(async ()=>{
+
+    if(
+      typeof window.loadLiveFantasyScores ===
+      "function"
+    ){
+
+      await window.loadLiveFantasyScores();
+
+    }
+
+    const isCalendarPage =
+      [...document.querySelectorAll("#content h2")]
+        .some(
+          h =>
+            h.textContent.trim() ===
+            "🏀 Calendario"
+        );
+
+    if(isCalendarPage){
+
+      try{
+
+        await calendar();
+
+      }catch(e){
+
+        console.error(
+          "Errore refresh calendario:",
+          e
+        );
+
+      }
+
+    }
+
+  },20000);     
+     
 if(
   typeof refreshDashboardFantasyTotal ===
   "function"
