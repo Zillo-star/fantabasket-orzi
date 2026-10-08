@@ -8132,7 +8132,26 @@ ctx.playerToGame[
 };
 
 window.livePlayerToGame =
-  ctx.playerToGame;
+  window.livePlayerToGame || {};
+
+for(
+  const [playerId,data]
+  of Object.entries(
+    ctx.playerToGame
+  )
+){
+
+  const dayId =
+    data.realGame?.matchday_id;
+
+  if(!dayId)
+    continue;
+
+  window.livePlayerToGame[
+    `${playerId}_${dayId}`
+  ] = data;
+
+}
            
         }
 
