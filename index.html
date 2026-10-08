@@ -16551,6 +16551,22 @@ if(coaches.error)return message(coaches.error.message,"err");
 let html=`
 
 <div class="card">
+
+<h2>📅 Calendario reale</h2>
+
+<p class="muted">
+Modifica data, ora e stato delle partite reali.
+Questi dati vengono usati dal sistema live e per la gestione dei recuperi.
+</p>
+
+<button onclick="adminRealGames()">
+Apri calendario reale
+</button>
+
+</div>
+
+
+<div class="card">
 <h2>Gestione rose</h2>
 
 <label>Fantallenatore</label>
@@ -16719,6 +16735,520 @@ vittoria/sconfitta in base allo scarto:
 
 el("content").innerHTML=html;
 }
+
+async function adminRealGames(){
+
+  if(!me || !me.is_admin)
+    return;
+
+
+  /* =========================
+     GIORNATE
+  ========================= */
+
+  const md = await db
+    .from("matchdays")
+    .select(`
+      id,
+      number
+    `)
+    .order("number");
+
+
+  if(md.error)
+    return message(
+      md.error.message,
+      "err"
+    );
+
+
+  const matchdays =
+    md.data || [];
+
+
+  if(!matchdays.length){
+
+    return message(
+      "Nessuna giornata trovata.",
+      "err"
+    );
+
+  }
+
+
+  el("content").innerHTML = `
+
+    <div class="card">
+
+      <h2>📅 Calendario reale</h2>
+
+      <p class="muted">
+        Qui puoi modificare data, ora e stato delle partite reali.
+      </p>
+
+
+      <label>
+        Giornata
+      </label>
+
+
+      <select
+        id="adminRealGamesDay"
+        onchange="loadAdminRealGames(this.value)"
+      >
+
+        ${matchdays.map(x => `
+
+          <option
+            value="${x.id}"
+            ${Number(x.number) === 1 ? "selected" : ""}
+          >
+
+            Giornata ${x.number}
+
+          </option>
+
+        `).join("")}
+
+      </select>
+
+
+      <div
+        id="adminRealGamesList"
+      >
+
+        Caricamento...
+
+      </div>
+
+
+      <button
+        class="secondary"
+        onclick="admin()"
+      >
+
+        ← Torna all'Admin
+
+      </button>
+
+    </div>
+
+  `;
+
+
+  await loadAdminRealGames(
+    matchdays[0].id
+  );
+
+}
+
+
+async function loadAdminRealGames(
+  matchdayId
+){
+
+  if(!me || !me.is_admin)
+    return;
+
+
+  const r = await db
+    .from("real_games")
+    .select(`
+      id,
+      scheduled_at,
+      postponed,
+      cancelled,
+
+      home_team_id,
+      away_team_id,
+
+      home:home_team_id(
+        name
+      ),
+
+      away:away_team_id(
+        name
+      )
+    `)
+    .eq(
+      "matchday_id",
+      matchdayId
+    )
+    .order(
+      "scheduled_at",
+      {
+        ascending:true
+      }
+    );
+
+
+  if(r.error){
+
+    return message(
+      r.error.message,
+      "err"
+    );
+
+  }
+
+
+  const games =
+    r.data || [];
+
+
+  let html = `
+
+    <div style="
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      margin-top:14px;
+    ">
+  `;
+
+
+  if(!games.length){
+
+    html += `
+
+      <div class="muted">
+
+        Nessuna partita per questa giornata.
+
+      </div>
+
+    `;
+
+  }
+
+
+  games.forEach(game => {
+
+    let localDate = "";
+
+
+    if(game.scheduled_at){
+
+      const d =
+        new Date(
+          game.scheduled_at
+        );
+
+
+      if(
+        Number.isFinite(
+          d.getTime()
+        )
+      ){
+
+        const year =
+          d.getFullYear();
+
+        const month =
+          String(
+            d.getMonth() + 1
+          ).padStart(2,"0");
+
+        const day =
+          String(
+            d.getDate()
+          ).padStart(2,"0");
+
+        const hours =
+          String(
+            d.getHours()
+          ).padStart(2,"0");
+
+        const minutes =
+          String(
+            d.getMinutes()
+          ).padStart(2,"0");
+
+
+        localDate =
+          `${year}-${month}-${day}T${hours}:${minutes}`;
+
+      }
+
+    }
+
+
+    let status = "✅ Programmata";
+
+
+    if(game.cancelled){
+
+      status =
+        "❌ Annullata";
+
+    }else if(game.postponed){
+
+      status =
+        "⏸️ Rinviata";
+
+    }
+
+
+    html += `
+
+      <div class="card"
+           style="margin-bottom:0">
+
+        <div style="
+          display:flex;
+          justify-content:space-between;
+          gap:12px;
+          align-items:flex-start;
+        ">
+
+          <div>
+
+            <b>
+              ${game.home?.name || "—"}
+              —
+              ${game.away?.name || "—"}
+            </b>
+
+            <div
+              class="muted"
+              style="margin-top:4px"
+            >
+
+              ${status}
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <label>
+          Data e ora
+        </label>
+
+
+        <input
+          id="realGameDate_${game.id}"
+          type="datetime-local"
+          value="${localDate}"
+        >
+
+
+        <label
+          style="
+            display:block;
+            margin:4px 0;
+          "
+        >
+
+          <input
+            id="realGamePostponed_${game.id}"
+            type="checkbox"
+            ${game.postponed ? "checked" : ""}
+            style="width:auto;margin-right:6px"
+          >
+
+          Partita rinviata
+
+        </label>
+
+
+        <label
+          style="
+            display:block;
+            margin:4px 0 10px;
+          "
+        >
+
+          <input
+            id="realGameCancelled_${game.id}"
+            type="checkbox"
+            ${game.cancelled ? "checked" : ""}
+            style="width:auto;margin-right:6px"
+          >
+
+          Partita annullata
+
+        </label>
+
+
+        <button
+          onclick="saveRealGame('${game.id}')"
+        >
+
+          💾 Salva partita
+
+        </button>
+
+      </div>
+
+    `;
+
+  });
+
+
+  html += `</div>`;
+
+
+  const box =
+    el("adminRealGamesList");
+
+
+  if(box){
+
+    box.innerHTML =
+      html;
+
+  }
+
+}
+
+
+async function saveRealGame(
+  gameId
+){
+
+  if(!me || !me.is_admin)
+    return;
+
+
+  const dateInput =
+    el(
+      `realGameDate_${gameId}`
+    );
+
+
+  const postponedInput =
+    el(
+      `realGamePostponed_${gameId}`
+    );
+
+
+  const cancelledInput =
+    el(
+      `realGameCancelled_${gameId}`
+    );
+
+
+  if(!dateInput){
+
+    return message(
+      "Campo data non trovato.",
+      "err"
+    );
+
+  }
+
+
+  if(
+    !dateInput.value &&
+    !cancelledInput.checked
+  ){
+
+    return message(
+      "Inserisci data e ora della partita.",
+      "err"
+    );
+
+  }
+
+
+  let scheduledAt =
+    null;
+
+
+  if(dateInput.value){
+
+    const d =
+      new Date(
+        dateInput.value
+      );
+
+
+    if(
+      !Number.isFinite(
+        d.getTime()
+      )
+    ){
+
+      return message(
+        "Data/ora non valida.",
+        "err"
+      );
+
+    }
+
+
+    scheduledAt =
+      d.toISOString();
+
+  }
+
+
+  const updateData = {
+
+    scheduled_at:
+      scheduledAt,
+
+    postponed:
+      postponedInput.checked,
+
+    cancelled:
+      cancelledInput.checked
+
+  };
+
+
+  const r =
+    await db
+      .from("real_games")
+      .update(
+        updateData
+      )
+      .eq(
+        "id",
+        gameId
+      );
+
+
+  if(r.error){
+
+    console.error(
+      "ERRORE SALVATAGGIO REAL GAME:",
+      r.error
+    );
+
+
+    return message(
+      "Errore salvataggio: " +
+      r.error.message,
+      "err"
+    );
+
+  }
+
+
+  message(
+    "✅ Partita aggiornata correttamente.",
+    "ok"
+  );
+
+
+  const daySelect =
+    el("adminRealGamesDay");
+
+
+  if(daySelect){
+
+    await loadAdminRealGames(
+      daySelect.value
+    );
+
+  }
+
+}
+   
 async function addCoachToManager(){
 
 let manager=el("coachManager").value;
