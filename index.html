@@ -8239,10 +8239,10 @@ window.livePlayerToGame =
           }
 
 
-          const pg =
-            ctx.playerToGame[
-              lp.player_id
-            ];
+const pg =
+  ctx.playerToGame[
+    `${lp.player_id}_${matchdayId}`
+  ];
 
 
           /*
