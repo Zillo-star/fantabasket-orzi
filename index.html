@@ -17806,4 +17806,383 @@ async function testWebpontLive(){
     return null;
   }
 }
-</script></body></html>
+</script>
+<script>
+
+/* =========================================================
+   AGGIORNAMENTO LIVE PUNTEGGI TOTALI CALENDARIO
+========================================================= */
+
+window.refreshLeagueMatchScoresLive = async function(){
+
+  try{
+
+    /* -----------------------------------------
+       1. MATCHDAY
+    ----------------------------------------- */
+
+    const mdRes = await db
+      .from("matchdays")
+      .select(`
+        id,
+        number
+      `);
+
+    if(mdRes.error){
+      console.error(
+        "Errore matchdays:",
+        mdRes.error
+      );
+      return;
+    }
+
+    const matchdays = mdRes.data || [];
+
+    const dayById = {};
+
+    matchdays.forEach(md => {
+
+      dayById[md.id] =
+        Number(md.number);
+
+    });
+
+
+    /* -----------------------------------------
+       2. LEAGUE MATCHES
+    ----------------------------------------- */
+
+    const lmRes = await db
+      .from("league_matches")
+      .select(`
+        id,
+        matchday_number,
+        home_manager_id,
+        away_manager_id
+      `);
+
+    if(lmRes.error){
+      console.error(
+        "Errore league_matches:",
+        lmRes.error
+      );
+      return;
+    }
+
+    const leagueMatches =
+      lmRes.data || [];
+
+
+    /* -----------------------------------------
+       3. FANTASY SCORES GIOCATORI
+    ----------------------------------------- */
+
+    const fsRes = await db
+      .from("fantasy_scores")
+      .select(`
+        manager_id,
+        matchday_id,
+        final_score
+      `);
+
+    if(fsRes.error){
+      console.error(
+        "Errore fantasy_scores:",
+        fsRes.error
+      );
+      return;
+    }
+
+    const fantasyScores =
+      fsRes.data || [];
+
+
+    /* -----------------------------------------
+       4. FANTASY SCORES ALLENATORI
+    ----------------------------------------- */
+
+    const csRes = await db
+      .from("fantasy_coach_scores")
+      .select(`
+        manager_id,
+        matchday_id,
+        final_score
+      `);
+
+    if(csRes.error){
+      console.error(
+        "Errore fantasy_coach_scores:",
+        csRes.error
+      );
+      return;
+    }
+
+    const coachScores =
+      csRes.data || [];
+
+
+    /* -----------------------------------------
+       5. TOTALI PER MANAGER + GIORNATA
+    ----------------------------------------- */
+
+    const totals = {};
+
+    function addScore(
+      managerId,
+      matchdayNumber,
+      score
+    ){
+
+      if(!managerId) return;
+
+      const n = Number(score);
+
+      if(!Number.isFinite(n)) return;
+
+      const key =
+        `${matchdayNumber}|${managerId}`;
+
+      if(!totals[key]){
+        totals[key] = 0;
+      }
+
+      totals[key] += n;
+
+    }
+
+
+    /* GIOCATORI */
+
+    fantasyScores.forEach(row => {
+
+      const day =
+        dayById[row.matchday_id];
+
+      if(!day) return;
+
+      addScore(
+        row.manager_id,
+        day,
+        row.final_score
+      );
+
+    });
+
+
+    /* ALLENATORI */
+
+    coachScores.forEach(row => {
+
+      const day =
+        dayById[row.matchday_id];
+
+      if(!day) return;
+
+      addScore(
+        row.manager_id,
+        day,
+        row.final_score
+      );
+
+    });
+
+
+    /* -----------------------------------------
+       6. AGGIORNA LEAGUE_MATCHES
+    ----------------------------------------- */
+
+    for(const match of leagueMatches){
+
+      const homeKey =
+        `${match.matchday_number}|${match.home_manager_id}`;
+
+      const awayKey =
+        `${match.matchday_number}|${match.away_manager_id}`;
+
+      const homeTotal =
+        totals[homeKey] !== undefined
+          ? Number(
+              totals[homeKey].toFixed(1)
+            )
+          : null;
+
+      const awayTotal =
+        totals[awayKey] !== undefined
+          ? Number(
+              totals[awayKey].toFixed(1)
+            )
+          : null;
+
+
+      const updateData = {};
+
+
+      if(
+        homeTotal !== null &&
+        Number.isFinite(homeTotal)
+      ){
+
+        updateData.home_score =
+          homeTotal;
+
+      }
+
+
+      if(
+        awayTotal !== null &&
+        Number.isFinite(awayTotal)
+      ){
+
+        updateData.away_score =
+          awayTotal;
+
+      }
+
+
+      if(
+        Object.keys(updateData).length === 0
+      ){
+
+        continue;
+
+      }
+
+
+      const upd = await db
+        .from("league_matches")
+        .update(updateData)
+        .eq("id", match.id);
+
+
+      if(upd.error){
+
+        console.error(
+          "Errore aggiornamento partita:",
+          match.id,
+          upd.error
+        );
+
+      }
+
+    }
+
+
+    /* -----------------------------------------
+       7. RINFRESCA IL CALENDARIO
+    ----------------------------------------- */
+
+    const isCalendarPage =
+      [...document.querySelectorAll("#content h2")]
+        .some(h =>
+          h.textContent
+            .trim()
+            .includes("Calendario")
+        );
+
+
+    if(isCalendarPage){
+
+      try{
+
+        await calendar();
+
+      }catch(e){
+
+        console.error(
+          "Errore refresh calendario:",
+          e
+        );
+
+      }
+
+    }
+
+
+    console.log(
+      "✅ Totali Calendario aggiornati live"
+    );
+
+  }catch(e){
+
+    console.error(
+      "❌ Errore refreshLeagueMatchScoresLive:",
+      e
+    );
+
+  }
+
+};
+
+
+/* =========================================================
+   TIMER LIVE TOTALE CALENDARIO
+========================================================= */
+
+clearInterval(
+  window.liveCalendarTotalsTimer
+);
+
+
+window.liveCalendarTotalsTimer =
+  setInterval(async()=>{
+
+    try{
+
+      /* Prima aggiorna i dati WebPont */
+
+      if(
+        typeof window.loadLiveFantasyScores ===
+        "function"
+      ){
+
+        await window.loadLiveFantasyScores();
+
+      }
+
+
+      /* Poi ricalcola i totali delle partite */
+
+      await window.refreshLeagueMatchScoresLive();
+
+    }catch(e){
+
+      console.error(
+        "Errore timer calendario live:",
+        e
+      );
+
+    }
+
+  },20000);
+
+
+/* Primo aggiornamento immediato */
+
+setTimeout(async()=>{
+
+  try{
+
+    if(
+      typeof window.loadLiveFantasyScores ===
+      "function"
+    ){
+
+      await window.loadLiveFantasyScores();
+
+    }
+
+    await window.refreshLeagueMatchScoresLive();
+
+  }catch(e){
+
+    console.error(
+      "Errore primo aggiornamento live:",
+      e
+    );
+
+  }
+
+},1000);
+
+</script>
+</body></html>
