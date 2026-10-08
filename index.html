@@ -14662,8 +14662,19 @@ function addStat(
   addStat("Rubate",stl,1.5);
   addStat("Stoppate",blk,1.5);
   addStat("Palle perse",tov,-1.5);
-  addStat("Tiri dal campo sbagliati",fgMiss,-1);
-  addStat("Tiri liberi sbagliati",ftMiss,-1);
+const tiriSbagliati =
+  Math.max(
+    0,
+    (twoPointsAttempted - twoPointsMade) +
+    (threePointsAttempted - threePointsMade) +
+    (freeThrowsAttempted - freeThrowsMade)
+  );
+
+addStat(
+  "Tiri sbagliati",
+  tiriSbagliati,
+  -1
+);
   addStat("Stoppate subite",blocksReceived,-0.5);
 
   if(
