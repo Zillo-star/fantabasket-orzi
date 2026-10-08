@@ -7629,6 +7629,31 @@ window.loadLiveFantasyScores = async function(){
 
     }
 
+/* =========================================
+   CACHE STATISTICHE PER IL POPUP
+========================================= */
+
+window.livePlayerGameStats =
+  window.livePlayerGameStats || {};
+
+for(
+  const [playerId,data]
+  of Object.entries(
+    ctx.playerToGame || {}
+  )
+){
+
+  const matchdayId =
+    data.realGame?.matchday_id;
+
+  if(!matchdayId)
+    continue;
+
+  window.livePlayerGameStats[
+    `${playerId}_${matchdayId}`
+  ] = data;
+
+}     
 
     /* =========================================================
        10. GIOCATORI
