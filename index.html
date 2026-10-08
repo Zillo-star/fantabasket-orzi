@@ -14445,194 +14445,101 @@ window.openPlayerGameStats = async function(
 
   }
 
-  const pts =
-    findStat([
-      "points",
-      "pts",
-      "punti"
-    ]);
+const pts =
+  Number(wp.points) || 0;
 
-  const orb =
-    findStat([
-      "offensiveRebounds",
-      "offensiveRebound",
-      "oreb",
-      "orb",
-      "rimbalzoffensivi"
-    ]);
+const orb =
+  Number(wp.offensiveRebounds) || 0;
 
-  const drb =
-    findStat([
-      "defensiveRebounds",
-      "defensiveRebound",
-      "dreb",
-      "drb",
-      "rimbalzidifensivi"
-    ]);
+const drb =
+  Number(wp.defensiveRebounds) || 0;
 
-  const ast =
-    findStat([
-      "assists",
-      "assist",
-      "ast"
-    ]);
+const ast =
+  Number(wp.assists) || 0;
 
-  const stl =
-    findStat([
-      "steals",
-      "steal",
-      "stl",
-      "rubate"
-    ]);
+const stl =
+  Number(wp.steals) || 0;
 
-  const blk =
-    findStat([
-      "blocks",
-      "block",
-      "blk",
-      "stoppate"
-    ]);
+const blk =
+  Number(wp.blocks) || 0;
 
-  const tov =
-    findStat([
-      "turnovers",
-      "turnover",
-      "to",
-      "palleperse"
-    ]);
+const tov =
+  Number(wp.turnovers) || 0;
 
-  const blocksReceived =
-    findStat([
-      "blocksReceived",
-      "blocked",
-      "stoppatesubite"
-    ]);
+const blocksReceived =
+  Number(wp.blocksReceived) || 0;
 
-  let fgMiss =
-    findStat([
-      "fgMissed",
-      "fieldGoalsMissed",
-      "fgmiss",
-      "tiriDalCampoSbagliati"
-    ]);
 
-  let ftMiss =
-    findStat([
-      "ftMissed",
-      "freeThrowsMissed",
-      "ftmiss",
-      "tiriliberisbagliati"
-    ]);
+/* =====================================
+   TIRI SBAGLIATI
+===================================== */
 
-  /* =====================================
-     PROVA DERIVAZIONE TIRI SBAGLIATI
-  ===================================== */
+const twoPointsMade =
+  Number(wp.twoPointsMade) || 0;
 
-  if(fgMiss === null){
+const twoPointsAttempted =
+  Number(wp.twoPointsAttempted) || 0;
 
-    const fga =
-      findStat(["fga","fieldGoalAttempts"]);
+const threePointsMade =
+  Number(wp.threePointsMade) || 0;
 
-    const fgm =
-      findStat(["fgm","fieldGoalsMade"]);
+const threePointsAttempted =
+  Number(wp.threePointsAttempted) || 0;
 
-    if(
-      fga !== null &&
-      fgm !== null
-    ){
+const freeThrowsMade =
+  Number(wp.freeThrowsMade) || 0;
 
-      fgMiss =
-        Math.max(0,fga - fgm);
+const freeThrowsAttempted =
+  Number(wp.freeThrowsAttempted) || 0;
 
-    }
 
-  }
+const twoPointsMissed =
+  Math.max(
+    0,
+    twoPointsAttempted - twoPointsMade
+  );
 
-  if(ftMiss === null){
+const threePointsMissed =
+  Math.max(
+    0,
+    threePointsAttempted - threePointsMade
+  );
 
-    const fta =
-      findStat(["fta","freeThrowAttempts"]);
+const fgMiss =
+  twoPointsMissed +
+  threePointsMissed;
 
-    const ftm =
-      findStat(["ftm","freeThrowsMade"]);
+const ftMiss =
+  Math.max(
+    0,
+    freeThrowsAttempted - freeThrowsMade
+  );
 
-    if(
-      fta !== null &&
-      ftm !== null
-    ){
 
-      ftMiss =
-        Math.max(0,fta - ftm);
+/* =====================================
+   DOPPIA / TRIPLA DOPPIA
+===================================== */
 
-    }
+const totalRebounds =
+  orb + drb;
 
-  }
+const doubleDoubleCategories = [
+  pts >= 10,
+  totalRebounds >= 10,
+  ast >= 10,
+  stl >= 10,
+  blk >= 10
+].filter(Boolean).length;
 
-  /* =====================================
-     DOPPIA / TRIPLA DOPPIA
-  ===================================== */
+const tripleDoubleCategories =
+  doubleDoubleCategories;
 
-  let doubleDouble =
-    findStat([
-      "doubleDouble",
-      "doubledouble",
-      "dd"
-    ]);
 
-  let tripleDouble =
-    findStat([
-      "tripleDouble",
-      "tripledouble",
-      "td"
-    ]);
+const doubleDouble =
+  tripleDoubleCategories >= 2;
 
-  if(
-    tripleDouble === null &&
-    pts !== null &&
-    [
-      orb,
-      drb
-    ].every(x => x !== null)
-  ){
-
-    const rebounds =
-      orb + drb;
-
-    const categories = [
-      pts >= 10,
-      rebounds >= 10,
-      ast !== null && ast >= 10,
-      stl !== null && stl >= 10,
-      blk !== null && blk >= 10
-    ].filter(Boolean).length;
-
-    tripleDouble =
-      categories >= 3 ? 1 : 0;
-
-  }
-
-  if(
-    doubleDouble === null &&
-    pts !== null
-  ){
-
-    const rebounds =
-      (orb ?? 0) +
-      (drb ?? 0);
-
-    const categories = [
-      pts >= 10,
-      rebounds >= 10,
-      ast !== null && ast >= 10,
-      stl !== null && stl >= 10,
-      blk !== null && blk >= 10
-    ].filter(Boolean).length;
-
-    doubleDouble =
-      categories >= 2 ? 1 : 0;
-
-  }
-
+const tripleDouble =
+  tripleDoubleCategories >= 3;
   /* =====================================
      FANTASY BASE
   ===================================== */
