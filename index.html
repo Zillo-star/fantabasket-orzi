@@ -14989,7 +14989,15 @@ function playerCard(x,side){
 
   return `
     <div class="fb-lineup-player"
-         style="
+     onclick="
+       openPlayerGameStats(
+         '${x.player_id}',
+         '${x.managerId}',
+         '${matchdayId}'
+       )
+     "
+     style="
+       cursor:pointer;
            position:relative;
            width:100%;
            min-width:0;
