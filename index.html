@@ -10656,22 +10656,27 @@ if(
       che mostrano i risultati.
     */
 
-    const calendarBox =
-      document.querySelector("#calendar");
+const calendarSelect =
+  document.querySelector(
+    'select[onchange*="calendarSelectedDay"]'
+  );
 
-    if(calendarBox){
+if(calendarSelect){
 
-      try{
-        await calendar();
-      }catch(e){
-        console.error(
-          "Errore refresh calendario:",
-          e
-        );
-      }
+  try{
 
-    }
+    await calendar();
 
+  }catch(e){
+
+    console.error(
+      "Errore refresh calendario:",
+      e
+    );
+
+  }
+
+}
   },20000);
 async function loadPlayerGames(){
 
