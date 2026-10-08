@@ -3931,6 +3931,64 @@ async function home(){
     );
 
 }
+
+async function refreshDashboardFantasyTotal(){
+
+  const totalBox =
+    document.getElementById("dashboardFantasyTotal");
+
+  if(!totalBox)
+    return;
+
+  const playersResult =
+    await db
+      .from("fantasy_scores")
+      .select("final_score")
+      .eq("manager_id",me.id);
+
+  if(playersResult.error){
+    console.error(
+      "Errore aggiornamento totale giocatori:",
+      playersResult.error
+    );
+    return;
+  }
+
+  const coachesResult =
+    await db
+      .from("fantasy_coach_scores")
+      .select("final_score")
+      .eq("manager_id",me.id);
+
+  if(coachesResult.error){
+    console.error(
+      "Errore aggiornamento totale allenatore:",
+      coachesResult.error
+    );
+    return;
+  }
+
+  const playerTotal =
+    (playersResult.data || [])
+      .reduce(
+        (s,x) => s + Number(x.final_score || 0),
+        0
+      );
+
+  const coachTotal =
+    (coachesResult.data || [])
+      .reduce(
+        (s,x) => s + Number(x.final_score || 0),
+        0
+      );
+
+  const total =
+    playerTotal + coachTotal;
+
+  totalBox.textContent =
+    total.toFixed(1);
+}
+   
 async function updateDashboardNotification(){
 
   if(!me?.id)
