@@ -2909,8 +2909,8 @@ async function boot(){
 async function logout(){await db.auth.signOut();location.reload()}
 function nav(){
 
-  let isAdmin =
-    window.currentManager?.is_admin === true;
+let isAdmin =
+  me?.is_admin === true;
 
   let items = [
 
