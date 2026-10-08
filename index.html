@@ -14670,49 +14670,82 @@ window.openPlayerGameStats = async function(
 
   const rows = [];
 
-  function addStat(
-    label,
-    value,
-    multiplier
+function addStat(
+  label,
+  value,
+  multiplier
+){
+
+  if(
+    value === null ||
+    value === undefined
   ){
-
-    if(value === null) return;
-
-    const contribution =
-      Math.round(
-        value *
-        multiplier *
-        100
-      ) / 100;
-
-    rows.push(`
-      <div style="
-        display:flex;
-        justify-content:space-between;
-        gap:10px;
-        padding:7px 0;
-        border-bottom:1px solid rgba(255,255,255,.06);
-      ">
-        <span>${label}</span>
-        <span style="font-weight:900;">
-          ${value}
-          ${
-            contribution !== 0
-              ? ` <small style="color:${
-                  contribution > 0
-                    ? "#86efac"
-                    : "#fca5a5"
-                };">
-                  ${contribution > 0 ? "+" : ""}
-                  ${contribution}
-                </small>`
-              : ""
-          }
-        </span>
-      </div>
-    `);
-
+    return;
   }
+
+  const n =
+    Number(value);
+
+  /* NON MOSTRARE LE STATISTICHE A ZERO */
+
+  if(
+    !Number.isFinite(n) ||
+    n === 0
+  ){
+    return;
+  }
+
+  const contribution =
+    Math.round(
+      n *
+      multiplier *
+      100
+    ) / 100;
+
+  rows.push(`
+
+    <div style="
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      padding:7px 0;
+      border-bottom:1px solid rgba(255,255,255,.06);
+    ">
+
+      <span>
+        ${label}
+      </span>
+
+      <span style="
+        display:flex;
+        align-items:center;
+        gap:7px;
+        font-weight:900;
+      ">
+
+        <span>
+          ${n}
+        </span>
+
+        <span style="
+          color:
+            ${
+              contribution > 0
+                ? "#86efac"
+                : "#fca5a5"
+            };
+        ">
+          ${contribution > 0 ? "+" : ""}
+          ${contribution}
+        </span>
+
+      </span>
+
+    </div>
+
+  `);
+}
 
   addStat("Punti",pts,1);
   addStat("Rimbalzi offensivi",orb,1.5);
