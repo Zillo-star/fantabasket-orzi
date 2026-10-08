@@ -14374,6 +14374,581 @@ function getPlayerData(lp){
     return Number(value).toFixed(1);
   }
 
+window.openPlayerGameStats = async function(
+  playerId,
+  managerId,
+  matchdayId
+){
+
+  const p =
+    (Array.isArray(players)
+      ? players.find(x => x.id === playerId)
+      : players[playerId]) || {};
+
+  const liveData =
+    window.livePlayerToGame?.[playerId];
+
+  const wp =
+    liveData?.wp || {};
+
+  /* =====================================
+     CERCA UNA STATISTICA WEBPONT
+  ===================================== */
+
+  function normKey(v){
+
+    return String(v || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g,"")
+      .replace(/[^a-z0-9]/g,"");
+
+  }
+
+  function findStat(aliases){
+
+    const wanted =
+      aliases.map(normKey);
+
+    const sources = [
+      wp,
+      wp.stats,
+      wp.statistics,
+      wp.statistiche
+    ].filter(Boolean);
+
+    for(const source of sources){
+
+      for(const key of Object.keys(source)){
+
+        const nk = normKey(key);
+
+        if(wanted.includes(nk)){
+
+          const n = Number(source[key]);
+
+          if(Number.isFinite(n)){
+            return n;
+          }
+
+        }
+
+      }
+
+    }
+
+    return null;
+
+  }
+
+  const pts =
+    findStat([
+      "points",
+      "pts",
+      "punti"
+    ]);
+
+  const orb =
+    findStat([
+      "offensiveRebounds",
+      "offensiveRebound",
+      "oreb",
+      "orb",
+      "rimbalzoffensivi"
+    ]);
+
+  const drb =
+    findStat([
+      "defensiveRebounds",
+      "defensiveRebound",
+      "dreb",
+      "drb",
+      "rimbalzidifensivi"
+    ]);
+
+  const ast =
+    findStat([
+      "assists",
+      "assist",
+      "ast"
+    ]);
+
+  const stl =
+    findStat([
+      "steals",
+      "steal",
+      "stl",
+      "rubate"
+    ]);
+
+  const blk =
+    findStat([
+      "blocks",
+      "block",
+      "blk",
+      "stoppate"
+    ]);
+
+  const tov =
+    findStat([
+      "turnovers",
+      "turnover",
+      "to",
+      "palleperse"
+    ]);
+
+  const blocksReceived =
+    findStat([
+      "blocksReceived",
+      "blocked",
+      "stoppatesubite"
+    ]);
+
+  let fgMiss =
+    findStat([
+      "fgMissed",
+      "fieldGoalsMissed",
+      "fgmiss",
+      "tiriDalCampoSbagliati"
+    ]);
+
+  let ftMiss =
+    findStat([
+      "ftMissed",
+      "freeThrowsMissed",
+      "ftmiss",
+      "tiriliberisbagliati"
+    ]);
+
+  /* =====================================
+     PROVA DERIVAZIONE TIRI SBAGLIATI
+  ===================================== */
+
+  if(fgMiss === null){
+
+    const fga =
+      findStat(["fga","fieldGoalAttempts"]);
+
+    const fgm =
+      findStat(["fgm","fieldGoalsMade"]);
+
+    if(
+      fga !== null &&
+      fgm !== null
+    ){
+
+      fgMiss =
+        Math.max(0,fga - fgm);
+
+    }
+
+  }
+
+  if(ftMiss === null){
+
+    const fta =
+      findStat(["fta","freeThrowAttempts"]);
+
+    const ftm =
+      findStat(["ftm","freeThrowsMade"]);
+
+    if(
+      fta !== null &&
+      ftm !== null
+    ){
+
+      ftMiss =
+        Math.max(0,fta - ftm);
+
+    }
+
+  }
+
+  /* =====================================
+     DOPPIA / TRIPLA DOPPIA
+  ===================================== */
+
+  let doubleDouble =
+    findStat([
+      "doubleDouble",
+      "doubledouble",
+      "dd"
+    ]);
+
+  let tripleDouble =
+    findStat([
+      "tripleDouble",
+      "tripledouble",
+      "td"
+    ]);
+
+  if(
+    tripleDouble === null &&
+    pts !== null &&
+    [
+      orb,
+      drb
+    ].every(x => x !== null)
+  ){
+
+    const rebounds =
+      orb + drb;
+
+    const categories = [
+      pts >= 10,
+      rebounds >= 10,
+      ast !== null && ast >= 10,
+      stl !== null && stl >= 10,
+      blk !== null && blk >= 10
+    ].filter(Boolean).length;
+
+    tripleDouble =
+      categories >= 3 ? 1 : 0;
+
+  }
+
+  if(
+    doubleDouble === null &&
+    pts !== null
+  ){
+
+    const rebounds =
+      (orb ?? 0) +
+      (drb ?? 0);
+
+    const categories = [
+      pts >= 10,
+      rebounds >= 10,
+      ast !== null && ast >= 10,
+      stl !== null && stl >= 10,
+      blk !== null && blk >= 10
+    ].filter(Boolean).length;
+
+    doubleDouble =
+      categories >= 2 ? 1 : 0;
+
+  }
+
+  /* =====================================
+     FANTASY BASE
+  ===================================== */
+
+  let rawScore = null;
+
+  try{
+
+    const r = await db
+      .from("fantasy_scores")
+      .select("raw_score")
+      .eq("manager_id",managerId)
+      .eq("matchday_id",matchdayId)
+      .eq("player_id",playerId)
+      .maybeSingle();
+
+    if(!r.error && r.data){
+
+      rawScore =
+        Number(r.data.raw_score);
+
+    }
+
+  }catch(e){
+
+    console.error(
+      "Errore recupero raw score:",
+      e
+    );
+
+  }
+
+  /* =====================================
+     CONTRIBUTO FANTASY
+  ===================================== */
+
+  const rows = [];
+
+  function addStat(
+    label,
+    value,
+    multiplier
+  ){
+
+    if(value === null) return;
+
+    const contribution =
+      Math.round(
+        value *
+        multiplier *
+        100
+      ) / 100;
+
+    rows.push(`
+      <div style="
+        display:flex;
+        justify-content:space-between;
+        gap:10px;
+        padding:7px 0;
+        border-bottom:1px solid rgba(255,255,255,.06);
+      ">
+        <span>${label}</span>
+        <span style="font-weight:900;">
+          ${value}
+          ${
+            contribution !== 0
+              ? ` <small style="color:${
+                  contribution > 0
+                    ? "#86efac"
+                    : "#fca5a5"
+                };">
+                  ${contribution > 0 ? "+" : ""}
+                  ${contribution}
+                </small>`
+              : ""
+          }
+        </span>
+      </div>
+    `);
+
+  }
+
+  addStat("Punti",pts,1);
+  addStat("Rimbalzi offensivi",orb,1.5);
+  addStat("Rimbalzi difensivi",drb,1.25);
+  addStat("Assist",ast,1.5);
+  addStat("Rubate",stl,1.5);
+  addStat("Stoppate",blk,1.5);
+  addStat("Palle perse",tov,-1.5);
+  addStat("Tiri dal campo sbagliati",fgMiss,-1);
+  addStat("Tiri liberi sbagliati",ftMiss,-1);
+  addStat("Stoppate subite",blocksReceived,-0.5);
+
+  if(
+    doubleDouble !== null &&
+    doubleDouble > 0
+  ){
+
+    rows.push(`
+      <div style="
+        display:flex;
+        justify-content:space-between;
+        padding:7px 0;
+        border-bottom:1px solid rgba(255,255,255,.06);
+      ">
+        <span>Doppia doppia</span>
+        <b style="color:#86efac;">+5</b>
+      </div>
+    `);
+
+  }
+
+  if(
+    tripleDouble !== null &&
+    tripleDouble > 0
+  ){
+
+    rows.push(`
+      <div style="
+        display:flex;
+        justify-content:space-between;
+        padding:7px 0;
+        border-bottom:1px solid rgba(255,255,255,.06);
+      ">
+        <span>Tripla doppia</span>
+        <b style="color:#86efac;">+10</b>
+      </div>
+    `);
+
+  }
+
+  /* =====================================
+     MODALE
+  ===================================== */
+
+  let old =
+    document.getElementById(
+      "playerGameStatsModal"
+    );
+
+  if(old) old.remove();
+
+  const fullName =
+    `${p.name || ""} ${p.surname || ""}`
+      .trim();
+
+  const team =
+    p.real_team_id
+      ? (
+          Array.isArray(players)
+            ? ""
+            : ""
+        )
+      : "";
+
+  const modal =
+    document.createElement("div");
+
+  modal.id =
+    "playerGameStatsModal";
+
+  modal.style.cssText = `
+    position:fixed;
+    inset:0;
+    z-index:99999;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:18px;
+    background:rgba(0,0,0,.72);
+  `;
+
+  modal.innerHTML = `
+
+    <div style="
+      width:100%;
+      max-width:390px;
+      max-height:85vh;
+      overflow:auto;
+      padding:18px;
+      border-radius:18px;
+      background:#11182c;
+      border:1px solid rgba(255,255,255,.10);
+      box-shadow:0 20px 60px rgba(0,0,0,.45);
+      color:#fff;
+    ">
+
+      <div style="
+        display:flex;
+        align-items:flex-start;
+        justify-content:space-between;
+        gap:12px;
+      ">
+
+        <div>
+
+          <div style="
+            font-size:18px;
+            font-weight:900;
+          ">
+            ${fullName}
+          </div>
+
+          <div style="
+            margin-top:3px;
+            font-size:11px;
+            color:#9ca3af;
+          ">
+            Prestazione · Giornata ${dayNumber}
+          </div>
+
+        </div>
+
+        <button
+          onclick="
+            document
+              .getElementById(
+                'playerGameStatsModal'
+              )
+              ?.remove()
+          "
+          style="
+            border:0;
+            background:rgba(255,255,255,.07);
+            color:#fff;
+            border-radius:9px;
+            width:32px;
+            height:32px;
+            cursor:pointer;
+            font-size:18px;
+          "
+        >
+          ×
+        </button>
+
+      </div>
+
+
+      <div style="
+        margin-top:14px;
+        padding:12px;
+        border-radius:13px;
+        background:rgba(124,58,237,.12);
+        border:1px solid rgba(167,139,250,.16);
+      ">
+
+        <div style="
+          font-size:10px;
+          color:#9ca3af;
+          text-transform:uppercase;
+          font-weight:900;
+        ">
+          Fantasy base
+        </div>
+
+        <div style="
+          margin-top:4px;
+          font-size:26px;
+          font-weight:950;
+          color:#c4b5fd;
+        ">
+          ${
+            Number.isFinite(rawScore)
+              ? rawScore.toFixed(1)
+              : "—"
+          }
+        </div>
+
+      </div>
+
+
+      <div style="
+        margin-top:15px;
+        font-size:10px;
+        color:#9ca3af;
+        text-transform:uppercase;
+        font-weight:900;
+        letter-spacing:.08em;
+      ">
+        Statistiche della partita
+      </div>
+
+
+      <div style="
+        margin-top:6px;
+        font-size:12px;
+      ">
+        ${
+          rows.length
+            ? rows.join("")
+            : `
+              <div style="
+                padding:15px 0;
+                color:#9ca3af;
+                text-align:center;
+              ">
+                Statistiche non ancora disponibili.
+              </div>
+            `
+        }
+      </div>
+
+    </div>
+  `;
+
+  modal.addEventListener(
+    "click",
+    e => {
+
+      if(e.target === modal){
+        modal.remove();
+      }
+
+    }
+  );
+
+  document.body.appendChild(modal);
+
+};
+   
   // ------------------------------------------------------------
   // PLAYER CARD
   // ------------------------------------------------------------
