@@ -6696,1720 +6696,204 @@ setTimeout(()=>{
 
 window.loadLiveFantasyScores = async function(){
 
-/* =========================================================
-   GIORNATA ATTUALE AUTOMATICA
-========================================================= */
+  try{
 
-let day = null;
+    const now = new Date();
 
-const matchdaysResult = await db
-  .from("matchdays")
-  .select(`
-    id,
-    number,
-    lineup_deadline
-  `)
-  .order("number", { ascending: true });
+    console.log("=================================");
+    console.log("=== LIVE FANTASY SCORE AVVIATO ===");
+    console.log("ORA:", now.toISOString());
+    console.log("=================================");
 
-if(matchdaysResult.error){
 
-  console.error(
-    "ERRORE RECUPERO GIORNATE:",
-    matchdaysResult.error
-  );
+    /* =========================================================
+       1. GIORNATE
+    ========================================================= */
 
-  return;
-}
+    const matchdaysResult = await db
+      .from("matchdays")
+      .select(`
+        id,
+        number,
+        lineup_deadline
+      `)
+      .order("number", { ascending:true });
 
-const allMatchdays = matchdaysResult.data || [];
-
-if(!allMatchdays.length){
-
-  console.error(
-    "NESSUNA GIORNATA PRESENTE"
-  );
-
-  return;
-}
-
-
-/*
-  La giornata live è quella che resta
-  ATTUALE fino alla deadline della
-  giornata successiva.
-*/
-
-const now = new Date();
-
-for(let i = 0; i < allMatchdays.length; i++){
-
-  const current =
-    allMatchdays[i];
-
-  const next =
-    allMatchdays[i + 1];
-
-  /* Ultima giornata */
-  if(!next){
-
-    day =
-      Number(current.number);
-
-    break;
-
-  }
-
-  const nextDeadline =
-    next.lineup_deadline
-      ? new Date(next.lineup_deadline)
-      : null;
-
-  if(
-    nextDeadline &&
-    Number.isFinite(nextDeadline.getTime()) &&
-    now < nextDeadline
-  ){
-
-    day =
-      Number(current.number);
-
-    break;
-
-  }
-
-}
-
-
-/* Sicurezza */
-if(!day){
-
-  day =
-    Number(
-      allMatchdays[0].number
-    );
-
-}
-
-
-/*
-  Se nessuna deadline è ancora passata,
-  prendiamo la prima giornata.
-*/
-
-if(!day){
-
-  day =
-    Number(
-      allMatchdays[0].number
-    );
-
-}
-
-
-const currentMatchday =
-  allMatchdays.find(
-    md => Number(md.number) === day
-  );
-
-const currentIndex =
-  allMatchdays.findIndex(
-    md => Number(md.number) === day
-  );
-
-const nextMatchday =
-  currentIndex >= 0 &&
-  currentIndex < allMatchdays.length - 1
-    ? allMatchdays[currentIndex + 1]
-    : null;
-
-
-console.log(
-  "================================="
-);
-
-console.log(
-  "GIORNATA ATTUALE AUTOMATICA:",
-  day
-);
-
-console.log(
-  "DEADLINE GIORNATA:",
-  currentMatchday?.lineup_deadline
-);
-
-console.log(
-  "DEADLINE GIORNATA SUCCESSIVA:",
-  nextMatchday?.lineup_deadline || "NESSUNA"
-);
-
-console.log(
-  "================================="
-);
-
-
-/* =========================================================
-   DISCOVERY AUTOMATICA WEBPONT
-========================================================= */
-
-const discoveryUrl =
-  "https://fantabasket-webpont.davzil2005.workers.dev" +
-  "?discover=1&start=400&end=500";
-
-
-let discovery;
-
-try{
-
-  const discoveryResponse =
-    await fetch(discoveryUrl);
-
-  discovery =
-    await discoveryResponse.json();
-
-}catch(error){
-
-  console.error(
-    "ERRORE DISCOVERY WEBPONT:",
-    error
-  );
-
-  return;
-}
-
-
-if(
-  !discovery ||
-  discovery.ok !== true ||
-  !Array.isArray(discovery.games)
-){
-
-  console.error(
-    "DISCOVERY WEBPONT NON VALIDA:",
-    discovery
-  );
-
-  return;
-}
-
-
-console.log(
-  "PARTITE TROVATE DA WEBPONT:",
-  discovery.games.length
-);
-
-
-console.table(
-  discovery.games.map(g => ({
-    game: g.game,
-    group: g.group,
-    home: g.home,
-    away: g.away,
-    date: g.date
-  }))
-);
-
-
-/* =========================================================
-   FILTRO PARTITE DELLA GIORNATA
-========================================================= */
-
-const startDate =
-  currentMatchday?.lineup_deadline
-    ? String(currentMatchday.lineup_deadline).slice(0,10)
-    : null;
-
-const endDate =
-  nextMatchday?.lineup_deadline
-    ? String(nextMatchday.lineup_deadline).slice(0,10)
-    : null;
-
-
-const games = discovery.games
-  .filter(g => {
-
-    const gameDate =
-      String(g.date || "").slice(0,10);
-
-    if(!gameDate || !startDate)
-      return false;
-
-
-    /*
-      La giornata comprende le partite
-      dalla propria deadline fino alla
-      deadline della giornata successiva.
-    */
-
-    if(endDate){
-
-      return (
-        gameDate >= startDate &&
-        gameDate < endDate
-      );
-
-    }
-
-
-    return gameDate >= startDate;
-
-  })
-  .map(g => g.game);
-
-
-console.log(
-  "GAMES WEBPONT GIORNATA",
-  day,
-  ":",
-  games
-);
-
-  console.log("=== LIVE FANTASY SCORE ===");
-  console.log("Giornata:",day);
-  console.log("Games:",games);
-
-  /* =========================================================
-     1. SCARICO TUTTE LE PARTITE WEBPONT
-  ========================================================= */
-
-  const gamesData = {};
-
-  for(const game of games){
-
-    try{
-
-      const r = await fetch(
-        "https://fantabasket-webpont.davzil2005.workers.dev?game="+game
-      );
-
-      const w = await r.json();
-
-      gamesData[game] = w;
-
-      console.log(
-        "WEBPONT:",
-        game,
-        w.info?.home,
-        w.info?.homeScore,
-        "-",
-        w.info?.away,
-        w.info?.awayScore
-      );
-
-    }catch(e){
-
-      console.error("ERRORE WEBPONT:",game,e);
-
-    }
-  }
-
-  /* =========================================================
-     2. CARICO I GIOCATORI
-  ========================================================= */
-
-  const playersResult = await db
-    .from("players")
-    .select(`
-      id,
-      name,
-      surname,
-      webpont_id,
-      real_team_id,
-      active,
-      real_teams(
-        name
-      )
-    `)
-    .eq("active",true);
-
-  if(playersResult.error){
-    console.error(playersResult.error);
-    return;
-  }
-
-  const dbPlayers = playersResult.data || [];
-
- /* =========================================================
-    3. ASSOCIO GIOCATORI WEBPONT -> SQUADRA REALE
- ========================================================= */
-
-const teamToGame = {};
-const playerToGame = {};
-
-/* =========================================================
-   NORMALIZZA NOME SQUADRA
-========================================================= */
-
-function normalizeTeamName(name){
-
-  return String(name || "")
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g,"")
-    .replace(/[^a-z0-9 ]/g," ")
-    .replace(/\s+/g," ")
-    .trim();
-
-}
-
-/* =========================================================
-   ALIAS SQUADRE
-========================================================= */
-
-const teamAliases = {
-
-  "a2a leonessa brescia":[
-    "brescia",
-    "leonessa brescia"
-  ],
-
-  "pallacanestro vicenza":[
-    "vicenza"
-  ],
-
-  "rucker san vendemiano":[
-    "san vendemiano",
-    "rucker san vendemiano"
-  ],
-
-  "basket golfo piombino":[
-    "piombino",
-    "solbat golfo piombino",
-    "basket golfo piombino"
-  ],
-
-  "herons montecatini":[
-    "montecatini",
-    "herons montecatini",
-    "fabo herons montecatini"
-  ],
-
-  "basketball club lucca":[
-    "lucca",
-    "basketball club lucca"
-  ],
-
-  "pielle livorno":[
-    "livorno",
-    "pielle livorno"
-  ],
-
-  "virtus lumezzane":[
-    "lumezzane",
-    "luxarm lumezzane",
-    "virtus lumezzane"
-  ],
-
-  "assigeco piacenza":[
-    "piacenza",
-    "assigeco piacenza",
-    "ucc assigeco piacenza"
-  ],
-
-  "sae legnano":[
-    "legnano",
-    "sae legnano",
-    "sae scientifica",
-    "sae scientifica soevis legnano knights"
-  ],
-
-  "fulgor omegna":[
-    "omegna",
-    "fulgor omegna",
-    "paffoni fulgor basket omegna"
-  ],
-
-  "treviglio brianza basket":[
-    "treviglio",
-    "treviglio brianza basket"
-  ],
-
-  "adamant ferrara":[
-    "ferrara",
-    "adamant ferrara"
-  ],
-
-  "fortitudo agrigento":[
-    "agrigento",
-    "moncada energy agrigento",
-    "fortitudo agrigento"
-  ],
-
-"infodrive capo d orlando":[
-  "capo d orlando",
-  "capo dorlando",
-  "infodrive capo dorlando"
-],
-
-  "viola reggio calabria":[
-    "reggio calabria",
-    "myenergy reggio calabria"
-  ],
-
-  "janus fabriano":[
-    "fabriano",
-    "ristopro fabriano"
-  ],
-
-  "loreto pesaro":[
-    "loreto pesaro",
-    "pesaro",
-    "consultinvest loreto pesaro"
-  ],
-
-  "raggisolaris faenza":[
-    "faenza",
-    "tema sinergie faenza",
-    "raggisolaris faenza"
-  ],
-
-  "scandone avellino":[
-    "avellino",
-    "felice scandone avellino",
-    "scandone avellino"
-  ],
-
-  "liofilchem roseto":[
-    "roseto",
-    "liofilchem roseto"
-  ],
-
-  "mens sana siena":[
-    "siena",
-    "mens sana",
-    "sendero mens sana siena"
-  ],
-
-  "cestistica san severo":[
-    "san severo",
-    "cestistica san severo",
-    "allianz pazienza cestistica san severo"
-  ],
-
-  "luiss roma":[
-    "luiss roma",
-    "luiss"
-  ],
-
-  "basket ravenna":[
-    "ravenna",
-    "orasì ravenna"
-  ],
-
-  "dany basket quarrata":[
-    "quarrata",
-    "dany basket quarrata",
-    "consorzio leonardo dany quarrata"
-  ],
-
-  "psa napoli est":[
-    "napoli est",
-    "psa napoli est"
-  ],
-
-  "latina basket":[
-    "latina",
-    "benacquista assicurazioni latina"
-  ],
-
-  "san giobbe chiusi":[
-    "chiusi",
-    "san giobbe chiusi",
-    "umana san giobbe chiusi"
-  ],
-
-  "aurora desio":[
-    "desio",
-    "rimadesio desio",
-    "aurora desio"
-  ],
-
-  "andrea costa imola":[
-    "imola",
-    "andrea costa imola"
-  ],
-
-  "ltc sangiorgese":[
-    "sangiorgese",
-    "sangiorgio",
-    "san giorgio",
-    "ltc sangiorgese basket"
-  ],
-
-  "siaz piazza armerina":[
-    "piazza armerina",
-    "siaz",
-    "siaz basket piazza armerina"
-  ],
-
-  "virtus roma":[
-    "virtus roma",
-    "virtus gvm roma 1960"
-  ],
-
-  "fiorenzuola bees":[
-    "fiorenzuola",
-    "fiorenzuola bees"
-  ]
-
-};
-
-
-/* =========================================================
-   1. ASSOCIA REAL_TEAM_ID -> PARTITA WEBPONT
-========================================================= */
-
-for(const p of dbPlayers){
-
-  if(!p.real_team_id)
-    continue;
-
-  const dbTeam =
-    normalizeTeamName(
-      p.real_teams?.name
-    );
-
-  const aliases =
-    teamAliases[dbTeam] || [];
-
-  if(!aliases.length)
-    continue;
-
-  for(const game of games){
-
-    const w =
-      gamesData[game];
-
-    if(!w?.info)
-      continue;
-
-    const home =
-      normalizeTeamName(
-        w.info.home
-      );
-
-    const away =
-      normalizeTeamName(
-        w.info.away
-      );
-
-    const homeMatch =
-      aliases.some(alias =>
-        home === normalizeTeamName(alias) ||
-        home.includes(normalizeTeamName(alias))
-      );
-
-    const awayMatch =
-      aliases.some(alias =>
-        away === normalizeTeamName(alias) ||
-        away.includes(normalizeTeamName(alias))
-      );
-
-    if(homeMatch || awayMatch){
-
-      teamToGame[
-        String(p.real_team_id)
-      ] = game;
-
-      break;
-    }
-
-  }
-
-}
-
-console.log(
-  "SQUADRE REALI COLLEGATE:",
-  Object.keys(teamToGame).length
-);
-
-
-/* =========================================================
-   2. ASSOCIA GIOCATORE -> PARTITA
-   USIAMO PRIMA webpont_id
-========================================================= */
-
-for(const p of dbPlayers){
-
-  if(!p.real_team_id)
-    continue;
-
-  const game =
-    teamToGame[
-      String(p.real_team_id)
-    ];
-
-  if(!game)
-    continue;
-
-  const w =
-    gamesData[game];
-
-  if(!w)
-    continue;
-
-  if(!Array.isArray(w.players))
-    continue;
-
-
-  /* -------------------------------------------------------
-     MATCH PRINCIPALE: WEBPONT ID
-  ------------------------------------------------------- */
-
-  if(p.webpont_id){
-
-    const foundById =
-      w.players.find(
-        wp =>
-          wp.webpont_id != null &&
-          String(wp.webpont_id) ===
-          String(p.webpont_id)
-      );
-
-    if(foundById){
-
-      playerToGame[p.id] = {
-        game,
-        wp: foundById
-      };
-
-      continue;
-    }
-
-  }
-
-
-  /* -------------------------------------------------------
-     FALLBACK: NOME COMPLETO
-  ------------------------------------------------------- */
-
-  const dbFullName =
-    `${p.name || ""} ${p.surname || ""}`
-      .trim()
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g,"")
-      .replace(/\s+/g," ");
-
-
-  if(!dbFullName)
-    continue;
-
-
-  const foundByName =
-    w.players.find(wp => {
-
-      const wpFullName =
-        `${wp.name || ""} ${wp.surname || ""}`
-          .trim()
-          .toLowerCase()
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g,"")
-          .replace(/\s+/g," ");
-
-      return wpFullName === dbFullName;
-
-    });
-
-
-  if(foundByName){
-
-    playerToGame[p.id] = {
-      game,
-      wp: foundByName
-    };
-
-  }
-
-}
-
-
-/* =========================================================
-   CONTROLLO FINALE
-========================================================= */
-
-console.log(
-  "SQUADRE WEBPONT COLLEGATE:",
-  Object.keys(teamToGame).length
-);
-
-console.log(
-  "GIOCATORI WEBPONT COLLEGATI:",
-  Object.keys(playerToGame).length
-);
-
-console.table(
-  dbPlayers
-    .filter(p =>
-      [
-        "Luca Valentini",
-        "Nik Raivio",
-        "Marco Giacomini",
-        "Lucas Maglietti",
-        "Andrea Del Debbio"
-      ].some(x =>
-        `${p.name || ""} ${p.surname || ""}`
-          .toLowerCase()
-          .includes(x.toLowerCase())
-      )
-    )
-    .map(p => ({
-      giocatore: `${p.name || ""} ${p.surname || ""}`,
-      squadra: p.real_teams?.name,
-      real_team_id: p.real_team_id,
-      webpont_id: p.webpont_id,
-      game: playerToGame[p.id]?.game || "NESSUNA"
-    }))
-);   
-   
-console.table(
-
-  dbPlayers
-    .filter(p => p.real_team_id)
-    .map(p => ({
-
-      giocatore:
-        `${p.name || ""} ${p.surname || ""}`,
-
-      squadra:
-        p.real_teams?.name,
-
-      webpont_id:
-        p.webpont_id || "NESSUNO",
-
-      collegato:
-        !!playerToGame[p.id],
-
-      game:
-        playerToGame[p.id]?.game ||
-        "NESSUNA"
-
-    }))
-
-); 
-   
-/* =========================================================
-     4. CARICO LE FORMAZIONI DELLA GIORNATA
-  ========================================================= */
-
-const matchdayResult = await db
-  .from("matchdays")
-  .select("id")
-  .eq("number", day)
-  .single();
-
-if(matchdayResult.error){
-
-  console.error(
-    "ERRORE RECUPERO MATCHDAY:",
-    matchdayResult.error
-  );
-
-  return;
-}
-
-const matchdayId = matchdayResult.data.id;
-
-const lineupsResult = await db
-  .from("lineups")
-  .select(`
-    id,
-    manager_id,
-    lineup_players(
-      player_id,
-      role,
-      captain
-    )
-  `)
-  .eq("matchday_id", matchdayId);
-
-  if(lineupsResult.error){
-
-    console.error(
-      "ERRORE LINEUPS:",
-      lineupsResult.error
-    );
-
-    return;
-  }
-
-  const lineups = lineupsResult.data || [];
-
-/* =========================================================
-   5. PUNTEGGI GIOCATORI
-========================================================= */
-
-for(const lineup of lineups){
-
-  for(const lp of (lineup.lineup_players || [])){
-
-const pg = playerToGame[lp.player_id];
-
-
-/* =========================================================
-   GIOCATORE NON PRESENTE A REFERTO
-   ========================================================= */
-
-if(!pg){
-
-  let multiplier = 0;
-
-  if(
-    lp.role === "starter" ||
-    lp.role === "sixth"
-  ){
-
-    multiplier = 1;
-
-  }else if(lp.role === "bench"){
-
-    multiplier = 0.5;
-
-  }
-
-
-  let captainMultiplier =
-    lp.captain
-      ? 1.5
-      : 1;
-
-
-  /* Nessun referto = ZERO ASSOLUTO
-     Nessun +3 */
-  const raw = 0;
-
-  const finalScore = 0;
-
-
-  const save =
-    await db
-      .from("fantasy_scores")
-      .upsert({
-
-        manager_id:
-          lineup.manager_id,
-
-        matchday_id:
-          matchdayId,
-
-        player_id:
-          lp.player_id,
-
-        raw_score:
-          0,
-
-        lineup_multiplier:
-          multiplier,
-
-        captain_multiplier:
-          captainMultiplier,
-
-        final_score:
-          0
-
-      },{
-        onConflict:
-          "manager_id,matchday_id,player_id"
-      });
-
-
-  if(save.error){
-
-    console.error(
-      "ERRORE SALVATAGGIO ZERO:",
-      save.error,
-      lp.player_id
-    );
-
-  }else{
-
-    console.log(
-      "GIOCATORE NON A REFERTO → 0:",
-      lp.player_id,
-      "| ROLE:",
-      lp.role,
-      "| CAP:",
-      lp.captain
-    );
-
-  }
-
-
-  /* Aggiorna il display della mia formazione */
-  if(
-    lineup.manager_id === me.id
-  ){
-
-    const scoreBox =
-      document.querySelector(
-        `[data-live-score="${lp.player_id}"]`
-      );
-
-    if(scoreBox){
-
-      if(lp.role === "out"){
-
-        scoreBox.textContent = "—";
-
-      }else{
-
-        scoreBox.textContent = "0.0";
-
-      }
-
-    }
-
-  }
-
-
-  continue;
-}
-
-
-    /* =========================
-       DATI PARTITA WEBPONT
-    ========================= */
-
-    const gameInfo =
-      gamesData[pg.game]?.info;
-
-    if(!gameInfo){
-
-      console.warn(
-        "INFO PARTITA NON TROVATA:",
-        pg.game,
-        pg.wp?.name
-      );
-
-      continue;
-    }
-
-
-    const homeScore =
-      Number(gameInfo.homeScore);
-
-    const awayScore =
-      Number(gameInfo.awayScore);
-
-    if(
-      !Number.isFinite(homeScore) ||
-      !Number.isFinite(awayScore)
-    ){
-
-      console.warn(
-        "RISULTATO NON VALIDO:",
-        pg.game,
-        gameInfo
-      );
-
-      continue;
-    }
-
-
-    /* =========================
-       PUNTEGGIO BASE WEBPONT
-    ========================= */
-
-let raw =
-  Number(pg.wp?.fantasyScore);
-
-if(!Number.isFinite(raw)){
-
-  /* È A REFERTO, ma non ha statistiche:
-     consideriamo 0 e permettiamo comunque
-     il +3 della vittoria. */
-
-  raw = 0;
-
-}
-
-
-    /* =========================
-       VITTORIA +3
-       
-       Usiamo direttamente il
-       nome squadra WebPont del
-       giocatore e i nomi WebPont
-       della partita.
-    ========================= */
-
-    const playerTeam =
-      String(pg.wp?.team || "")
-        .trim()
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g,"");
-
-
-    const homeTeam =
-      String(gameInfo.home || "")
-        .trim()
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g,"");
-
-
-    const awayTeam =
-      String(gameInfo.away || "")
-        .trim()
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g,"");
-
-
-    let winBonus = false;
-
-
-    if(
-      playerTeam &&
-      (
-        playerTeam === homeTeam ||
-        homeTeam.includes(playerTeam) ||
-        playerTeam.includes(homeTeam)
-      )
-    ){
-
-      winBonus =
-        homeScore > awayScore;
-
-    }else if(
-      playerTeam &&
-      (
-        playerTeam === awayTeam ||
-        awayTeam.includes(playerTeam) ||
-        playerTeam.includes(awayTeam)
-      )
-    ){
-
-      winBonus =
-        awayScore > homeScore;
-    }
-
-
-    if(winBonus){
-
-      raw += 3;
-
-      console.log(
-        "🏆 VITTORIA +3:",
-        pg.wp?.name,
-        "| SQUADRA:",
-        pg.wp?.team,
-        "| RISULTATO:",
-        homeScore,
-        "-",
-        awayScore,
-        "| RAW:",
-        raw
-      );
-
-    }
-
-
-    /* =========================
-       MOLTIPLICATORE FORMAZIONE
-    ========================= */
-
-    let multiplier = 0;
-
-    if(
-      lp.role === "starter" ||
-      lp.role === "sixth"
-    ){
-
-      multiplier = 1;
-
-    }else if(lp.role === "bench"){
-
-      multiplier = 0.5;
-
-    }else{
-
-      multiplier = 0;
-
-    }
-
-
-    /* =========================
-       CAPITANO
-    ========================= */
-
-    let captainMultiplier = 1;
-
-    if(lp.captain){
-
-      captainMultiplier = 1.5;
-    }
-
-
-    const finalScore =
-      Math.round(
-        raw *
-        multiplier *
-        captainMultiplier *
-        10
-      ) / 10;
-
-
-    /* =========================
-       SALVATAGGIO
-    ========================= */
-
-    const save =
-      await db
-        .from("fantasy_scores")
-        .upsert({
-
-          manager_id:
-            lineup.manager_id,
-
-          matchday_id:
-            matchdayId,
-
-          player_id:
-            lp.player_id,
-
-          raw_score:
-            Math.round(raw * 10) / 10,
-
-          lineup_multiplier:
-            multiplier,
-
-          captain_multiplier:
-            captainMultiplier,
-
-          final_score:
-            finalScore
-
-        },{
-          onConflict:
-            "manager_id,matchday_id,player_id"
-        });
-
-
-    if(save.error){
+    if(matchdaysResult.error){
 
       console.error(
-        "ERRORE SALVATAGGIO FANTASY SCORE:",
-        save.error
+        "ERRORE RECUPERO GIORNATE:",
+        matchdaysResult.error
       );
 
-    }else{
-
-      console.log(
-        "FANTASY SCORE SALVATO:",
-        pg.wp?.name || "",
-        "| GAME:",
-        pg.game,
-        "| TEAM:",
-        pg.wp?.team,
-        "| RAW:",
-        Math.round(raw * 10) / 10,
-        "| ROLE:",
-        lp.role,
-        "| CAP:",
-        lp.captain,
-        "| FINAL:",
-        finalScore
-      );
-
+      return;
     }
 
-  }
+    const allMatchdays =
+      matchdaysResult.data || [];
 
-}
-
-  /* =========================================================
-     6. CARICO GLI ALLENATORI
-  ========================================================= */
-
-  console.log("=== CALCOLO PUNTEGGI ALLENATORI ===");
-
-  const coachesResult = await db
-    .from("manager_coaches")
-    .select(`
-      manager_id,
-      real_team_id,
-      purchase_price,
-      active,
-      real_teams(
-        name,
-        coach,
-        logo_url
-      )
-    `)
-    .eq("active",true);
-
-  if(coachesResult.error){
-
-    console.error(
-      "ERRORE MANAGER COACHES:",
-      coachesResult.error
-    );
-
-    return;
-  }
-
-  const coaches = coachesResult.data || [];
-
-  console.log(
-    "ALLENATORI ATTIVI:",
-    coaches
-  );
-
-  /* =========================================================
-     7. CALCOLO PUNTEGGIO ALLENATORE
-  ========================================================= */
-
-for(const coach of coaches){
-
-const realTeamId = String(coach.real_team_id);
-
-let game = teamToGame[realTeamId];
-
-/* Se la squadra non è stata trovata tramite i giocatori,
-   cerchiamo direttamente il nome della squadra nei dati WebPont */
-
-if(!game){
-
-  const coachTeamName =
-    String(coach.real_teams?.name || "")
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g,"");
-
-  const coachTeamAliases = {
-
-    "virtus roma": [
-      "virtus roma"
-    ],
-
-    "siaz piazza armerina": [
-      "piazza armerina",
-      "siaz"
-    ],
-
-    "sae legnano": [
-      "sae scientifica-soevis legnano",
-      "sae scientifica",
-      "legnano knights"
-    ]
-
-  };
-
-  const aliases = coachTeamAliases[coachTeamName] || [];
-
-  for(const g of games){
-
-    const w = gamesData[g];
-
-    if(!w?.info)
-      continue;
-
-    const home =
-      String(w.info.home || "")
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g,"");
-
-    const away =
-      String(w.info.away || "")
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g,"");
-
-    if(
-      aliases.some(alias =>
-        home.includes(alias) ||
-        away.includes(alias)
-      )
-    ){
-      game = g;
-      break;
-    }
-  }
-}
-    if(!game){
+    if(!allMatchdays.length){
 
       console.warn(
-        "GAME ALLENATORE NON TROVATO:",
-        coach.real_teams?.name,
-        realTeamId
+        "NESSUNA GIORNATA PRESENTE"
       );
 
-      continue;
+      return;
     }
 
-    const info = gamesData[game]?.info;
 
-    if(!info){
+    /* =========================================================
+       2. LEAGUE MATCHES
+    ========================================================= */
 
-      console.warn(
-        "INFO RISULTATO NON TROVATA:",
-        game
-      );
+    const leagueMatchesResult = await db
+      .from("league_matches")
+      .select(`
+        id,
+        matchday_number,
+        home_manager_id,
+        away_manager_id,
+        home_score,
+        away_score,
+        home_points,
+        away_points,
+        completed
+      `)
+      .order("matchday_number")
+      .order("id");
 
-      continue;
-    }
-
-    const homeScore = Number(info.homeScore);
-    const awayScore = Number(info.awayScore);
-
-    if(
-      !Number.isFinite(homeScore) ||
-      !Number.isFinite(awayScore)
-    ){
-
-      console.warn(
-        "RISULTATO NON VALIDO:",
-        game,
-        info
-      );
-
-      continue;
-    }
-
-    const homeName = String(info.home || "").trim().toLowerCase();
-    const awayName = String(info.away || "").trim().toLowerCase();
-
-    const realTeamName = String(
-      coach.real_teams?.name || ""
-    ).trim().toLowerCase();
-
-    let teamScore = null;
-    let opponentScore = null;
-
-    /*
-      Prima proviamo a capire da che parte è la squadra
-      usando il nome completo e quello abbreviato.
-    */
-
-    if(
-      realTeamName === homeName ||
-      realTeamName === String(info.homeShort || "").trim().toLowerCase()
-    ){
-
-      teamScore = homeScore;
-      opponentScore = awayScore;
-
-    }else if(
-      realTeamName === awayName ||
-      realTeamName === String(info.awayShort || "").trim().toLowerCase()
-    ){
-
-      teamScore = awayScore;
-      opponentScore = homeScore;
-
-    }else{
-
-      /*
-        Fallback: confronto parole del nome squadra.
-      */
-
-      const teamWords = realTeamName
-        .split(/\s+/)
-        .filter(x => x.length >= 4);
-
-      const homeMatch = teamWords.some(
-        word => homeName.includes(word)
-      );
-
-      const awayMatch = teamWords.some(
-        word => awayName.includes(word)
-      );
-
-      if(homeMatch && !awayMatch){
-
-        teamScore = homeScore;
-        opponentScore = awayScore;
-
-      }else if(awayMatch && !homeMatch){
-
-        teamScore = awayScore;
-        opponentScore = homeScore;
-
-      }
-
-    }
-
-    if(
-      teamScore === null ||
-      opponentScore === null
-    ){
-
-      console.warn(
-        "SQUADRA ALLENATORE NON RICONOSCIUTA:",
-        coach.real_teams?.name,
-        "GAME:",
-        game,
-        "HOME:",
-        info.home,
-        homeScore,
-        "AWAY:",
-        info.away,
-        awayScore
-      );
-
-      continue;
-    }
-
-    const margin = Math.abs(
-      teamScore - opponentScore
-    );
-
-    let coachScore = 0;
-
-    if(teamScore > opponentScore){
-
-      if(margin <= 5)
-        coachScore = 2.5;
-      else if(margin <= 11)
-        coachScore = 5;
-      else if(margin <= 17)
-        coachScore = 7.5;
-      else
-        coachScore = 10;
-
-    }else if(teamScore < opponentScore){
-
-      if(margin <= 5)
-        coachScore = -2.5;
-      else if(margin <= 11)
-        coachScore = -5;
-      else if(margin <= 17)
-        coachScore = -7.5;
-      else
-        coachScore = -10;
-
-    }
-
-    console.log(
-      "ALLENATORE:",
-      coach.real_teams?.coach,
-      "| SQUADRA:",
-      coach.real_teams?.name,
-      "| RISULTATO:",
-      teamScore + "-" + opponentScore,
-      "| MARGINE:",
-      margin,
-      "| PUNTEGGIO:",
-      coachScore
-    );
-
-const matchdayResult = await db
-  .from("matchdays")
-  .select("id")
-  .eq("number", day)
-  .single();
-
-if(matchdayResult.error){
-
-  console.error(
-    "ERRORE RECUPERO MATCHDAY:",
-    matchdayResult.error
-  );
-
-  continue;
-}
-
-const matchdayId = matchdayResult.data.id;
-
-const coachSave = await db
-  .from("fantasy_coach_scores")
-  .upsert({
-    manager_id: coach.manager_id,
-    matchday_id: matchdayId,
-    real_team_id: coach.real_team_id,
-    raw_score: coachScore,
-    final_score: coachScore
-  },{
-    onConflict:"manager_id,matchday_id"
-  });
-
-if(coachSave.error){
-
-  console.error(
-    "ERRORE SALVATAGGIO COACH:",
-    coachSave.error
-  );
-
-}else{
-
-  console.log(
-    "PUNTEGGIO ALLENATORE SALVATO:",
-    coach.real_teams?.coach,
-    coachScore
-  );
-
-}
-
-    if(coachSave.error){
+    if(leagueMatchesResult.error){
 
       console.error(
-        "ERRORE SALVATAGGIO COACH:",
-        coachSave.error
+        "ERRORE LEAGUE MATCHES:",
+        leagueMatchesResult.error
       );
 
-    }else{
+      return;
+    }
 
-      console.log(
-        "PUNTEGGIO ALLENATORE SALVATO:",
-        coach.real_teams?.coach,
-        coachScore
+    const allLeagueMatches =
+      leagueMatchesResult.data || [];
+
+
+    const leagueMatchesByDay = {};
+
+    allLeagueMatches.forEach(match => {
+
+      const n =
+        Number(match.matchday_number);
+
+      if(!leagueMatchesByDay[n])
+        leagueMatchesByDay[n] = [];
+
+      leagueMatchesByDay[n].push(match);
+
+    });
+
+
+    /* =========================================================
+       3. REAL GAMES
+       ========================================================= */
+
+    const realGamesResult = await db
+      .from("real_games")
+      .select(`
+        id,
+        matchday_id,
+        home_team_id,
+        away_team_id,
+        scheduled_at,
+        postponed,
+        cancelled,
+        home:home_team_id(
+          id,
+          name
+        ),
+        away:away_team_id(
+          id,
+          name
+        )
+      `);
+
+    if(realGamesResult.error){
+
+      console.error(
+        "ERRORE REAL GAMES:",
+        realGamesResult.error
       );
+
+      return;
+    }
+
+    const allRealGames =
+      realGamesResult.data || [];
+
+
+    const realGamesByMatchdayId = {};
+
+    allRealGames.forEach(game => {
+
+      if(!realGamesByMatchdayId[game.matchday_id])
+        realGamesByMatchdayId[game.matchday_id] = [];
+
+      realGamesByMatchdayId[game.matchday_id].push(game);
+
+    });
+
+
+    /* =========================================================
+       4. DECIDIAMO QUALI GIORNATE DEVONO ESSERE ELABORATE
+    ========================================================= */
+
+    function validDate(value){
+
+      if(!value)
+        return null;
+
+      const d = new Date(value);
+
+      if(!Number.isFinite(d.getTime()))
+        return null;
+
+      return d;
 
     }
 
-  }
 
-/* =========================================
-   AGGIORNA RISULTATI MATCH FANTASY
-========================================= */
+    function dateOnly(value){
 
-const leagueMatches = await db
-  .from("league_matches")
-  .select(`
-    id,
-    home_manager_id,
-    away_manager_id
-  `)
-  .eq("matchday_number", day);
+      const d =
+        validDate(value);
 
-if(leagueMatches.error){
+      if(!d)
+        return null;
 
-  console.error(
-    "ERRORE LEAGUE MATCHES:",
-    leagueMatches.error
-  );
+      return d
+        .toISOString()
+        .slice(0,10);
 
-}else{
-
-  const playerScores = await db
-    .from("fantasy_scores")
-    .select(`
-      manager_id,
-      final_score
-    `)
-    .eq("matchday_id", matchdayId);
-
-  const coachScores = await db
-    .from("fantasy_coach_scores")
-    .select(`
-      manager_id,
-      final_score
-    `)
-    .eq("matchday_id", matchdayId);
+    }
 
 
-  /* =========================
-     MANAGER + BOT
-  ========================= */
-
-  const managersResult = await db
-    .from("managers")
-    .select(`
-      id,
-      is_bot
-    `);
-
-  const botIds = new Set(
-    (managersResult.data || [])
-      .filter(x => x.is_bot === true)
-      .map(x => String(x.id))
-  );
+    const todayString =
+      dateOnly(now);
 
 
-  if(
-    !playerScores.error &&
-    !coachScores.error
-  ){
-
-    const totals = {};
-
-    /* =========================
-       GIOCATORI
-    ========================= */
-
-    (playerScores.data || []).forEach(x => {
-
-      const id =
-        String(x.manager_id);
-
-      totals[id] =
-        (totals[id] || 0) +
-        Number(x.final_score || 0);
-
-    });
+    const daysToProcess = [];
 
 
-    /* =========================
-       ALLENATORI
-    ========================= */
+    for(const md of allMatchdays){
 
-    (coachScores.data || []).forEach(x => {
-
-      const id =
-        String(x.manager_id);
-
-      totals[id] =
-        (totals[id] || 0) +
-        Number(x.final_score || 0);
-
-    });
-
-
-    /* =========================
-       FANTABOT = 1 PUNTO
-    ========================= */
-
-    botIds.forEach(id => {
-
-      totals[id] = 1;
-
-    });
-
-
-    /* =========================
-       SALVA RISULTATI PARTITE
-    ========================= */
-
-    for(
-      const match of
-      (leagueMatches.data || [])
-    ){
-
-      const homeId =
-        String(match.home_manager_id);
-
-      const awayId =
-        String(match.away_manager_id);
-
-
-      const homeScore =
-        totals[homeId] !== undefined
-          ? Number(
-              totals[homeId].toFixed(1)
-            )
-          : null;
-
-
-      const awayScore =
-        totals[awayId] !== undefined
-          ? Number(
-              totals[awayId].toFixed(1)
-            )
-          : null;
-
+      const deadline =
+        validDate(md.lineup_deadline);
 
       /*
-        La partita viene considerata
-        COMPLETA solo quando entrambi
-        hanno un punteggio.
+        Le giornate future non vengono toccate.
       */
 
       if(
-        homeScore === null ||
-        awayScore === null
+        deadline &&
+        now < deadline
       ){
 
         continue;
@@ -8417,92 +6901,2334 @@ if(leagueMatches.error){
       }
 
 
-      const updateData = {
+      const dayNumber =
+        Number(md.number);
 
-        home_score:
-          homeScore,
-
-        away_score:
-          awayScore,
-
-        completed:
-          true
-
-      };
+      const dayLeagueMatches =
+        leagueMatchesByDay[dayNumber] || [];
 
 
-      /* =========================
-         PUNTI CLASSIFICA
-      ========================= */
-
-      if(homeScore > awayScore){
-
-        updateData.home_points = 2;
-        updateData.away_points = 0;
-
-      }
-      else if(awayScore > homeScore){
-
-        updateData.home_points = 0;
-        updateData.away_points = 2;
-
-      }
-      else{
-
-        updateData.home_points = 1;
-        updateData.away_points = 1;
-
-      }
-
-
-      const updateMatch =
-        await db
-          .from("league_matches")
-          .update(updateData)
-          .eq("id", match.id);
-
-
-      if(updateMatch.error){
-
-        console.error(
-          "ERRORE AGGIORNAMENTO MATCH FANTASY:",
-          updateMatch.error
+      const allFantasyMatchesCompleted =
+        dayLeagueMatches.length === 5 &&
+        dayLeagueMatches.every(
+          x => x.completed === true
         );
 
-      }else{
+
+      const dayRealGames =
+        realGamesByMatchdayId[md.id] || [];
+
+
+      /*
+        Una giornata già chiusa normalmente viene saltata,
+        MA se ha una partita oggi o nel futuro deve restare
+        sotto controllo.
+
+        Questo è proprio il caso della Giornata 1:
+        una partita stasera + un recupero il 21 ottobre.
+      */
+
+      const hasTodayOrFutureGame =
+        dayRealGames.some(game => {
+
+          if(game.cancelled)
+            return false;
+
+          const scheduled =
+            validDate(game.scheduled_at);
+
+          if(!scheduled)
+            return true;
+
+          return (
+            dateOnly(scheduled) >= todayString
+          );
+
+        });
+
+
+      if(
+        allFantasyMatchesCompleted &&
+        !hasTodayOrFutureGame
+      ){
+
+        continue;
+
+      }
+
+
+      daysToProcess.push({
+        ...md,
+        realGames:dayRealGames,
+        leagueMatches:dayLeagueMatches
+      });
+
+    }
+
+
+    console.log(
+      "GIORNATE DA ELABORARE:",
+      daysToProcess.map(x => Number(x.number))
+    );
+
+
+    if(!daysToProcess.length){
+
+      console.log(
+        "NESSUNA GIORNATA LIVE/APERta DA ELABORARE."
+      );
+
+      return;
+    }
+
+
+    /* =========================================================
+       5. DISCOVERY WEBPONT
+    ========================================================= */
+
+    const discoveryUrl =
+      "https://fantabasket-webpont.davzil2005.workers.dev" +
+      "?discover=1&start=400&end=500";
+
+
+    let discovery;
+
+    try{
+
+      const discoveryResponse =
+        await fetch(discoveryUrl);
+
+      discovery =
+        await discoveryResponse.json();
+
+    }catch(error){
+
+      console.error(
+        "ERRORE DISCOVERY WEBPONT:",
+        error
+      );
+
+      return;
+    }
+
+
+    if(
+      !discovery ||
+      discovery.ok !== true ||
+      !Array.isArray(discovery.games)
+    ){
+
+      console.error(
+        "DISCOVERY WEBPONT NON VALIDA:",
+        discovery
+      );
+
+      return;
+    }
+
+
+    console.log(
+      "PARTITE TROVATE DA WEBPONT:",
+      discovery.games.length
+    );
+
+
+    /* =========================================================
+       6. NORMALIZZAZIONE
+    ========================================================= */
+
+    function normalizeTeamName(name){
+
+      return String(name || "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g,"")
+        .replace(/[^a-z0-9 ]/g," ")
+        .replace(/\s+/g," ")
+        .trim();
+
+    }
+
+
+    /* =========================================================
+       7. ALIAS SQUADRE
+    ========================================================= */
+
+    const teamAliases = {
+
+      "a2a leonessa brescia":[
+        "brescia",
+        "leonessa brescia"
+      ],
+
+      "pallacanestro vicenza":[
+        "vicenza"
+      ],
+
+      "rucker san vendemiano":[
+        "san vendemiano",
+        "rucker san vendemiano"
+      ],
+
+      "basket golfo piombino":[
+        "piombino",
+        "solbat golfo piombino",
+        "basket golfo piombino"
+      ],
+
+      "herons montecatini":[
+        "montecatini",
+        "herons montecatini",
+        "fabo herons montecatini"
+      ],
+
+      "basketball club lucca":[
+        "lucca",
+        "basketball club lucca"
+      ],
+
+      "pielle livorno":[
+        "livorno",
+        "pielle livorno"
+      ],
+
+      "virtus lumezzane":[
+        "lumezzane",
+        "luxarm lumezzane",
+        "virtus lumezzane"
+      ],
+
+      "assigeco piacenza":[
+        "piacenza",
+        "assigeco piacenza",
+        "ucc assigeco piacenza"
+      ],
+
+      "sae legnano":[
+        "legnano",
+        "sae legnano",
+        "sae scientifica",
+        "sae scientifica soevis legnano"
+      ],
+
+      "fulgor omegna":[
+        "omegna",
+        "fulgor omegna",
+        "paffoni fulgor basket omegna"
+      ],
+
+      "treviglio brianza basket":[
+        "treviglio",
+        "treviglio brianza basket"
+      ],
+
+      "adamant ferrara":[
+        "ferrara",
+        "adamant ferrara"
+      ],
+
+      "fortitudo agrigento":[
+        "agrigento",
+        "moncada energy agrigento",
+        "fortitudo agrigento"
+      ],
+
+      "infodrive capo d orlando":[
+        "capo d orlando",
+        "capo dorlando",
+        "infodrive capo dorlando"
+      ],
+
+      "viola reggio calabria":[
+        "reggio calabria",
+        "myenergy reggio calabria"
+      ],
+
+      "janus fabriano":[
+        "fabriano",
+        "ristopro fabriano"
+      ],
+
+      "loreto pesaro":[
+        "loreto pesaro",
+        "pesaro",
+        "consultinvest loreto pesaro"
+      ],
+
+      "raggisolaris faenza":[
+        "faenza",
+        "tema sinergie faenza",
+        "raggisolaris faenza"
+      ],
+
+      "scandone avellino":[
+        "avellino",
+        "felice scandone avellino",
+        "scandone avellino"
+      ],
+
+      "liofilchem roseto":[
+        "roseto",
+        "liofilchem roseto"
+      ],
+
+      "mens sana siena":[
+        "siena",
+        "mens sana",
+        "sendero mens sana siena"
+      ],
+
+      "cestistica san severo":[
+        "san severo",
+        "cestistica san severo",
+        "allianz pazienza cestistica san severo"
+      ],
+
+      "luiss roma":[
+        "luiss roma",
+        "luiss"
+      ],
+
+      "basket ravenna":[
+        "ravenna",
+        "orasi ravenna"
+      ],
+
+      "dany basket quarrata":[
+        "quarrata",
+        "dany basket quarrata",
+        "consorzio leonardo dany quarrata"
+      ],
+
+      "psa napoli est":[
+        "napoli est",
+        "psa napoli est"
+      ],
+
+      "latina basket":[
+        "latina",
+        "benacquista assicurazioni latina"
+      ],
+
+      "san giobbe chiusi":[
+        "chiusi",
+        "san giobbe chiusi",
+        "umana san giobbe chiusi"
+      ],
+
+      "aurora desio":[
+        "desio",
+        "rimadesio desio",
+        "aurora desio"
+      ],
+
+      "andrea costa imola":[
+        "imola",
+        "andrea costa imola"
+      ],
+
+      "ltc sangiorgese":[
+        "sangiorgese",
+        "sangiorgio",
+        "san giorgio",
+        "ltc sangiorgese basket"
+      ],
+
+      "siaz piazza armerina":[
+        "piazza armerina",
+        "siaz",
+        "siaz basket piazza armerina"
+      ],
+
+      "virtus roma":[
+        "virtus roma",
+        "virtus gvm roma 1960"
+      ],
+
+      "fiorenzuola bees":[
+        "fiorenzuola",
+        "fiorenzuola bees"
+      ]
+
+    };
+
+
+    function teamMatches(
+      webName,
+      dbName
+    ){
+
+      const web =
+        normalizeTeamName(webName);
+
+      const db =
+        normalizeTeamName(dbName);
+
+      if(!web || !db)
+        return false;
+
+
+      const aliases =
+        teamAliases[db] || [db];
+
+
+      return aliases.some(alias => {
+
+        const a =
+          normalizeTeamName(alias);
+
+        return (
+          web === a ||
+          web.includes(a) ||
+          a.includes(web)
+        );
+
+      });
+
+    }
+
+
+    function webGameDate(game){
+
+      return (
+        dateOnly(game?.date) ||
+        dateOnly(game?.info?.date)
+      );
+
+    }
+
+
+    /* =========================================================
+       8. TROVA GAME WEBPONT PER OGNI REAL GAME
+    ========================================================= */
+
+    const dayContexts = [];
+
+
+    for(const md of daysToProcess){
+
+      const realGames =
+        md.realGames || [];
+
+
+      const matchedRealGames = [];
+
+
+      for(const realGame of realGames){
+
+        if(realGame.cancelled){
+
+          matchedRealGames.push({
+            realGame,
+            webGame:null
+          });
+
+          continue;
+        }
+
+
+        const realDate =
+          dateOnly(realGame.scheduled_at);
+
+
+        /*
+          Prima proviamo con squadra + data.
+        */
+
+        let found =
+          discovery.games.find(g => {
+
+            const sameTeams =
+              teamMatches(
+                g.home,
+                realGame.home?.name
+              ) &&
+              teamMatches(
+                g.away,
+                realGame.away?.name
+              );
+
+            if(!sameTeams)
+              return false;
+
+
+            const gameDate =
+              webGameDate(g);
+
+
+            if(
+              realDate &&
+              gameDate
+            ){
+
+              return (
+                realDate === gameDate
+              );
+
+            }
+
+            return true;
+
+          });
+
+
+        /*
+          Fallback:
+          squadra + squadra, senza data.
+        */
+
+        if(!found){
+
+          found =
+            discovery.games.find(g => {
+
+              return (
+                teamMatches(
+                  g.home,
+                  realGame.home?.name
+                ) &&
+                teamMatches(
+                  g.away,
+                  realGame.away?.name
+                )
+              );
+
+            });
+
+        }
+
+
+        if(!found){
+
+          console.warn(
+            "NESSUN WEBPONT PER REAL GAME:",
+            {
+              giornata:Number(md.number),
+              real_game_id:realGame.id,
+              home:realGame.home?.name,
+              away:realGame.away?.name,
+              scheduled_at:realGame.scheduled_at
+            }
+          );
+
+        }else{
+
+          console.log(
+            "REAL GAME -> WEBPONT:",
+            {
+              giornata:Number(md.number),
+              home:realGame.home?.name,
+              away:realGame.away?.name,
+              scheduled_at:realGame.scheduled_at,
+              game:found.game,
+              webpont_date:found.date
+            }
+          );
+
+        }
+
+
+        matchedRealGames.push({
+          realGame,
+          webGame:
+            found?.game || null
+        });
+
+      }
+
+
+      dayContexts.push({
+        matchday:md,
+        realGames,
+        matchedRealGames,
+        gamesData:{},
+        teamToGame:{},
+        playerToGame:{}
+      });
+
+    }
+
+
+    /* =========================================================
+       9. SCARICO SOLO I WEBPONT NECESSARI
+    ========================================================= */
+
+    const gamesToFetch = [
+      ...new Set(
+        dayContexts.flatMap(
+          ctx =>
+            ctx.matchedRealGames
+              .map(x => x.webGame)
+              .filter(Boolean)
+        )
+      )
+    ];
+
+
+    console.log(
+      "WEBPONT DA SCARICARE:",
+      gamesToFetch
+    );
+
+
+    const globalGamesData = {};
+
+
+    for(const game of gamesToFetch){
+
+      try{
+
+        const r =
+          await fetch(
+            "https://fantabasket-webpont.davzil2005.workers.dev?game=" +
+            encodeURIComponent(game)
+          );
+
+
+        if(!r.ok){
+
+          console.error(
+            "WEBPONT HTTP ERROR:",
+            game,
+            r.status
+          );
+
+          continue;
+        }
+
+
+        const w =
+          await r.json();
+
+
+        globalGamesData[game] =
+          w;
+
 
         console.log(
-          "RISULTATO FANTASY AGGIORNATO:",
-          {
-            match: match.id,
-            homeScore,
-            awayScore,
-            completed: true,
-            homePoints:
-              updateData.home_points,
-            awayPoints:
-              updateData.away_points
-          }
+          "WEBPONT:",
+          game,
+          w.info?.home,
+          w.info?.homeScore,
+          "-",
+          w.info?.away,
+          w.info?.awayScore
+        );
+
+
+      }catch(error){
+
+        console.error(
+          "ERRORE WEBPONT:",
+          game,
+          error
         );
 
       }
 
     }
 
+
+    /* =========================================================
+       10. GIOCATORI
+    ========================================================= */
+
+    const playersResult = await db
+      .from("players")
+      .select(`
+        id,
+        name,
+        surname,
+        webpont_id,
+        real_team_id,
+        active,
+        real_teams(
+          name
+        )
+      `)
+      .eq("active",true);
+
+
+    if(playersResult.error){
+
+      console.error(
+        "ERRORE PLAYERS:",
+        playersResult.error
+      );
+
+      return;
+    }
+
+
+    const dbPlayers =
+      playersResult.data || [];
+
+
+    const playersById = {};
+
+    const playersByWebPontId =
+      new Map();
+
+    const playersByName =
+      new Map();
+
+
+    dbPlayers.forEach(player => {
+
+      playersById[player.id] =
+        player;
+
+
+      if(player.webpont_id != null){
+
+        playersByWebPontId.set(
+          String(player.webpont_id),
+          player
+        );
+
+      }
+
+
+      const fullName =
+        normalizeTeamName(
+          `${player.name || ""} ${player.surname || ""}`
+        );
+
+      if(fullName){
+
+        playersByName.set(
+          fullName,
+          player
+        );
+
+      }
+
+    });
+
+
+    /* =========================================================
+       11. FORMAZIONI DI TUTTE LE GIORNATE DA ELABORARE
+    ========================================================= */
+
+    const processMatchdayIds =
+      dayContexts.map(
+        ctx => ctx.matchday.id
+      );
+
+
+    const lineupsResult = await db
+      .from("lineups")
+      .select(`
+        id,
+        manager_id,
+        matchday_id,
+        lineup_players(
+          player_id,
+          role,
+          captain
+        )
+      `)
+      .in(
+        "matchday_id",
+        processMatchdayIds
+      );
+
+
+    if(lineupsResult.error){
+
+      console.error(
+        "ERRORE LINEUPS:",
+        lineupsResult.error
+      );
+
+      return;
+    }
+
+
+    const allLineups =
+      lineupsResult.data || [];
+
+
+    const coachesResult = await db
+      .from("manager_coaches")
+      .select(`
+        manager_id,
+        real_team_id,
+        purchase_price,
+        active,
+        real_teams(
+          name,
+          coach,
+          logo_url
+        )
+      `)
+      .eq("active",true);
+
+
+    if(coachesResult.error){
+
+      console.error(
+        "ERRORE MANAGER COACHES:",
+        coachesResult.error
+      );
+
+      return;
+    }
+
+
+    const coaches =
+      coachesResult.data || [];
+
+
+    /* =========================================================
+       12. FUNZIONI STATO PARTITA
+    ========================================================= */
+
+    function numericScore(value){
+
+      return Number.isFinite(
+        Number(value)
+      );
+
+    }
+
+
+    function getInfo(gameId){
+
+      return globalGamesData[gameId]?.info || null;
+
+    }
+
+
+    function gameStarted(
+      realGame,
+      webGameId
+    ){
+
+      const scheduled =
+        validDate(
+          realGame?.scheduled_at
+        );
+
+
+      if(scheduled)
+        return scheduled <= now;
+
+
+      const webDate =
+        globalGamesData[webGameId]?.date ||
+        globalGamesData[webGameId]?.info?.date;
+
+
+      const d =
+        validDate(webDate);
+
+
+      if(!d)
+        return false;
+
+
+      return d <= now;
+
+    }
+
+
+    function gameFinished(
+      realGame,
+      webGameId
+    ){
+
+      if(realGame.cancelled)
+        return true;
+
+
+      const data =
+        globalGamesData[webGameId];
+
+
+      if(!data)
+        return false;
+
+
+      const info =
+        data.info || {};
+
+
+      /*
+        Se WebPont ci fornisce esplicitamente
+        lo stato finale, usiamo quello.
+      */
+
+      const explicitValues = [
+        info.finished,
+        info.isFinished,
+        info.completed,
+        info.final,
+        data.finished,
+        data.isFinished,
+        data.completed,
+        data.final
+      ];
+
+
+      for(const value of explicitValues){
+
+        if(typeof value === "boolean")
+          return value;
+
+      }
+
+
+      const status =
+        String(
+          info.status ||
+          data.status ||
+          ""
+        )
+        .trim()
+        .toLowerCase();
+
+
+      if(
+        status.includes("final") ||
+        status.includes("finished") ||
+        status.includes("complete") ||
+        status.includes("terminat") ||
+        status.includes("conclus")
+      ){
+
+        return true;
+
+      }
+
+
+      if(
+        status.includes("live") ||
+        status.includes("ongoing") ||
+        status.includes("in corso") ||
+        status.includes("playing")
+      ){
+
+        return false;
+
+      }
+
+
+      const homeScore =
+        Number(info.homeScore);
+
+      const awayScore =
+        Number(info.awayScore);
+
+
+      if(
+        !Number.isFinite(homeScore) ||
+        !Number.isFinite(awayScore)
+      ){
+
+        return false;
+
+      }
+
+
+      /*
+        Fallback di sicurezza:
+        se la partita è di un giorno precedente,
+        con un risultato numerico la consideriamo conclusa.
+
+        Per una partita di oggi aspettiamo almeno
+        2 ore e 30 dalla scheduled_at.
+      */
+
+      const scheduled =
+        validDate(
+          realGame?.scheduled_at
+        );
+
+
+      if(scheduled){
+
+        const elapsed =
+          now.getTime() -
+          scheduled.getTime();
+
+
+        if(elapsed >= 150 * 60 * 1000){
+
+          return true;
+
+        }
+
+      }
+
+
+      const gameDate =
+        webGameDate(
+          data
+        ) ||
+        dateOnly(
+          realGame?.scheduled_at
+        );
+
+
+      if(
+        gameDate &&
+        gameDate < todayString
+      ){
+
+        return true;
+
+      }
+
+
+      return false;
+
+    }
+
+
+    /* =========================================================
+       13. ELABORIAMO OGNI GIORNATA APERTA
+    ========================================================= */
+
+    for(const ctx of dayContexts){
+
+      const md =
+        ctx.matchday;
+
+
+      const day =
+        Number(md.number);
+
+
+      const matchdayId =
+        md.id;
+
+
+      console.log("=================================");
+      console.log("ELABORO GIORNATA:",day);
+      console.log("=================================");
+
+
+      /* =====================================================
+         MAPPATURA REAL GAME -> WEBPONT
+      ===================================================== */
+
+      for(const item of ctx.matchedRealGames){
+
+        const realGame =
+          item.realGame;
+
+        const game =
+          item.webGame;
+
+
+        if(game){
+
+          ctx.gamesData[game] =
+            globalGamesData[game];
+
+        }
+
+
+        if(!game)
+          continue;
+
+
+        ctx.teamToGame[
+          String(realGame.home_team_id)
+        ] = {
+          game,
+          realGame
+        };
+
+
+        ctx.teamToGame[
+          String(realGame.away_team_id)
+        ] = {
+          game,
+          realGame
+        };
+
+      }
+
+
+      /* =====================================================
+         MAPPATURA GIOCATORI
+      ===================================================== */
+
+      for(const item of ctx.matchedRealGames){
+
+        if(!item.webGame)
+          continue;
+
+
+        const game =
+          item.webGame;
+
+
+        const realGame =
+          item.realGame;
+
+
+        const data =
+          globalGamesData[game];
+
+
+        if(
+          !data ||
+          !Array.isArray(data.players)
+        ){
+
+          continue;
+        }
+
+
+        for(const wp of data.players){
+
+          let player =
+            null;
+
+
+          if(wp.webpont_id != null){
+
+            player =
+              playersByWebPontId.get(
+                String(wp.webpont_id)
+              ) || null;
+
+          }
+
+
+          if(!player){
+
+            const fullName =
+              normalizeTeamName(
+                `${wp.name || ""} ${wp.surname || ""}`
+              );
+
+
+            player =
+              playersByName.get(
+                fullName
+              ) || null;
+
+          }
+
+
+          if(!player)
+            continue;
+
+
+          ctx.playerToGame[
+            player.id
+          ] = {
+
+            game,
+            wp,
+            realGame
+
+          };
+
+        }
+
+      }
+
+
+      console.log(
+        "SQUADRE COLLEGATE GIORNATA",
+        day,
+        ":",
+        Object.keys(ctx.teamToGame).length
+      );
+
+
+      console.log(
+        "GIOCATORI COLLEGATI GIORNATA",
+        day,
+        ":",
+        Object.keys(ctx.playerToGame).length
+      );
+
+
+      /* =====================================================
+         LINEUPS DELLA GIORNATA
+      ===================================================== */
+
+      const lineups =
+        allLineups.filter(
+          lineup =>
+            lineup.matchday_id ===
+            matchdayId
+        );
+
+
+      console.log(
+        "FORMAZIONI GIORNATA",
+        day,
+        ":",
+        lineups.length
+      );
+
+
+      /* =====================================================
+         PUNTEGGI GIOCATORI
+      ===================================================== */
+
+      for(const lineup of lineups){
+
+        for(
+          const lp of
+          (lineup.lineup_players || [])
+        ){
+
+          const player =
+            playersById[
+              lp.player_id
+            ];
+
+
+          if(!player)
+            continue;
+
+
+          const teamEntry =
+            ctx.teamToGame[
+              String(player.real_team_id)
+            ];
+
+
+          /*
+            Se la squadra non ha partita WebPont
+            per questa giornata non inventiamo il punteggio.
+          */
+
+          if(!teamEntry){
+
+            continue;
+
+          }
+
+
+          const game =
+            teamEntry.game;
+
+
+          const realGame =
+            teamEntry.realGame;
+
+
+          /*
+            Partita non ancora iniziata:
+            niente punteggio.
+          */
+
+          if(
+            !gameStarted(
+              realGame,
+              game
+            )
+          ){
+
+            continue;
+
+          }
+
+
+          const pg =
+            ctx.playerToGame[
+              lp.player_id
+            ];
+
+
+          /*
+            Il giocatore non è a referto:
+            ZERO ASSOLUTO.
+          */
+
+          if(!pg){
+
+            let multiplier = 0;
+
+
+            if(
+              lp.role === "starter" ||
+              lp.role === "sixth"
+            ){
+
+              multiplier = 1;
+
+            }else if(
+              lp.role === "bench"
+            ){
+
+              multiplier = 0.5;
+
+            }
+
+
+            const captainMultiplier =
+              lp.captain
+                ? 1.5
+                : 1;
+
+
+            const save =
+              await db
+                .from("fantasy_scores")
+                .upsert({
+
+                  manager_id:
+                    lineup.manager_id,
+
+                  matchday_id:
+                    matchdayId,
+
+                  player_id:
+                    lp.player_id,
+
+                  raw_score:
+                    0,
+
+                  lineup_multiplier:
+                    multiplier,
+
+                  captain_multiplier:
+                    captainMultiplier,
+
+                  final_score:
+                    0
+
+                },{
+                  onConflict:
+                    "manager_id,matchday_id,player_id"
+                });
+
+
+            if(save.error){
+
+              console.error(
+                "ERRORE SALVATAGGIO ZERO:",
+                save.error
+              );
+
+            }
+
+
+            if(
+              typeof me !== "undefined" &&
+              lineup.manager_id === me.id
+            ){
+
+              const scoreBox =
+                document.querySelector(
+                  `[data-live-score="${lp.player_id}"]`
+                );
+
+
+              if(scoreBox){
+
+                if(lp.role === "out"){
+
+                  scoreBox.textContent =
+                    "—";
+
+                }else{
+
+                  scoreBox.textContent =
+                    "0.0";
+
+                }
+
+              }
+
+            }
+
+
+            continue;
+
+          }
+
+
+          const gameInfo =
+            globalGamesData[
+              pg.game
+            ]?.info;
+
+
+          if(!gameInfo){
+
+            console.warn(
+              "INFO PARTITA NON TROVATA:",
+              pg.game
+            );
+
+            continue;
+
+          }
+
+
+          const homeScore =
+            Number(
+              gameInfo.homeScore
+            );
+
+
+          const awayScore =
+            Number(
+              gameInfo.awayScore
+            );
+
+
+          if(
+            !Number.isFinite(homeScore) ||
+            !Number.isFinite(awayScore)
+          ){
+
+            continue;
+
+          }
+
+
+          /* =========================
+             PUNTEGGIO BASE WEBPONT
+          ========================= */
+
+          let raw =
+            Number(
+              pg.wp?.fantasyScore
+            );
+
+
+          if(!Number.isFinite(raw)){
+
+            raw = 0;
+
+          }
+
+
+          /* =========================
+             VITTORIA +3
+          ========================= */
+
+          const playerTeamId =
+            String(
+              player.real_team_id
+            );
+
+
+          const homeTeamId =
+            String(
+              realGame.home_team_id
+            );
+
+
+          let winBonus = false;
+
+
+          if(
+            playerTeamId ===
+            homeTeamId
+          ){
+
+            winBonus =
+              homeScore >
+              awayScore;
+
+          }else{
+
+            winBonus =
+              awayScore >
+              homeScore;
+
+          }
+
+
+          if(winBonus){
+
+            raw += 3;
+
+
+            console.log(
+              "🏆 VITTORIA +3:",
+              `${player.name || ""} ${player.surname || ""}`,
+              "| GIORNATA:",
+              day,
+              "| RISULTATO:",
+              homeScore,
+              "-",
+              awayScore
+            );
+
+          }
+
+
+          /* =========================
+             MOLTIPLICATORE
+          ========================= */
+
+          let multiplier = 0;
+
+
+          if(
+            lp.role === "starter" ||
+            lp.role === "sixth"
+          ){
+
+            multiplier = 1;
+
+          }else if(
+            lp.role === "bench"
+          ){
+
+            multiplier = 0.5;
+
+          }
+
+
+          /* =========================
+             CAPITANO
+          ========================= */
+
+          const captainMultiplier =
+            lp.captain
+              ? 1.5
+              : 1;
+
+
+          /* =========================
+             FINAL SCORE
+          ========================= */
+
+          const finalScore =
+            Math.round(
+              raw *
+              multiplier *
+              captainMultiplier *
+              10
+            ) / 10;
+
+
+          /* =========================
+             SALVATAGGIO
+          ========================= */
+
+          const save =
+            await db
+              .from("fantasy_scores")
+              .upsert({
+
+                manager_id:
+                  lineup.manager_id,
+
+                matchday_id:
+                  matchdayId,
+
+                player_id:
+                  lp.player_id,
+
+                raw_score:
+                  Math.round(
+                    raw * 10
+                  ) / 10,
+
+                lineup_multiplier:
+                  multiplier,
+
+                captain_multiplier:
+                  captainMultiplier,
+
+                final_score:
+                  finalScore
+
+              },{
+                onConflict:
+                  "manager_id,matchday_id,player_id"
+              });
+
+
+          if(save.error){
+
+            console.error(
+              "ERRORE SALVATAGGIO FANTASY SCORE:",
+              save.error
+            );
+
+          }else{
+
+            console.log(
+              "FANTASY SCORE SALVATO:",
+              `${player.name || ""} ${player.surname || ""}`,
+              "| GIORNATA:",
+              day,
+              "| RAW:",
+              Math.round(raw * 10) / 10,
+              "| FINAL:",
+              finalScore
+            );
+
+          }
+
+
+          /* =========================
+             DISPLAY LIVE
+          ========================= */
+
+          if(
+            typeof me !== "undefined" &&
+            lineup.manager_id === me.id
+          ){
+
+            const scoreBox =
+              document.querySelector(
+                `[data-live-score="${lp.player_id}"]`
+              );
+
+
+            if(scoreBox){
+
+              scoreBox.textContent =
+                finalScore > 0
+                  ? "+" + finalScore.toFixed(1)
+                  : finalScore.toFixed(1);
+
+            }
+
+
+            const detailBox =
+              document.querySelector(
+                `[data-live-detail="${lp.player_id}"]`
+              );
+
+
+            if(detailBox){
+
+              const stats = [];
+
+
+              if(
+                pg.wp?.points != null
+              ){
+
+                stats.push(
+                  `${pg.wp.points} pt`
+                );
+
+              }
+
+
+              if(
+                pg.wp?.assists != null
+              ){
+
+                stats.push(
+                  `${pg.wp.assists} ast`
+                );
+
+              }
+
+
+              if(
+                pg.wp?.offensiveRebounds != null ||
+                pg.wp?.defensiveRebounds != null
+              ){
+
+                const rebounds =
+                  Number(
+                    pg.wp.offensiveRebounds || 0
+                  ) +
+                  Number(
+                    pg.wp.defensiveRebounds || 0
+                  );
+
+
+                stats.push(
+                  `${rebounds} reb`
+                );
+
+              }
+
+
+              if(
+                pg.wp?.steals != null
+              ){
+
+                stats.push(
+                  `${pg.wp.steals} rec`
+                );
+
+              }
+
+
+              detailBox.textContent =
+                stats.join(" · ");
+
+            }
+
+          }
+
+        }
+
+      }
+
+
+      /* =====================================================
+         ALLENATORI
+      ===================================================== */
+
+      console.log(
+        "=== CALCOLO ALLENATORI GIORNATA",
+        day,
+        "==="
+      );
+
+
+      for(const coach of coaches){
+
+        const realTeamId =
+          String(
+            coach.real_team_id
+          );
+
+
+        const teamEntry =
+          ctx.teamToGame[
+            realTeamId
+          ];
+
+
+        if(!teamEntry){
+
+          console.warn(
+            "GAME ALLENATORE NON TROVATO:",
+            coach.real_teams?.name,
+            realTeamId,
+            "GIORNATA:",
+            day
+          );
+
+          continue;
+
+        }
+
+
+        const game =
+          teamEntry.game;
+
+
+        const realGame =
+          teamEntry.realGame;
+
+
+        /*
+          Partita futura:
+          niente punteggio allenatore.
+        */
+
+        if(
+          !gameStarted(
+            realGame,
+            game
+          )
+        ){
+
+          continue;
+
+        }
+
+
+        const info =
+          globalGamesData[
+            game
+          ]?.info;
+
+
+        if(!info)
+          continue;
+
+
+        const homeScore =
+          Number(
+            info.homeScore
+          );
+
+
+        const awayScore =
+          Number(
+            info.awayScore
+          );
+
+
+        if(
+          !Number.isFinite(homeScore) ||
+          !Number.isFinite(awayScore)
+        ){
+
+          continue;
+
+        }
+
+
+        const isHome =
+          String(
+            realGame.home_team_id
+          ) === realTeamId;
+
+
+        const teamScore =
+          isHome
+            ? homeScore
+            : awayScore;
+
+
+        const opponentScore =
+          isHome
+            ? awayScore
+            : homeScore;
+
+
+        const margin =
+          Math.abs(
+            teamScore -
+            opponentScore
+          );
+
+
+        let coachScore = 0;
+
+
+        if(
+          teamScore >
+          opponentScore
+        ){
+
+          if(margin <= 5)
+            coachScore = 2.5;
+          else if(margin <= 11)
+            coachScore = 5;
+          else if(margin <= 17)
+            coachScore = 7.5;
+          else
+            coachScore = 10;
+
+        }else if(
+          teamScore <
+          opponentScore
+        ){
+
+          if(margin <= 5)
+            coachScore = -2.5;
+          else if(margin <= 11)
+            coachScore = -5;
+          else if(margin <= 17)
+            coachScore = -7.5;
+          else
+            coachScore = -10;
+
+        }
+
+
+        console.log(
+          "ALLENATORE:",
+          coach.real_teams?.coach,
+          "| SQUADRA:",
+          coach.real_teams?.name,
+          "| GIORNATA:",
+          day,
+          "| RISULTATO:",
+          teamScore + "-" + opponentScore,
+          "| MARGINE:",
+          margin,
+          "| PUNTEGGIO:",
+          coachScore
+        );
+
+
+        const coachSave =
+          await db
+            .from("fantasy_coach_scores")
+            .upsert({
+
+              manager_id:
+                coach.manager_id,
+
+              matchday_id:
+                matchdayId,
+
+              real_team_id:
+                coach.real_team_id,
+
+              raw_score:
+                coachScore,
+
+              final_score:
+                coachScore
+
+            },{
+              onConflict:
+                "manager_id,matchday_id"
+            });
+
+
+        if(coachSave.error){
+
+          console.error(
+            "ERRORE SALVATAGGIO COACH:",
+            coachSave.error
+          );
+
+        }else{
+
+          console.log(
+            "PUNTEGGIO ALLENATORE SALVATO:",
+            coach.real_teams?.coach,
+            coachScore
+          );
+
+        }
+
+      }
+
+
+      /* =====================================================
+         14. STATO REALE DELLA GIORNATA
+      ===================================================== */
+
+      let allRealGamesFinished =
+        true;
+
+
+      for(const item of ctx.matchedRealGames){
+
+        const realGame =
+          item.realGame;
+
+
+        if(realGame.cancelled)
+          continue;
+
+
+        if(!item.webGame){
+
+          allRealGamesFinished =
+            false;
+
+          continue;
+
+        }
+
+
+        const finished =
+          gameFinished(
+            realGame,
+            item.webGame
+          );
+
+
+        if(!finished){
+
+          allRealGamesFinished =
+            false;
+
+        }
+
+      }
+
+
+      console.log(
+        "GIORNATA",
+        day,
+        "TUTTE LE PARTITE REALI FINITE:",
+        allRealGamesFinished
+      );
+
+
+      /* =====================================================
+         15. CALCOLO TOTALI FANTASY
+      ===================================================== */
+
+      const playerScores =
+        await db
+          .from("fantasy_scores")
+          .select(`
+            manager_id,
+            final_score
+          `)
+          .eq(
+            "matchday_id",
+            matchdayId
+          );
+
+
+      const coachScores =
+        await db
+          .from("fantasy_coach_scores")
+          .select(`
+            manager_id,
+            final_score
+          `)
+          .eq(
+            "matchday_id",
+            matchdayId
+          );
+
+
+      if(
+        playerScores.error
+      ){
+
+        console.error(
+          "ERRORE LETTURA FANTASY SCORES:",
+          playerScores.error
+        );
+
+        continue;
+      }
+
+
+      if(
+        coachScores.error
+      ){
+
+        console.error(
+          "ERRORE LETTURA COACH SCORES:",
+          coachScores.error
+        );
+
+        continue;
+      }
+
+
+      const totals = {};
+
+
+      /*
+        GIOCATORI
+      */
+
+      (playerScores.data || [])
+        .forEach(x => {
+
+          const id =
+            String(
+              x.manager_id
+            );
+
+
+          totals[id] =
+            (
+              totals[id] || 0
+            ) +
+            Number(
+              x.final_score || 0
+            );
+
+        });
+
+
+      /*
+        ALLENATORI
+      */
+
+      (coachScores.data || [])
+        .forEach(x => {
+
+          const id =
+            String(
+              x.manager_id
+            );
+
+
+          totals[id] =
+            (
+              totals[id] || 0
+            ) +
+            Number(
+              x.final_score || 0
+            );
+
+        });
+
+
+      /* =====================================================
+         16. AGGIORNA LE PARTITE FANTASY
+      ===================================================== */
+
+      const leagueMatches =
+        ctx.leagueMatches || [];
+
+
+      let everyFantasyMatchHasScore =
+        leagueMatches.length === 5;
+
+
+      for(
+        const match
+        of leagueMatches
+      ){
+
+        const homeId =
+          String(
+            match.home_manager_id
+          );
+
+
+        const awayId =
+          String(
+            match.away_manager_id
+          );
+
+
+        const homeScore =
+          totals[homeId] !== undefined
+            ? Number(
+                totals[homeId].toFixed(1)
+              )
+            : null;
+
+
+        const awayScore =
+          totals[awayId] !== undefined
+            ? Number(
+                totals[awayId].toFixed(1)
+              )
+            : null;
+
+
+        if(
+          homeScore === null ||
+          awayScore === null
+        ){
+
+          everyFantasyMatchHasScore =
+            false;
+
+        }
+
+
+        const updateData = {};
+
+
+        if(
+          homeScore !== null
+        ){
+
+          updateData.home_score =
+            homeScore;
+
+        }
+
+
+        if(
+          awayScore !== null
+        ){
+
+          updateData.away_score =
+            awayScore;
+
+        }
+
+
+        /*
+          La giornata è COMPLETA solamente
+          se TUTTE le partite reali sono finite
+          e tutte le 5 partite fantasy hanno
+          entrambi i punteggi.
+        */
+
+        if(
+          allRealGamesFinished &&
+          homeScore !== null &&
+          awayScore !== null
+        ){
+
+          updateData.completed =
+            true;
+
+
+          if(
+            homeScore >
+            awayScore
+          ){
+
+            updateData.home_points = 2;
+            updateData.away_points = 0;
+
+          }else if(
+            homeScore <
+            awayScore
+          ){
+
+            updateData.home_points = 0;
+            updateData.away_points = 2;
+
+          }else{
+
+            updateData.home_points = 1;
+            updateData.away_points = 1;
+
+          }
+
+        }else{
+
+          /*
+            Fondamentale per i recuperi:
+            una giornata con un recupero futuro
+            NON può risultare chiusa.
+          */
+
+          updateData.completed =
+            false;
+
+        }
+
+
+        if(
+          Object.keys(updateData).length === 0
+        )
+          continue;
+
+
+        const updateMatch =
+          await db
+            .from("league_matches")
+            .update(updateData)
+            .eq(
+              "id",
+              match.id
+            );
+
+
+        if(updateMatch.error){
+
+          console.error(
+            "ERRORE AGGIORNAMENTO LEAGUE MATCH:",
+            updateMatch.error
+          );
+
+        }else{
+
+          console.log(
+            "LEAGUE MATCH AGGIORNATO:",
+            {
+              giornata:day,
+              id:match.id,
+              homeScore,
+              awayScore,
+              completed:
+                updateData.completed,
+              homePoints:
+                updateData.home_points,
+              awayPoints:
+                updateData.away_points
+            }
+          );
+
+        }
+
+      }
+
+
+      /* =====================================================
+         17. STATO DEFINITIVO GIORNATA
+      ===================================================== */
+
+      const dayIsCompleted =
+        allRealGamesFinished &&
+        everyFantasyMatchHasScore &&
+        leagueMatches.length === 5;
+
+
+      console.log(
+        "================================="
+      );
+
+
+      console.log(
+        "GIORNATA",
+        day,
+        dayIsCompleted
+          ? "✅ COMPLETATA"
+          : "🟡 ANCORA APERTA"
+      );
+
+
+      if(!dayIsCompleted){
+
+        const pendingGames =
+          ctx.matchedRealGames
+            .filter(item => {
+
+              if(item.realGame.cancelled)
+                return false;
+
+              if(!item.webGame)
+                return true;
+
+              return !gameFinished(
+                item.realGame,
+                item.webGame
+              );
+
+            })
+            .map(item => ({
+              home:
+                item.realGame.home?.name,
+              away:
+                item.realGame.away?.name,
+              scheduled_at:
+                item.realGame.scheduled_at,
+              webGame:
+                item.webGame
+            }));
+
+
+        console.table(
+          pendingGames
+        );
+
+      }
+
+
+      console.log(
+        "================================="
+      );
+
+    }
+
+
+    /* =========================================================
+       18. FINE
+    ========================================================= */
+
+    console.log(
+      "================================="
+    );
+
+    console.log(
+      "LIVE FANTASY SCORE COMPLETATO"
+    );
+
+    console.log(
+      "GIORNATE ELABORATE:",
+      daysToProcess.map(
+        x => Number(x.number)
+      )
+    );
+
+    console.log(
+      "================================="
+    );
+
+
+  }catch(error){
+
+    console.error(
+      "ERRORE GENERALE LIVE FANTASY SCORE:",
+      error
+    );
+
   }
-
-}
-
-  /* =========================================================
-     8. FINE
-  ========================================================= */
-
-  console.log("=================================");
-  console.log("LIVE FANTASY SCORE COMPLETATO");
-  console.log("Giornata:",day);
-  console.log("Games WebPont:",games.length);
-  console.log("Formazioni:",lineups.length);
-  console.log("=================================");
 
 };
 
