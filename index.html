@@ -8121,15 +8121,15 @@ window.loadLiveFantasyScores = async function(){
 
 console.log("DATI WEBPONT:", wp);           
 
-          ctx.playerToGame[
-            player.id
-          ] = {
+ctx.playerToGame[
+  `${player.id}_${realGame.matchday_id}`
+] = {
 
-            game,
-            wp,
-            realGame
+  game,
+  wp,
+  realGame
 
-          };
+};
 
 window.livePlayerToGame =
   ctx.playerToGame;
