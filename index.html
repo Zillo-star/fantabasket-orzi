@@ -14389,8 +14389,10 @@ window.openPlayerGameStats = async function(
       ? players.find(x => x.id === playerId)
       : players[playerId]) || {};
 
-  const liveData =
-    window.livePlayerToGame?.[playerId];
+const liveData =
+  window.livePlayerToGame?.[
+    `${playerId}_${matchdayId}`
+  ];
 
   const wp =
     liveData?.wp || {};
