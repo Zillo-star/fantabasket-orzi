@@ -3934,9 +3934,36 @@ async function home(){
 
 async function refreshDashboardFantasyTotal(){
 
-  const totalBox =
+  let totalBox =
     document.getElementById("dashboardFantasyTotal");
 
+  /*
+    Se l'id non esiste, trova la card
+    "Punti fantasy" direttamente.
+  */
+  if(!totalBox){
+
+    const title =
+      [...document.querySelectorAll("#content h2")]
+        .find(
+          x =>
+            x.textContent.trim() ===
+            "Punti fantasy"
+        );
+
+    if(title){
+
+      totalBox =
+        title.parentElement.querySelector("b");
+
+    }
+
+  }
+
+  /*
+    Se non siamo sulla Dashboard,
+    non fare nulla.
+  */
   if(!totalBox)
     return;
 
@@ -3947,11 +3974,14 @@ async function refreshDashboardFantasyTotal(){
       .eq("manager_id",me.id);
 
   if(playersResult.error){
+
     console.error(
       "Errore aggiornamento totale giocatori:",
       playersResult.error
     );
+
     return;
+
   }
 
   const coachesResult =
@@ -3961,32 +3991,41 @@ async function refreshDashboardFantasyTotal(){
       .eq("manager_id",me.id);
 
   if(coachesResult.error){
+
     console.error(
       "Errore aggiornamento totale allenatore:",
       coachesResult.error
     );
+
     return;
+
   }
 
   const playerTotal =
     (playersResult.data || [])
       .reduce(
-        (s,x) => s + Number(x.final_score || 0),
+        (s,x) =>
+          s +
+          Number(x.final_score || 0),
         0
       );
 
   const coachTotal =
     (coachesResult.data || [])
       .reduce(
-        (s,x) => s + Number(x.final_score || 0),
+        (s,x) =>
+          s +
+          Number(x.final_score || 0),
         0
       );
 
   const total =
-    playerTotal + coachTotal;
+    playerTotal +
+    coachTotal;
 
   totalBox.textContent =
     total.toFixed(1);
+
 }
    
 async function updateDashboardNotification(){
