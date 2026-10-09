@@ -7047,14 +7047,19 @@ window.loadLiveFantasyScores = async function(){
         });
 
 
-      if(
-        allFantasyMatchesCompleted &&
-        !hasTodayOrFutureGame
-      ){
+const popupRequestsThisDay =
+  String(window.playerStatsRequestedMatchdayId || "") ===
+  String(md.id);
 
-        continue;
+if(
+  allFantasyMatchesCompleted &&
+  !hasTodayOrFutureGame &&
+  !popupRequestsThisDay
+){
 
-      }
+  continue;
+
+}
 
 
       daysToProcess.push({
