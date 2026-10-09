@@ -14467,6 +14467,27 @@ window.openPlayerGameStats = async function(
   matchdayId
 ){
 
+window.playerStatsRequestedMatchdayId = matchdayId;
+
+if(
+  typeof window.loadLiveFantasyScores === "function"
+){
+
+  try{
+
+    await window.loadLiveFantasyScores();
+
+  }catch(e){
+
+    console.error(
+      "Errore caricamento statistiche giornata:",
+      e
+    );
+
+  }
+
+}
+   
   const p =
     (Array.isArray(players)
       ? players.find(x => x.id === playerId)
