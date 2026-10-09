@@ -8141,10 +8141,13 @@ for(
           }
 
 
-          if(!player)
-            continue;
+if(!player)
+  continue;
 
-console.log("DATI WEBPONT:", wp);           
+
+/* =========================================
+   MOTORE FANTASY: NON MODIFICARE LA CHIAVE
+========================================= */
 
 ctx.playerToGame[
   player.id
@@ -8155,6 +8158,29 @@ ctx.playerToGame[
   realGame
 
 };
+
+
+/* =========================================
+   CACHE STATISTICHE PER IL POPUP
+   SEPARATA PER OGNI GIORNATA
+========================================= */
+
+if(realGame?.matchday_id){
+
+  window.livePlayerGameStats =
+    window.livePlayerGameStats || {};
+
+  window.livePlayerGameStats[
+    `${player.id}_${realGame.matchday_id}`
+  ] = {
+
+    game,
+    wp,
+    realGame
+
+  };
+
+}
 
 window.livePlayerToGame =
   window.livePlayerToGame || {};
