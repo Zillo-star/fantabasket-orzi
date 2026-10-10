@@ -14787,8 +14787,11 @@ if(
     return;
   }
 
-  window.loadLiveFantasyScores()
-    .then(() => {
+window.loadSinglePlayerGameStats(
+  playerId,
+  matchdayId
+)
+  .then(() => {
 
       const found =
         window.livePlayerGameStats?.[cacheKey];
