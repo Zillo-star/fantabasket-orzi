@@ -14545,74 +14545,106 @@ window.loadSinglePlayerGameStats = async function(
     );
   };
 
-  const realDate = realGame.scheduled_at
-    ? new Date(realGame.scheduled_at)
-        .toISOString()
-        .slice(0,10)
-    : null;
+const realDate = realGame.scheduled_at
+  ? new Date(realGame.scheduled_at)
+      .toISOString()
+      .slice(0, 10)
+  : null;
 
-  /* Recupera l'elenco delle partite WebPont */
-  const discoveryRes = await fetch(
-    "https://fantabasket-webpont.davzil2005.workers.dev?discover=1&start=400&end=500"
-  );
 
-  if(!discoveryRes.ok){
-    throw new Error("Discovery WebPont non disponibile.");
-  }
+/* =====================================
+   ABBINAMENTO PARTITA WEBPONT
+   1. Prima prova squadre + data
+   2. Se la data non coincide, riprova
+      usando soltanto le due squadre
+===================================== */
 
-  const discovery = await discoveryRes.json();
+const sameTeams = g => {
 
-  if(!Array.isArray(discovery.games)){
-    throw new Error("Elenco partite WebPont non valido.");
-  }
+  const direct =
+    teamMatches(g.home, realGame.home?.name) &&
+    teamMatches(g.away, realGame.away?.name);
 
-  const candidates = discovery.games.filter(g => {
+  const reverse =
+    teamMatches(g.home, realGame.away?.name) &&
+    teamMatches(g.away, realGame.home?.name);
 
-    const teamsMatch =
-      (
-        teamMatches(g.home, realGame.home?.name) &&
-        teamMatches(g.away, realGame.away?.name)
-      ) ||
-      (
-        teamMatches(g.home, realGame.away?.name) &&
-        teamMatches(g.away, realGame.home?.name)
-      );
+  return direct || reverse;
 
-    if(!teamsMatch) return false;
+};
 
-    const dateValue = g.date || g.info?.date;
 
-    if(realDate && dateValue){
+const sameDate = g => {
 
-      const d = new Date(dateValue);
+  const value = g.date || g.info?.date;
 
-      if(Number.isFinite(d.getTime())){
-
-        const webDate =
-          d.toISOString().slice(0,10);
-
-        if(webDate !== realDate) return false;
-
-      }
-
-    }
-
+  if(!realDate || !value)
     return true;
 
-  });
+  const d = new Date(value);
 
-  const selectedGame = candidates[0];
+  if(!Number.isFinite(d.getTime()))
+    return true;
 
-  const gameId =
-    selectedGame?.id ||
-    selectedGame?.game ||
-    selectedGame?.gameId;
+  return d.toISOString().slice(0, 10) === realDate;
 
-  if(!gameId){
-    throw new Error(
-      "Partita WebPont corrispondente non trovata."
-    );
-  }
+};
+
+
+/* Primo tentativo: squadre e data */
+
+let candidates =
+  discovery.games.filter(g =>
+    sameTeams(g) && sameDate(g)
+  );
+
+
+/* Secondo tentativo: solo le squadre */
+
+if(!candidates.length){
+
+  candidates =
+    discovery.games.filter(sameTeams);
+
+}
+
+
+if(!candidates.length){
+
+  console.error(
+    "PARTITA WEBPONT NON ABBINATA",
+    {
+      giornata: realGame.matchday_id,
+      dataReale: realDate,
+      casaReale: realGame.home?.name,
+      trasfertaReale: realGame.away?.name,
+      partiteWebPont: discovery.games.map(g => ({
+        game: g.game,
+        data: g.date,
+        casa: g.home,
+        trasferta: g.away
+      }))
+    }
+  );
+
+  throw new Error(
+    "Non trovo la partita WebPont corrispondente."
+  );
+
+}
+
+
+const selectedGame = candidates[0];
+
+const gameId = selectedGame.game;
+
+if(!gameId){
+
+  throw new Error(
+    "La partita trovata non ha un ID WebPont valido."
+  );
+
+}
 
   /* Scarica soltanto questa partita */
   const gameRes = await fetch(
