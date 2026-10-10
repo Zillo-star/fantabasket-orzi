@@ -14461,6 +14461,225 @@ function getPlayerData(lp){
     return Number(value).toFixed(1);
   }
 
+window.loadSinglePlayerGameStats = async function(
+  playerId,
+  matchdayId
+){
+
+  const key = `${playerId}_${matchdayId}`;
+
+  window.livePlayerGameStats =
+    window.livePlayerGameStats || {};
+
+  if(window.livePlayerGameStats[key]?.wp){
+    return window.livePlayerGameStats[key];
+  }
+
+  const playerRes = await db
+    .from("players")
+    .select(`
+      id,
+      name,
+      surname,
+      webpont_id,
+      real_team_id,
+      real_teams(name)
+    `)
+    .eq("id", playerId)
+    .single();
+
+  if(playerRes.error){
+    throw playerRes.error;
+  }
+
+  const player = playerRes.data;
+
+  const gamesRes = await db
+    .from("real_games")
+    .select(`
+      id,
+      matchday_id,
+      home_team_id,
+      away_team_id,
+      scheduled_at,
+      cancelled,
+      home:home_team_id(id,name),
+      away:away_team_id(id,name)
+    `)
+    .eq("matchday_id", matchdayId);
+
+  if(gamesRes.error){
+    throw gamesRes.error;
+  }
+
+  const realGame = (gamesRes.data || []).find(g =>
+    !g.cancelled &&
+    (
+      String(g.home_team_id) ===
+        String(player.real_team_id) ||
+      String(g.away_team_id) ===
+        String(player.real_team_id)
+    )
+  );
+
+  if(!realGame){
+    throw new Error(
+      "Partita reale non trovata per questa giornata."
+    );
+  }
+
+  const normalize = value =>
+    String(value || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]/g, "");
+
+  const teamMatches = (a,b) => {
+    const x = normalize(a);
+    const y = normalize(b);
+
+    return Boolean(
+      x && y &&
+      (x === y || x.includes(y) || y.includes(x))
+    );
+  };
+
+  const realDate = realGame.scheduled_at
+    ? new Date(realGame.scheduled_at)
+        .toISOString()
+        .slice(0,10)
+    : null;
+
+  /* Recupera l'elenco delle partite WebPont */
+  const discoveryRes = await fetch(
+    "https://fantabasket-webpont.davzil2005.workers.dev?discover=1&start=400&end=500"
+  );
+
+  if(!discoveryRes.ok){
+    throw new Error("Discovery WebPont non disponibile.");
+  }
+
+  const discovery = await discoveryRes.json();
+
+  if(!Array.isArray(discovery.games)){
+    throw new Error("Elenco partite WebPont non valido.");
+  }
+
+  const candidates = discovery.games.filter(g => {
+
+    const teamsMatch =
+      (
+        teamMatches(g.home, realGame.home?.name) &&
+        teamMatches(g.away, realGame.away?.name)
+      ) ||
+      (
+        teamMatches(g.home, realGame.away?.name) &&
+        teamMatches(g.away, realGame.home?.name)
+      );
+
+    if(!teamsMatch) return false;
+
+    const dateValue = g.date || g.info?.date;
+
+    if(realDate && dateValue){
+
+      const d = new Date(dateValue);
+
+      if(Number.isFinite(d.getTime())){
+
+        const webDate =
+          d.toISOString().slice(0,10);
+
+        if(webDate !== realDate) return false;
+
+      }
+
+    }
+
+    return true;
+
+  });
+
+  const selectedGame = candidates[0];
+
+  const gameId =
+    selectedGame?.id ||
+    selectedGame?.game ||
+    selectedGame?.gameId;
+
+  if(!gameId){
+    throw new Error(
+      "Partita WebPont corrispondente non trovata."
+    );
+  }
+
+  /* Scarica soltanto questa partita */
+  const gameRes = await fetch(
+    "https://fantabasket-webpont.davzil2005.workers.dev?game=" +
+    encodeURIComponent(gameId)
+  );
+
+  if(!gameRes.ok){
+    throw new Error("Dati WebPont non disponibili.");
+  }
+
+  const gameData = await gameRes.json();
+
+  if(!Array.isArray(gameData.players)){
+    throw new Error(
+      "Statistiche dei giocatori non disponibili."
+    );
+  }
+
+  let wp = null;
+
+  if(player.webpont_id){
+
+    wp = gameData.players.find(x =>
+      x.webpont_id != null &&
+      String(x.webpont_id) ===
+        String(player.webpont_id)
+    );
+
+  }
+
+  if(!wp){
+
+    const surname = normalize(
+      player.surname ||
+      String(player.name || "").split(/\s+/).pop()
+    );
+
+    wp = gameData.players.find(x => {
+
+      const fullName = normalize(
+        `${x.name || ""} ${x.surname || ""}`
+      );
+
+      return surname && fullName.endsWith(surname);
+
+    });
+
+  }
+
+  if(!wp){
+    throw new Error(
+      "Giocatore non trovato nella partita WebPont."
+    );
+  }
+
+  const result = {
+    game: gameId,
+    wp,
+    realGame
+  };
+
+  window.livePlayerGameStats[key] = result;
+
+  return result;
+};
+   
 window.openPlayerGameStats = async function(
   playerId,
   managerId,
