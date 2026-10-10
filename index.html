@@ -14817,23 +14817,30 @@ window.loadSinglePlayerGameStats(
       }
 
     })
-    .catch(error => {
+.catch(error => {
 
-      console.error(
-        "Errore caricamento statistiche:",
-        error
-      );
+  console.error(
+    "Errore caricamento statistiche:",
+    error
+  );
 
-      loadingModal.querySelector("div")
-        .insertAdjacentHTML(
-          "beforeend",
-          `<p style="color:#fca5a5;font-size:12px">
-            Errore nel caricamento. Riprova.
-          </p>`
-        );
+  const messaggio = document.createElement("p");
 
-    });
+  messaggio.style.cssText = `
+    color:#fca5a5;
+    font-size:12px;
+    line-height:1.5;
+    margin-top:12px;
+  `;
 
+  messaggio.textContent =
+    "Errore: " +
+    String(error?.message || error);
+
+  loadingModal.querySelector("div")
+    .appendChild(messaggio);
+
+});
   return;
 }
    
