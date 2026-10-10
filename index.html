@@ -14467,25 +14467,155 @@ window.openPlayerGameStats = async function(
   matchdayId
 ){
 
-window.playerStatsRequestedMatchdayId = matchdayId;
+const cacheKey =
+  `${playerId}_${matchdayId}`;
+
+/* Se le statistiche sono già in cache,
+   apri direttamente il popup. */
 
 if(
-  typeof window.loadLiveFantasyScores === "function"
+  !window.livePlayerGameStats?.[cacheKey]
 ){
 
-  try{
+  window.playerStatsRequestedMatchdayId =
+    matchdayId;
 
-    await window.loadLiveFantasyScores();
-
-  }catch(e){
-
-    console.error(
-      "Errore caricamento statistiche giornata:",
-      e
+  const oldModal =
+    document.getElementById(
+      "playerGameStatsModal"
     );
 
+  if(oldModal) oldModal.remove();
+
+  const loadingModal =
+    document.createElement("div");
+
+  loadingModal.id =
+    "playerGameStatsModal";
+
+  loadingModal.style.cssText = `
+    position:fixed;
+    inset:0;
+    z-index:99999;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:18px;
+    background:rgba(0,0,0,.72);
+  `;
+
+  loadingModal.innerHTML = `
+    <div style="
+      width:100%;
+      max-width:340px;
+      padding:25px;
+      border-radius:18px;
+      background:#11182c;
+      border:1px solid rgba(255,255,255,.1);
+      color:white;
+      text-align:center;
+    ">
+      <div style="font-size:28px;margin-bottom:12px">
+        🏀
+      </div>
+
+      <div style="font-size:17px;font-weight:900">
+        Caricamento statistiche…
+      </div>
+
+      <div style="
+        margin-top:8px;
+        font-size:12px;
+        color:#9ca3af;
+      ">
+        Recupero i dati della partita.
+      </div>
+
+      <button
+        onclick="
+          document.getElementById(
+            'playerGameStatsModal'
+          )?.remove()
+        "
+        style="
+          margin-top:18px;
+          padding:8px 16px;
+          border:0;
+          border-radius:9px;
+          background:#26304a;
+          color:white;
+          cursor:pointer;
+        "
+      >
+        Chiudi
+      </button>
+    </div>
+  `;
+
+  document.body.appendChild(loadingModal);
+
+  if(
+    typeof window.loadLiveFantasyScores !==
+    "function"
+  ){
+
+    loadingModal.querySelector("div")
+      .insertAdjacentHTML(
+        "beforeend",
+        '<p>Loader live non disponibile.</p>'
+      );
+
+    return;
   }
 
+  window.loadLiveFantasyScores()
+    .then(() => {
+
+      const found =
+        window.livePlayerGameStats?.[cacheKey];
+
+      if(found){
+
+        loadingModal.remove();
+
+        /* Riapre la scheda usando la cache */
+        window.openPlayerGameStats(
+          playerId,
+          managerId,
+          matchdayId
+        );
+
+      }else{
+
+        loadingModal.querySelector("div")
+          .insertAdjacentHTML(
+            "beforeend",
+            `<p style="color:#fca5a5;font-size:12px">
+              Statistiche non disponibili per questa giornata.
+            </p>`
+          );
+
+      }
+
+    })
+    .catch(error => {
+
+      console.error(
+        "Errore caricamento statistiche:",
+        error
+      );
+
+      loadingModal.querySelector("div")
+        .insertAdjacentHTML(
+          "beforeend",
+          `<p style="color:#fca5a5;font-size:12px">
+            Errore nel caricamento. Riprova.
+          </p>`
+        );
+
+    });
+
+  return;
 }
    
   const p =
