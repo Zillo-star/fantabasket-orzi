@@ -3795,29 +3795,64 @@ const myRank = standingsRows.findIndex(
 ) + 1;  
 
 
+
 /* =========================
-   PARTITA ATTUALE E SUCCESSIVA
+   ULTIMA GIORNATA E GIORNATA ATTUALE
 ========================= */
 
-const myMatches = allMatches
-  .filter(x =>
-    x.home_manager_id === me.id ||
-    x.away_manager_id === me.id
-  )
-  .sort((a,b) =>
-    Number(a.matchday_number) - Number(b.matchday_number)
+const dayNumbers = [...new Set(
+  allMatches.map(m => Number(m.matchday_number))
+)].filter(n => Number.isFinite(n) && n > 0)
+ .sort((a,b) => a-b);
+
+const completedDayNumbers = dayNumbers.filter(day => {
+  const games = allMatches.filter(
+    m => Number(m.matchday_number) === day
   );
 
-// Prima partita non ancora conclusa
-const currentMatch = myMatches.find(x => !x.completed) || null;
+  return games.length > 0 &&
+    games.every(m => m.completed === true);
+});
 
-// Partita della giornata successiva
-const nextMatch = currentMatch
-  ? myMatches.find(x =>
-      Number(x.matchday_number) >
-      Number(currentMatch.matchday_number)
-    ) || null
+const lastCompletedDay = completedDayNumbers.length
+  ? completedDayNumbers[completedDayNumbers.length - 1]
   : null;
+
+const currentDayNumber = dayNumbers.find(day => {
+  const games = allMatches.filter(
+    m => Number(m.matchday_number) === day
+  );
+
+  return !games.every(m => m.completed === true) &&
+    (lastCompletedDay === null || day > lastCompletedDay);
+}) ?? null;
+
+const lastDayMatch = lastCompletedDay === null
+  ? null
+  : allMatches.find(m =>
+      Number(m.matchday_number) === lastCompletedDay &&
+      (m.home_manager_id === me.id ||
+       m.away_manager_id === me.id)
+    ) || null;
+
+const currentDayMatch = currentDayNumber === null
+  ? null
+  : allMatches.find(m =>
+      Number(m.matchday_number) === currentDayNumber &&
+      (m.home_manager_id === me.id ||
+       m.away_manager_id === me.id)
+    ) || null;
+
+function getOpponentName(match){
+  if(!match) return "Da definire";
+
+  const opponentId =
+    match.home_manager_id === me.id
+      ? match.away_manager_id
+      : match.home_manager_id;
+
+  return standingsMap[opponentId]?.teamName || "Avversario";
+}
 
 function getOpponentName(match){
   if(!match) return "Da definire";
