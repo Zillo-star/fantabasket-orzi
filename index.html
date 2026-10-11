@@ -14503,35 +14503,39 @@ let futureDays =
   allDays.filter(day => day > currentDay);
 
 
+
 /* =========================
    GIORNATA SELEZIONATA
 ========================= */
 
-let selectedDay =
-  Number(
+// Se la dashboard passa una giornata,
+// usa quella richiesta esplicitamente.
+let selectedDay;
+
+if (
+  dayNumber !== null &&
+  dayNumber !== undefined &&
+  dayNumber !== ""
+) {
+  selectedDay = Number(dayNumber);
+} else {
+  // Navigazione normale dal selettore
+  // o apertura del calendario.
+  selectedDay = Number(
     window.calendarSelectedDay || currentDay
   );
-
-
-/*
-  Sono selezionabili anche le giornate future.
-
-  Se non esiste una giornata precedentemente
-  selezionata, viene usata quella attuale.
-*/
-
-if(
-  !allDays.includes(selectedDay) ||
-  selectedDay === 0
-){
-
-  selectedDay = currentDay;
-
 }
 
+// Controllo di sicurezza
+if (
+  !allDays.includes(selectedDay) ||
+  selectedDay === 0
+) {
+  selectedDay = currentDay;
+}
 
-window.calendarSelectedDay =
-  selectedDay;
+// Memorizza la giornata scelta
+window.calendarSelectedDay = selectedDay;
 
   /* =========================
      LINEUP
