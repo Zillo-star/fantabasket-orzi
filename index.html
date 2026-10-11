@@ -4377,13 +4377,13 @@ return `
         ">
           <div style="font-size:12px;color:#aab5d0">POSIZIONE</div>
           <div style="font-size:29px;font-weight:950;margin-top:3px">
-            ${myRank>0?myRank+"°":"—"}
+            
+          ${myRank>0?myRank+"°":"—"}
           </div>
           <div style="font-size:11px;color:#aab5d0">
             su ${standingsRows.length} squadre
           </div>
         </div>
-
       </div>
 
       <div style="
@@ -4423,7 +4423,6 @@ return `
   );
 
 }
-
 async function refreshDashboardFantasyTotal(){
 
   let totalBox =
