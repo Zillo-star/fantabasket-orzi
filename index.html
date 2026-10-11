@@ -16853,12 +16853,10 @@ function benchBlock(list,managerId){
      PARTITE SELEZIONATE
   ========================= */
 
-  let selectedMatches =
-    matches.filter(
-      x =>
-        Number(x.matchday_number) ===
-        selectedDay
-    );
+let selectedMatches = matches.filter(x =>
+  Number(x.matchday_number) === selectedDay &&
+  (!onlyMatchId || String(x.id) === String(onlyMatchId))
+);
 
 
   /* =========================
