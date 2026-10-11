@@ -4325,6 +4325,7 @@ async function home(){
 
       </div>
 
+
       <div style="
         margin-top:24px;
         padding-top:18px;
@@ -4332,12 +4333,21 @@ async function home(){
         display:flex;
         align-items:center;
         justify-content:space-between;
-        gap:16px;
-        flex-wrap:wrap;
+        gap:12px;
       ">
-        <div>
-          <div style="font-size:13px;color:#aab5d0">PUNTI FANTASY TOTALI</div>
-          <div style="font-size:42px;line-height:1.2;font-weight:950;margin-top:5px">
+
+        <div style="
+          display:flex;
+          align-items:center;
+          gap:7px;
+          flex-shrink:0;
+        ">
+          ${renderRecentResults()}
+        </div>
+
+        <div style="text-align:center;min-width:0">
+          <div style="font-size:11px;color:#aab5d0">PUNTI TOTALI</div>
+          <div style="font-size:30px;line-height:1.2;font-weight:950;margin-top:4px">
             ${tot.toFixed(1)}
           </div>
         </div>
@@ -4346,19 +4356,16 @@ async function home(){
           text-align:center;
           background:rgba(255,255,255,.07);
           border:1px solid rgba(255,255,255,.1);
-          border-radius:14px;
-          padding:12px 18px;
-          min-width:105px;
+          border-radius:12px;
+          padding:9px 12px;
+          flex-shrink:0;
         ">
-          <div style="font-size:12px;color:#aab5d0">POSIZIONE</div>
-          <div style="font-size:29px;font-weight:950;margin-top:3px">
-            
-          ${myRank>0?myRank+"°":"—"}
-          </div>
-          <div style="font-size:11px;color:#aab5d0">
-            su ${standingsRows.length} squadre
+          <div style="font-size:11px;color:#aab5d0">CLASSIFICA</div>
+          <div style="font-size:25px;font-weight:950;margin-top:3px">
+            ${myRank>0?myRank+"°":"—"}
           </div>
         </div>
+
       </div>
 
       <div style="
