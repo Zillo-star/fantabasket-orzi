@@ -3752,6 +3752,47 @@ db.from("league_matches")
   const allDays = mdRes.data || [];
   const allMatches = matchesRes.data || [];
 
+ /* =========================
+   POSIZIONE IN CLASSIFICA
+========================= */
+
+const managersRes = await db
+  .from("managers")
+  .select("id,name,team_name");
+
+if(managersRes.error)
+  return message(managersRes.error.message,"err");
+
+const standingsMap = {};
+
+(managersRes.data || []).forEach(m => {
+  standingsMap[m.id] = {
+    id: m.id,
+    teamName: m.team_name || m.name || "—",
+    points: 0
+  };
+});
+
+allMatches.forEach(m => {
+  if(!m.completed) return;
+
+  if(standingsMap[m.home_manager_id]){
+    standingsMap[m.home_manager_id].points +=
+      Number(m.home_points || 0);
+  }
+
+  if(standingsMap[m.away_manager_id]){
+    standingsMap[m.away_manager_id].points +=
+      Number(m.away_points || 0);
+  }
+});
+
+const standingsRows = Object.values(standingsMap)
+  .sort((a,b) => b.points - a.points);
+
+const myRank = standingsRows.findIndex(
+  x => x.id === me.id
+) + 1;  
 
   /* =========================
      ULTIMA GIORNATA CONCLUSA
