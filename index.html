@@ -3698,205 +3698,474 @@ async function testPlayerStats(playerId="A827505"){
   }
 
 }
+
 async function home(){
 
-  let r=await db
-    .from("fantasy_scores")
-    .select("final_score")
-    .eq("manager_id",me.id);
+  /* =========================
+     DATI GENERALI
+  ========================= */
 
-  if(r.error)
-    return message(r.error.message,"err");
+  let [r,c,mdRes,matchesRes] = await Promise.all([
+
+    db.from("fantasy_scores")
+      .select("final_score")
+      .eq("manager_id",me.id),
+
+    db.from("fantasy_coach_scores")
+      .select("final_score")
+      .eq("manager_id",me.id),
+
+    db.from("matchdays")
+      .select("id,number")
+      .order("number"),
+
+    db.from("league_matches")
+      .select(`
+        id,
+        matchday_number,
+        home_manager_id,
+        away_manager_id,
+        home_score,
+        away_score,
+        completed
+      `)
+      .order("matchday_number")
+
+  ]);
+
+  if(r.error) return message(r.error.message,"err");
+  if(c.error) return message(c.error.message,"err");
+  if(mdRes.error) return message(mdRes.error.message,"err");
+  if(matchesRes.error) return message(matchesRes.error.message,"err");
 
 
-  let c=await db
-    .from("fantasy_coach_scores")
-    .select("final_score")
-    .eq("manager_id",me.id);
+  const playerTotal = (r.data||[])
+    .reduce((s,x)=>s+Number(x.final_score||0),0);
 
-  if(c.error)
-    return message(c.error.message,"err");
+  const coachTotal = (c.data||[])
+    .reduce((s,x)=>s+Number(x.final_score||0),0);
+
+  const tot = playerTotal + coachTotal;
+
+  const teamName = me.team_name || me.name || "La tua squadra";
+  const allDays = mdRes.data || [];
+  const allMatches = matchesRes.data || [];
 
 
-  let playerTotal=(r.data||[])
-    .reduce(
-      (s,x)=>s+Number(x.final_score||0),
-      0
+  /* =========================
+     ULTIMA GIORNATA CONCLUSA
+  ========================= */
+
+  const completedDays = [...new Set(
+    allMatches
+      .filter(x=>x.completed)
+      .map(x=>Number(x.matchday_number))
+  )].filter(day=>{
+
+    const games = allMatches.filter(
+      x=>Number(x.matchday_number)===day
+    );
+
+    return games.length>0 && games.every(x=>x.completed);
+
+  }).sort((a,b)=>b-a);
+
+  const dayNumber = completedDays[0] || null;
+
+  const matchday = allDays.find(
+    x=>Number(x.number)===Number(dayNumber)
+  );
+
+  let dayPlayerTotal = 0;
+  let dayCoachTotal = 0;
+  let topPlayer = null;
+  let flopPlayer = null;
+  let duelHTML = `
+    <div class="muted">Nessuno scontro concluso disponibile.</div>
+  `;
+
+
+  /* =========================
+     PUNTEGGI DELLA GIORNATA
+  ========================= */
+
+  if(dayNumber && matchday){
+
+    const [scoresRes,coachRes] = await Promise.all([
+
+      db.from("fantasy_scores")
+        .select(`
+          player_id,
+          final_score,
+          players(
+            name,
+            surname,
+            position,
+            real_teams(name)
+          )
+        `)
+        .eq("manager_id",me.id)
+        .eq("matchday_id",matchday.id),
+
+      db.from("fantasy_coach_scores")
+        .select("final_score")
+        .eq("manager_id",me.id)
+        .eq("matchday_id",matchday.id)
+
+    ]);
+
+    if(scoresRes.error)
+      return message(scoresRes.error.message,"err");
+
+    if(coachRes.error)
+      return message(coachRes.error.message,"err");
+
+
+    const scores = scoresRes.data || [];
+
+    dayPlayerTotal = scores.reduce(
+      (s,x)=>s+Number(x.final_score||0),0
+    );
+
+    dayCoachTotal = (coachRes.data||[]).reduce(
+      (s,x)=>s+Number(x.final_score||0),0
     );
 
 
-  let coachTotal=(c.data||[])
-    .reduce(
-      (s,x)=>s+Number(x.final_score||0),
-      0
+    /* TOP E FLOP: punteggio fantasy individuale */
+
+    const ranked = scores
+      .filter(x=>x.players)
+      .map(x=>({
+        ...x,
+        points:Number(x.final_score||0),
+        playerName:[
+          x.players.name,
+          x.players.surname
+        ].filter(Boolean).join(" ")
+      }))
+      .sort((a,b)=>b.points-a.points);
+
+    if(ranked.length){
+      topPlayer = ranked[0];
+      flopPlayer = ranked[ranked.length-1];
+    }
+
+
+    /* =========================
+       SCONTRO DIRETTO
+    ========================= */
+
+    const duel = allMatches.find(x=>
+      Number(x.matchday_number)===Number(dayNumber) &&
+      (
+        x.home_manager_id===me.id ||
+        x.away_manager_id===me.id
+      )
     );
 
+    if(duel){
 
-  let tot=playerTotal+coachTotal;
+      const opponentId =
+        duel.home_manager_id===me.id
+          ? duel.away_manager_id
+          : duel.home_manager_id;
 
+      const managerRes = await db
+        .from("managers")
+        .select("id,name,team_name")
+        .in("id",[me.id,opponentId]);
 
-  let teamName=
-    me.team_name ||
-    "Nome squadra non impostato";
+      if(managerRes.error)
+        return message(managerRes.error.message,"err");
 
+      const managers = managerRes.data || [];
 
-  el("content").innerHTML=`
+      const mine = managers.find(x=>x.id===me.id);
+      const opponent = managers.find(x=>x.id===opponentId);
 
-    <div class="grid">
+      const myScore = Number(
+        duel.home_manager_id===me.id
+          ? duel.home_score
+          : duel.away_score
+      );
 
-      <div class="card">
+      const opponentScore = Number(
+        duel.home_manager_id===me.id
+          ? duel.away_score
+          : duel.home_score
+      );
 
-        <!-- TESTATA DASHBOARD -->
+      const result =
+        myScore>opponentScore ? "VITTORIA" :
+        myScore<opponentScore ? "SCONFITTA" :
+        "PAREGGIO";
 
+      const resultColor =
+        myScore>opponentScore ? "#22c55e" :
+        myScore<opponentScore ? "#f87171" :
+        "#fbbf24";
+
+      duelHTML = `
         <div style="
-          display:flex;
-          justify-content:space-between;
+          display:grid;
+          grid-template-columns:1fr auto 1fr;
           align-items:center;
-          gap:15px;
+          gap:10px;
+          margin-top:18px;
         ">
 
-          <div style="
-            min-width:0;
-          ">
-
-            <h2 style="
-              margin:0;
-              overflow:hidden;
-              text-overflow:ellipsis;
-            ">
-              ${teamName}
-            </h2>
-
-            <p
-              class="muted"
-              style="
-                margin:4px 0 0;
-              "
-            >
-              Fantallenatore: ${me.name}
-            </p>
-
+          <div style="text-align:center;min-width:0">
+            <div style="font-size:12px;color:#aab5d0">
+              LA TUA SQUADRA
+            </div>
+            <b style="display:block;margin-top:6px;overflow-wrap:anywhere">
+              ${mine?.team_name || mine?.name || teamName}
+            </b>
+            <div style="font-size:30px;font-weight:900;margin-top:8px">
+              ${Number.isFinite(myScore)?myScore.toFixed(1):"—"}
+            </div>
           </div>
 
+          <div style="font-size:14px;font-weight:900;color:#aab5d0">
+            VS
+          </div>
 
-          <!-- CAMPANELLA -->
-
-          <button
-            onclick="showNotifications()"
-            id="dashboardNotificationBtn"
-            style="
-              position:relative;
-              width:48px;
-              height:48px;
-              min-width:48px;
-              padding:0;
-              border-radius:14px;
-              font-size:23px;
-              display:flex;
-              align-items:center;
-              justify-content:center;
-            "
-            title="Notifiche"
-          >
-
-            🔔
-
-            <span
-              id="dashboardNotificationBadge"
-              style="
-                display:none;
-                position:absolute;
-                top:-5px;
-                right:-5px;
-                min-width:20px;
-                height:20px;
-                padding:0 5px;
-                border-radius:999px;
-                background:#ef4444;
-                color:white;
-                font-size:11px;
-                font-weight:bold;
-                line-height:20px;
-                text-align:center;
-                box-sizing:border-box;
-              "
-            >
-              0
-            </span>
-
-          </button>
+          <div style="text-align:center;min-width:0">
+            <div style="font-size:12px;color:#aab5d0">
+              AVVERSARIO
+            </div>
+            <b style="display:block;margin-top:6px;overflow-wrap:anywhere">
+              ${opponent?.team_name || opponent?.name || "Avversario"}
+            </b>
+            <div style="font-size:30px;font-weight:900;margin-top:8px">
+              ${Number.isFinite(opponentScore)?opponentScore.toFixed(1):"—"}
+            </div>
+          </div>
 
         </div>
 
+        <div style="
+          text-align:center;
+          margin-top:16px;
+          padding:9px;
+          border-radius:10px;
+          background:rgba(255,255,255,.04);
+          color:${resultColor};
+          font-weight:900;
+          letter-spacing:1px;
+        ">
+          ${result}
+        </div>
+      `;
+    }
+  }
 
-        <br>
+
+  /* =========================
+     CARD GIOCATORE TOP / FLOP
+  ========================= */
+
+  function playerCard(player,label,emoji,color){
+
+    if(!player){
+      return `
+        <div class="card" style="margin:0">
+          <div style="font-size:22px">${emoji}</div>
+          <h3 style="margin:8px 0">${label}</h3>
+          <p class="muted">Dati non ancora disponibili.</p>
+        </div>
+      `;
+    }
+
+    const p = player.players || {};
+    const team = p.real_teams?.name || "";
+    const role = p.position || "";
+
+    return `
+      <div class="card" style="
+        margin:0;
+        border-top:3px solid ${color};
+        min-width:0;
+      ">
+
+        <div style="
+          display:flex;
+          align-items:center;
+          gap:8px;
+          font-size:13px;
+          font-weight:900;
+          color:${color};
+        ">
+          <span style="font-size:23px">${emoji}</span>
+          ${label}
+        </div>
+
+        <div style="
+          font-size:18px;
+          font-weight:900;
+          margin-top:14px;
+          overflow-wrap:anywhere;
+        ">
+          ${player.playerName}
+        </div>
+
+        <div class="muted" style="font-size:12px;margin-top:5px">
+          ${role}${team ? " · "+team : ""}
+        </div>
+
+        <div style="
+          font-size:32px;
+          font-weight:900;
+          margin-top:15px;
+          color:${color};
+        ">
+          ${player.points.toFixed(1)}
+          <span style="font-size:13px;color:#aab5d0">fantasy</span>
+        </div>
+
+        <div style="
+          margin-top:10px;
+          padding-top:10px;
+          border-top:1px solid rgba(255,255,255,.08);
+          font-size:12px;
+          color:#aab5d0;
+        ">
+          Punteggio individuale della giornata
+        </div>
+
+      </div>
+    `;
+  }
 
 
-        <b>Nome squadra:</b>
+  /* =========================
+     DASHBOARD
+  ========================= */
 
+  el("content").innerHTML = `
 
-        <form
-          onsubmit="event.preventDefault(); saveTeamName();"
+    <div class="card" style="
+      background:linear-gradient(135deg,#172554,#11182c 70%);
+      border:1px solid rgba(99,102,241,.3);
+      padding:22px;
+    ">
+
+      <div style="
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        gap:12px;
+      ">
+
+        <div style="min-width:0">
+          <div style="
+            color:#aab5d0;
+            font-size:12px;
+            font-weight:800;
+            letter-spacing:1.5px;
+            text-transform:uppercase;
+          ">
+            FANTABASKET ORZI
+          </div>
+
+          <h2 style="
+            font-size:26px;
+            margin:8px 0 4px;
+            overflow-wrap:anywhere;
+          ">
+            ${teamName}
+          </h2>
+
+          <div class="muted">
+            Fantallenatore: ${me.name}
+          </div>
+        </div>
+
+        <button
+          onclick="showNotifications()"
+          id="dashboardNotificationBtn"
+          title="Notifiche"
+          style="
+            position:relative;
+            width:48px;
+            height:48px;
+            min-width:48px;
+            padding:0;
+            border-radius:14px;
+            font-size:23px;
+          "
         >
-
-          <input
-            id="teamNameInput"
-            type="text"
-            value="${
-              teamName==="Nome squadra non impostato"
-                ? ""
-                : teamName
-            }"
-            maxlength="30"
-            placeholder="Nome della squadra"
-            autocomplete="off"
-          >
-
-
-          <button
-            type="submit"
+          🔔
+          <span
+            id="dashboardNotificationBadge"
             style="
-              width:100%;
-              margin:5px 0 0;
-              min-height:46px;
+              display:none;
+              position:absolute;
+              top:-5px;
+              right:-5px;
+              min-width:20px;
+              height:20px;
+              padding:0 5px;
+              border-radius:999px;
+              background:#ef4444;
+              color:white;
+              font-size:11px;
+              font-weight:bold;
+              line-height:20px;
+              text-align:center;
+              box-sizing:border-box;
             "
-          >
-            Salva nome squadra
-          </button>
-
-        </form>
-
-
-        <p class="muted">
-          Il nome squadra comparirà nel calendario,
-          nella classifica e negli scambi.
-        </p>
-
-
-        <p>
-          ${me.credits} crediti
-        </p>
+          >0</span>
+        </button>
 
       </div>
 
+      <div style="
+        margin-top:24px;
+        padding-top:18px;
+        border-top:1px solid rgba(255,255,255,.1);
+      ">
 
-      <div class="card">
+        <div style="font-size:13px;color:#aab5d0">
+          PUNTI FANTASY TOTALI
+        </div>
 
-        <h2>Punti fantasy</h2>
+        <div style="
+          font-size:42px;
+          line-height:1.2;
+          font-weight:950;
+          margin-top:5px;
+        ">
+          ${tot.toFixed(1)}
+        </div>
 
-<b
-  id="dashboardFantasyTotal"
-  style="font-size:28px"
->
-  ${tot.toFixed(1)}
-</b>
+        <div style="
+          display:flex;
+          flex-wrap:wrap;
+          gap:8px;
+          margin-top:14px;
+        ">
 
-        <p class="muted">
-          Giocatori: ${playerTotal.toFixed(1)}
-          <br>
-          Allenatore: ${coachTotal.toFixed(1)}
-        </p>
+          <span style="
+            background:rgba(255,255,255,.07);
+            border-radius:9px;
+            padding:7px 10px;
+            font-size:12px;
+          ">
+            🏀 Giocatori ${playerTotal.toFixed(1)}
+          </span>
 
+          <span style="
+            background:rgba(255,255,255,.07);
+            border-radius:9px;
+            padding:7px 10px;
+            font-size:12px;
+          ">
+            🧑‍🏫 Allenatore ${coachTotal.toFixed(1)}
+          </span>
+
+        </div>
       </div>
 
     </div>
@@ -3904,31 +4173,99 @@ async function home(){
 
     <div class="card">
 
-      <h2>Benvenuto</h2>
+      <div style="
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        gap:10px;
+        flex-wrap:wrap;
+      ">
 
-      <p class="muted">
-        FantaBasket Orzi: listone, rose, formazioni,
-        scambi, punteggi e classifica.
-      </p>
+        <div>
+          <div style="font-size:12px;color:#aab5d0;font-weight:800;letter-spacing:1px">
+            ULTIMA GIORNATA CONCLUSA
+          </div>
+          <h2 style="margin:5px 0 0">
+            ${dayNumber ? "🏀 Giornata "+dayNumber : "In attesa dei risultati"}
+          </h2>
+        </div>
 
+        <div style="
+          font-size:28px;
+          font-weight:950;
+        ">
+          ${dayNumber ? (dayPlayerTotal+dayCoachTotal).toFixed(1) : "—"}
+        </div>
+
+      </div>
+
+      ${
+        dayNumber
+          ? `
+            <div class="muted" style="font-size:12px;margin-top:8px">
+              Giocatori ${dayPlayerTotal.toFixed(1)}
+              · Allenatore ${dayCoachTotal.toFixed(1)}
+            </div>
+          `
+          : `
+            <p class="muted">
+              Il riepilogo comparirà quando sarà conclusa una giornata.
+            </p>
+          `
+      }
+
+      <div style="
+        margin-top:18px;
+        padding-top:15px;
+        border-top:1px solid rgba(255,255,255,.08);
+      ">
+        <h3 style="margin:0">⚔️ Scontro diretto</h3>
+        ${duelHTML}
+      </div>
+
+    </div>
+
+
+    <div style="
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));
+      gap:14px;
+      margin-bottom:14px;
+    ">
+
+      ${playerCard(topPlayer,"TOP DELLA GIORNATA","🔥","#4ade80")}
+
+      ${playerCard(flopPlayer,"FLOP DELLA GIORNATA","📉","#fb7185")}
+
+    </div>
+
+
+    <div class="card" style="
+      text-align:center;
+      padding:18px;
+    ">
+      <div style="font-size:22px">🏆</div>
+      <b style="display:block;margin-top:6px">
+        La stagione continua
+      </b>
+      <div class="muted" style="font-size:12px;margin-top:5px">
+        Ogni giornata può cambiare la classifica.
+      </div>
     </div>
 
   `;
 
 
-  // Aggiorna subito il numero delle notifiche
+  // Aggiorna subito le notifiche
   updateDashboardNotification();
 
-
-  // Aggiornamento automatico ogni 5 secondi
   if(window.notificationInterval)
     clearInterval(window.notificationInterval);
 
-  window.notificationInterval=
-    setInterval(
-      updateDashboardNotification,
-      5000
-    );
+  window.notificationInterval = setInterval(
+    updateDashboardNotification,
+    5000
+  );
 
 }
 
