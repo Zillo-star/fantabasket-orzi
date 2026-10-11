@@ -3718,17 +3718,19 @@ async function home(){
       .select("id,number")
       .order("number"),
 
-    db.from("league_matches")
-      .select(`
-        id,
-        matchday_number,
-        home_manager_id,
-        away_manager_id,
-        home_score,
-        away_score,
-        completed
-      `)
-      .order("matchday_number")
+db.from("league_matches")
+  .select(`
+    id,
+    matchday_number,
+    home_manager_id,
+    away_manager_id,
+    home_score,
+    away_score,
+    home_points,
+    away_points,
+    completed
+  `)
+  .order("matchday_number")
 
   ]);
 
