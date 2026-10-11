@@ -3874,24 +3874,52 @@ const myRank = standingsRows.findIndex(
     );
 
 
-    /* TOP E FLOP: punteggio fantasy individuale */
 
-    const ranked = scores
-      .filter(x=>x.players)
-      .map(x=>({
-        ...x,
-        points:Number(x.final_score||0),
-        playerName:[
-          x.players.name,
-          x.players.surname
-        ].filter(Boolean).join(" ")
-      }))
-      .sort((a,b)=>b.points-a.points);
+/* TOP E FLOP: solo i 10 giocatori utilizzati */
 
-    if(ranked.length){
-      topPlayer = ranked[0];
-      flopPlayer = ranked[ranked.length-1];
-    }
+const lineupRes = await db
+  .from("lineups")
+  .select("id")
+  .eq("manager_id", me.id)
+  .eq("matchday_id", matchday.id)
+  .maybeSingle();
+
+if(lineupRes.error)
+  return message(lineupRes.error.message, "err");
+
+let activePlayerIds = new Set();
+
+if(lineupRes.data){
+  const rolesRes = await db
+    .from("lineup_players")
+    .select("player_id,role")
+    .eq("lineup_id", lineupRes.data.id)
+    .in("role", ["starter", "sixth", "bench"]);
+
+  if(rolesRes.error)
+    return message(rolesRes.error.message, "err");
+
+  activePlayerIds = new Set(
+    (rolesRes.data || []).map(x => x.player_id)
+  );
+}
+
+const ranked = scores
+  .filter(x => x.players && activePlayerIds.has(x.player_id))
+  .map(x => ({
+    ...x,
+    points: Number(x.final_score || 0),
+    playerName: [
+      x.players.name,
+      x.players.surname
+    ].filter(Boolean).join(" ")
+  }))
+  .sort((a,b) => b.points - a.points);
+
+if(ranked.length){
+  topPlayer = ranked[0];
+  flopPlayer = ranked[ranked.length - 1];
+}
 
 
     /* =========================
