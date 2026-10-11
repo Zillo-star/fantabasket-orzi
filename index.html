@@ -3794,6 +3794,44 @@ const myRank = standingsRows.findIndex(
   x => x.id === me.id
 ) + 1;  
 
+
+/* =========================
+   PARTITA ATTUALE E SUCCESSIVA
+========================= */
+
+const myMatches = allMatches
+  .filter(x =>
+    x.home_manager_id === me.id ||
+    x.away_manager_id === me.id
+  )
+  .sort((a,b) =>
+    Number(a.matchday_number) - Number(b.matchday_number)
+  );
+
+// Prima partita non ancora conclusa
+const currentMatch = myMatches.find(x => !x.completed) || null;
+
+// Partita della giornata successiva
+const nextMatch = currentMatch
+  ? myMatches.find(x =>
+      Number(x.matchday_number) >
+      Number(currentMatch.matchday_number)
+    ) || null
+  : null;
+
+function getOpponentName(match){
+  if(!match) return "Da definire";
+
+  const opponentId =
+    match.home_manager_id === me.id
+      ? match.away_manager_id
+      : match.home_manager_id;
+
+  const opponent = standingsMap[opponentId];
+
+  return opponent?.teamName || "Avversario";
+}
+   
   /* =========================
      ULTIMA GIORNATA CONCLUSA
   ========================= */
