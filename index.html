@@ -4348,18 +4348,97 @@ if(ranked.length){
     </div>
 
 
-    <div class="card" style="
-      text-align:center;
-      padding:18px;
-    ">
-      <div style="font-size:22px">🏆</div>
-      <b style="display:block;margin-top:6px">
-        La stagione continua
-      </b>
-      <div class="muted" style="font-size:12px;margin-top:5px">
-        Ogni giornata può cambiare la classifica.
-      </div>
+
+<div style="
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));
+  gap:14px;
+  margin-bottom:14px;
+">
+
+  <!-- PARTITA ATTUALE -->
+  <div class="card" style="
+    margin:0;
+    border-top:3px solid #818cf8;
+  ">
+    <div style="font-size:12px;color:#aab5d0;font-weight:800;letter-spacing:1px">
+      PARTITA ATTUALE
     </div>
+
+    ${
+      currentMatch ? `
+        <h3 style="margin:10px 0 5px">
+          🏀 Giornata ${currentMatch.matchday_number}
+        </h3>
+
+        <div style="font-size:20px;font-weight:900;margin-top:12px;overflow-wrap:anywhere">
+          ${teamName}
+        </div>
+
+        <div style="font-size:13px;color:#aab5d0;margin:7px 0">
+          contro
+        </div>
+
+        <div style="font-size:20px;font-weight:900;overflow-wrap:anywhere">
+          ${getOpponentName(currentMatch)}
+        </div>
+
+        <button
+          onclick="calendar(${Number(currentMatch.matchday_number)}, '${currentMatch.id}')"
+          style="width:100%;margin-top:18px"
+        >
+          Apri il mio scontro →
+        </button>
+      ` : `
+        <p class="muted" style="margin-top:14px">
+          Non ci sono altre partite da giocare.
+        </p>
+      `
+    }
+  </div>
+
+  <!-- PROSSIMA PARTITA -->
+  <div class="card" style="
+    margin:0;
+    border-top:3px solid #4ade80;
+  ">
+    <div style="font-size:12px;color:#aab5d0;font-weight:800;letter-spacing:1px">
+      PROSSIMA PARTITA
+    </div>
+
+    ${
+      nextMatch ? `
+        <h3 style="margin:10px 0 5px">
+          🗓️ Giornata ${nextMatch.matchday_number}
+        </h3>
+
+        <div style="font-size:20px;font-weight:900;margin-top:12px;overflow-wrap:anywhere">
+          ${teamName}
+        </div>
+
+        <div style="font-size:13px;color:#aab5d0;margin:7px 0">
+          contro
+        </div>
+
+        <div style="font-size:20px;font-weight:900;overflow-wrap:anywhere">
+          ${getOpponentName(nextMatch)}
+        </div>
+
+        <button
+          onclick="calendar(${Number(nextMatch.matchday_number)}, '${nextMatch.id}')"
+          style="width:100%;margin-top:18px"
+        >
+          Vedi la partita →
+        </button>
+      ` : `
+        <p class="muted" style="margin-top:14px">
+          La prossima partita non è ancora disponibile.
+        </p>
+      `
+    }
+  </div>
+
+</div>
 
   `;
 
