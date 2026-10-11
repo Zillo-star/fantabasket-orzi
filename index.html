@@ -3904,32 +3904,32 @@ async function home(){
       `;
     }).join("");
 
-    return `
-      <div class="card" style="margin:0">
-        <div style="
-          font-size:12px;
-          color:#aab5d0;
-          font-weight:900;
-          letter-spacing:1px;
-          margin-bottom:14px;
-        ">ULTIME GIORNATE GIOCATE</div>
 
-        ${
-          circles
-            ? `<div style="display:flex;gap:12px;align-items:center">
-                ${circles}
-              </div>`
-            : `<div class="muted" style="font-size:13px">
-                Non ci sono ancora giornate concluse.
-              </div>`
-        }
+return `
+  <div>
+    <div style="
+      font-size:12px;
+      color:#aab5d0;
+      font-weight:900;
+      letter-spacing:1px;
+      margin-bottom:14px;
+    ">ULTIME GIORNATE GIOCATE</div>
 
-        <div class="muted" style="font-size:11px;margin-top:10px">
-          Più recente a sinistra · Verde: vittoria · Rosso: sconfitta · Giallo: pareggio
-        </div>
-      </div>
-    `;
-  }
+    ${
+      circles
+        ? `<div style="display:flex;gap:12px;align-items:center">
+            ${circles}
+          </div>`
+        : `<div class="muted" style="font-size:13px">
+            Non ci sono ancora giornate concluse.
+          </div>`
+    }
+
+    <div class="muted" style="font-size:11px;margin-top:10px">
+      Più recente a sinistra · Verde: vittoria · Rosso: sconfitta · Giallo: pareggio
+    </div>
+  </div>
+`;
    
   /* =========================
      DATI DI UNA GIORNATA
