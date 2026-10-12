@@ -7948,27 +7948,6 @@ if(realDate){
 
         if(!found){
 
-          found =
-            discovery.games.find(g => {
-
-              return (
-                teamMatches(
-                  g.home,
-                  realGame.home?.name
-                ) &&
-                teamMatches(
-                  g.away,
-                  realGame.away?.name
-                )
-              );
-
-            });
-
-        }
-
-
-        if(!found){
-
           console.warn(
             "NESSUN WEBPONT PER REAL GAME:",
             {
