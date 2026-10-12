@@ -7915,36 +7915,40 @@ const teamCandidates = discovery.games.filter(g => {
   );
 });
 
-// Prima scelta: squadre e data esatta.
-if(realDate){
 
-  found = teamCandidates.find(g => {
-    return webGameDate(g) === realDate;
-  }) || null;
+        // Associazione partita reale -> WebPont
+        let found = null;
 
-  // Se WebPont non fornisce la data,
-  // accettiamo l'abbinamento solo se non è ambiguo.
-  if(!found){
+        // Prima cerchiamo le squadre esatte, anche se
+        // la data WebPont differisce da quella Supabase.
+        if(teamCandidates.length === 1){
 
-    const withoutDate = teamCandidates.filter(g => {
-      return !webGameDate(g);
-    });
+          found = teamCandidates[0];
 
-    if(withoutDate.length === 1){
-      found = withoutDate[0];
-    }
+        }else if(teamCandidates.length > 1 && realDate){
 
-  }
+          // Se ci sono più partite con le stesse squadre,
+          // usiamo prima la data esatta.
+          found = teamCandidates.find(g => {
+            return webGameDate(g) === realDate;
+          }) || null;
 
-}else{
+          // Se la data esatta manca, accettiamo soltanto
+          // un candidato privo di data.
+          if(!found){
 
-  // Senza data del calendario, accettiamo
-  // soltanto una corrispondenza univoca.
-  if(teamCandidates.length === 1){
-    found = teamCandidates[0];
-  }
+            const withoutDate = teamCandidates.filter(g => {
+              return !webGameDate(g);
+            });
 
-}
+            if(withoutDate.length === 1){
+              found = withoutDate[0];
+            }
+
+          }
+
+        }
+
         if(!found){
 
           console.warn(
@@ -7974,11 +7978,9 @@ if(realDate){
 
         }
 
-
         matchedRealGames.push({
           realGame,
-          webGame:
-            found?.game || null
+          webGame:found?.game || null
         });
 
       }
