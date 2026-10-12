@@ -7905,47 +7905,46 @@ const discoveryUrl =
           Prima proviamo con squadra + data.
         */
 
-        let found =
-          discovery.games.find(g => {
 
-            const sameTeams =
-              teamMatches(
-                g.home,
-                realGame.home?.name
-              ) &&
-              teamMatches(
-                g.away,
-                realGame.away?.name
-              );
+let found = null;
 
-            if(!sameTeams)
-              return false;
+const teamCandidates = discovery.games.filter(g => {
+  return (
+    teamMatches(g.home, realGame.home?.name) &&
+    teamMatches(g.away, realGame.away?.name)
+  );
+});
 
+// Prima scelta: squadre e data esatta.
+if(realDate){
 
-            const gameDate =
-              webGameDate(g);
+  found = teamCandidates.find(g => {
+    return webGameDate(g) === realDate;
+  }) || null;
 
+  // Se WebPont non fornisce la data,
+  // accettiamo l'abbinamento solo se non è ambiguo.
+  if(!found){
 
-            if(
-              realDate &&
-              gameDate
-            ){
+    const withoutDate = teamCandidates.filter(g => {
+      return !webGameDate(g);
+    });
 
-              return (
-                realDate === gameDate
-              );
+    if(withoutDate.length === 1){
+      found = withoutDate[0];
+    }
 
-            }
+  }
 
-            return true;
+}else{
 
-          });
+  // Senza data del calendario, accettiamo
+  // soltanto una corrispondenza univoca.
+  if(teamCandidates.length === 1){
+    found = teamCandidates[0];
+  }
 
-
-        /*
-          Fallback:
-          squadra + squadra, senza data.
-        */
+}
 
         if(!found){
 
