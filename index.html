@@ -7915,9 +7915,8 @@ const teamCandidates = discovery.games.filter(g => {
   );
 });
 
-
-        // Associazione partita reale -> WebPont
-        let found = null;
+// Associazione partita reale -> WebPont
+// NON dichiarare di nuovo found qui!
 
         // Prima cerchiamo le squadre esatte, anche se
         // la data WebPont differisce da quella Supabase.
