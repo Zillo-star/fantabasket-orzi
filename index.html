@@ -7158,26 +7158,34 @@ if(currentDay===null && days.length){
       <h3>Formazione</h3>
 
 
-      <select
-        id="day"
-        onchange="loadSavedLineup(); loadPlayerGames(); loadLiveFantasyScores()">
 
-        ${availableDays.map(x=>`
+<div style="
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:10px;
+  margin-bottom:12px;
+  border-radius:10px;
+  background:rgba(99,102,241,.12);
+  font-size:15px;
+  font-weight:800;
+">
+  Giornata ${currentDay} · ATTUALE
+</div>
 
-          <option
-            value="${x.id}"
-            data-number="${x.number}"
-            ${x.number===currentDay?"selected":""}>
-
-            Giornata ${x.number}
-            ${x.number===currentDay?" · ATTUALE":""}
-
-          </option>
-
-        `).join("")}
-
-      </select>
-
+<select
+  id="day"
+  style="display:none"
+>
+  ${availableDays.map(x=>`
+    <option
+      value="${x.id}"
+      data-number="${x.number}"
+      ${x.number===currentDay?"selected":""}>
+      Giornata ${x.number}
+    </option>
+  `).join("")}
+</select>
 
       <div id="deadlineBox" class="card">
 
