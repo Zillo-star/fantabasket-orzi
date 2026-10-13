@@ -12975,6 +12975,14 @@ window.changeFormationDay = function(direction) {
 
   const label = document.getElementById("dayLabel");
   if (label) {
+    label.textContent =
+      "Giornata " + window.calendarSelectedDay;
+  }
+
+  calendar();
+};
+  const label = document.getElementById("dayLabel");
+  if (label) {
     const day = Number(
       select.options[nextIndex].dataset.number
     );
