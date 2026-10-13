@@ -12481,20 +12481,26 @@ html += saved
 }
 async function saveLineup(){
 
-  let select=el("day");
 
-  if(!select)
-    return;
+const matchdayNumber = Number(window.currentLineupDay);
 
+if (!matchdayNumber) {
+  return message("Giornata attuale non disponibile", "err");
+}
 
-  let selected=select.options[select.selectedIndex];
+const select = el("day");
 
-  if(!selected)
-    return;
+if (!select) return;
 
+const currentOption = Array.from(select.options).find(
+  option => Number(option.dataset.number) === matchdayNumber
+);
 
-  let matchdayId=selected.value;
-  let matchdayNumber=Number(selected.dataset.number);
+if (!currentOption) {
+  return message("Non trovo la giornata attuale", "err");
+}
+
+const matchdayId = currentOption.value;
 
 
   /* =========================
