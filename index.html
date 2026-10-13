@@ -7594,9 +7594,51 @@ window.playerStatsRequestedMatchdayId = null;
           return data.games;
         })
       );
-
+    
       const allGames = results.flat();
 
+      // Recupera esplicitamente le 5 partite che mancavano
+      const requiredGames = [
+        "ita3_a_425",
+        "ita3_a_426",
+        "ita3_b_424",
+        "ita3_b_425",
+        "ita3_b_426"
+      ];
+
+      const missingGames = requiredGames.filter(
+        id => !allGames.some(g => g.game === id)
+      );
+
+      const recoveredGames = await Promise.all(
+        missingGames.map(async id => {
+          const response = await fetch(
+            `${discoveryBase}?game=${id}`
+          );
+
+          if (!response.ok) {
+            throw new Error(
+              `Errore recupero partita ${id}: HTTP ${response.status}`
+            );
+          }
+
+          const data = await response.json();
+
+          if (!data.ok) {
+            throw new Error(`WebPont non ha trovato ${id}`);
+          }
+
+          return {
+            game: data.game,
+            group: id.includes("_a_") ? "A" : "B",
+            home: data.info.home,
+            away: data.info.away,
+            date: data.info.date
+          };
+        })
+      );
+
+      allGames.push(...recoveredGames);
       const uniqueGames = [
         ...new Map(
           allGames.map(g => [g.game, g])
