@@ -7904,38 +7904,41 @@ window.playerStatsRequestedMatchdayId = null;
     };
 
 
-    function teamMatches(
-      webName,
-      dbName
-    ){
 
-      const web =
-        normalizeTeamName(webName);
+    function teamMatches(webName, dbName) {
+      const web = normalizeTeamName(webName);
+      const db = normalizeTeamName(dbName);
 
-      const db =
-        normalizeTeamName(dbName);
+      if (!web || !db) return false;
 
-      if(!web || !db)
-        return false;
+      // Alias espliciti per le denominazioni WebPont
+      const extraAliases = {
+        "virtus roma": [
+          "virtus roma",
+          "virtus roma gvm",
+          "gvm virtus roma"
+        ],
+        "loreto pesaro": [
+          "loreto pesaro",
+          "consultinvest loreto pesaro",
+          "consultinvest pesaro"
+        ]
+      };
 
-
-      const aliases =
-        teamAliases[db] || [db];
-
+      const aliases = [
+        ...(teamAliases[db] || [db]),
+        ...(extraAliases[db] || [])
+      ];
 
       return aliases.some(alias => {
-
-        const a =
-          normalizeTeamName(alias);
+        const a = normalizeTeamName(alias);
 
         return (
           web === a ||
           web.includes(a) ||
           a.includes(web)
         );
-
       });
-
     }
 
 
