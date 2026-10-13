@@ -18059,59 +18059,53 @@ if(homeIsBot || awayIsBot){
         <div class="calendar-match">
 
 
-          <div class="calendar-teams">
+<div class="calendar-teams">
 
+  <!-- CASA -->
 
-            <!-- CASA -->
+  <div class="calendar-team home">
 
-            <div class="calendar-team home">
+    <div class="calendar-team-name">
+      ${homeName}
+    </div>
 
-              <div class="calendar-team-name">
-                ${homeName}
-              </div>
+    <div class="calendar-manager">
+      ${homeManagerSmall}
+    </div>
 
-              ${
-                homeManagerSmall
-                  ? `
-                    <div class="calendar-manager">
-                      ${homeManagerSmall}
-                    </div>
-                  `
-                  : ""
-              }
+    <div class="calendar-score">
+      ${
+        x.home_score !== null && x.home_score !== undefined
+          ? x.home_score
+          : "—"
+      }
+    </div>
 
-            </div>
+  </div>
 
+  <!-- TRASFERTA -->
 
-            <!-- RISULTATO -->
+  <div class="calendar-team away">
 
-            <div class="calendar-score">
-              ${score}
-            </div>
+    <div class="calendar-team-name">
+      ${awayName}
+    </div>
 
+    <div class="calendar-manager">
+      ${awayManagerSmall}
+    </div>
 
-            <!-- TRASFERTA -->
+    <div class="calendar-score">
+      ${
+        x.away_score !== null && x.away_score !== undefined
+          ? x.away_score
+          : "—"
+      }
+    </div>
 
-            <div class="calendar-team away">
+  </div>
 
-              <div class="calendar-team-name">
-                ${awayName}
-              </div>
-
-              ${
-                awayManagerSmall
-                  ? `
-                    <div class="calendar-manager">
-                      ${awayManagerSmall}
-                    </div>
-                  `
-                  : ""
-              }
-
-            </div>
-
-
-          </div>
+</div>
 
 
           ${formationSection}
