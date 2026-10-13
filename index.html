@@ -17289,11 +17289,11 @@ let selectedMatches = matches.filter(x =>
       </div>
 
 
+
 <div style="
   margin-top:16px;
   max-width:300px;
 ">
-
   <label style="
     display:block;
     margin-bottom:6px;
@@ -17305,44 +17305,64 @@ let selectedMatches = matches.filter(x =>
     Giornata
   </label>
 
-  <select
-    id="day"
-    onchange="
-      window.calendarSelectedDay =
-        Number(
-          this.options[this.selectedIndex]
-            .dataset.number
-        );
-      calendar();
-    "
-    style="
-      width:100%;
-    "
-  >
+  <div style="
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  ">
+    <button
+      type="button"
+      id="dayPrev"
+      onclick="changeFormationDay(-1)"
+      style="
+        width:44px;
+        height:42px;
+        flex-shrink:0;
+        font-size:22px;
+        border-radius:10px;
+      "
+    >‹</button>
 
-${
-  allDays
-    .map(day => `
+    <div
+      id="dayLabel"
+      style="
+        flex:1;
+        text-align:center;
+        font-weight:800;
+        font-size:15px;
+      "
+    >
+      Giornata ${selectedDay}
+    </div>
 
-      <option
-        value="${matchdays[day]?.id || ""}"
-        data-number="${day}"
-        ${
-          selectedDay === day
-            ? "selected"
-            : ""
-        }
-      >
-        Giornata ${day}
-        ${day === currentDay ? " · ATTUALE" : ""}
-      </option>
+    <button
+      type="button"
+      id="dayNext"
+      onclick="changeFormationDay(1)"
+      style="
+        width:44px;
+        height:42px;
+        flex-shrink:0;
+        font-size:22px;
+        border-radius:10px;
+      "
+    >›</button>
+  </div>
 
-    `)
-    .join("")
-}
-
+  <select id="day" style="display:none">
+    ${
+      allDays.map(day => `
+        <option
+          value="${matchdays[day]?.id || ""}"
+          data-number="${day}"
+          ${selectedDay === day ? "selected" : ""}
+        >
+          Giornata ${day}
+        </option>
+      `).join("")
+    }
   </select>
-
 </div>
 
     </div>
