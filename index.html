@@ -7552,111 +7552,94 @@ window.playerStatsRequestedMatchdayId = null;
     }
 
 
+
     /* =========================================================
        5. DISCOVERY WEBPONT
     ========================================================= */
 
+    const discoveryBase =
+      "https://fantabasket-webpont.davzil2005.workers.dev";
 
-const discoveryBase =
-  "https://fantabasket-webpont.davzil2005.workers.dev";
-
-let discovery;
-
-try {
-  const ranges = [
-    [400, 439],
-    [440, 479],
-    [480, 519],
-    [520, 559],
-    [560, 600]
-  ];
-
-  const results = await Promise.all(
-    ranges.map(async ([start, end]) => {
-      const response = await fetch(
-        `${discoveryBase}?discover=1&start=${start}&end=${end}`
-      );
-
-      if (!response.ok) {
-        throw new Error(`Discovery ${start}-${end}: HTTP ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (!data.ok || !Array.isArray(data.games)) {
-        throw new Error(`Risposta discovery non valida: ${start}-${end}`);
-      }
-
-      return data.games;
-    })
-  );
-
-  const allGames = results.flat();
-  const uniqueGames = [
-    ...new Map(allGames.map(g => [g.game, g])).values()
-  ];
-
-  discovery = {
-    ok: true,
-    discovery: true,
-    games: uniqueGames
-  };
-
-  console.log("PARTITE TROVATE DA WEBPONT:", discovery.games.length);
-  console.log(
-    "CONTROLLO ID WEBPONT 426:",
-    discovery.games.filter(g => g.game === "ita3_b_426")
-  );
-
-} catch (error) {
-  console.error("ERRORE DISCOVERY WEBPONT:", error);
-  return;
-}
     let discovery;
 
-    try{
+    try {
+      const ranges = [
+        [400, 439],
+        [440, 479],
+        [480, 519],
+        [520, 559],
+        [560, 600]
+      ];
 
-      const discoveryResponse =
-        await fetch(discoveryUrl);
+      const results = await Promise.all(
+        ranges.map(async ([start, end]) => {
+          const response = await fetch(
+            `${discoveryBase}?discover=1&start=${start}&end=${end}`
+          );
 
-      discovery =
-        await discoveryResponse.json();
+          if (!response.ok) {
+            throw new Error(
+              `Discovery ${start}-${end}: HTTP ${response.status}`
+            );
+          }
 
-    }catch(error){
+          const data = await response.json();
 
+          if (!data.ok || !Array.isArray(data.games)) {
+            throw new Error(
+              `Risposta discovery non valida: ${start}-${end}`
+            );
+          }
+
+          return data.games;
+        })
+      );
+
+      const allGames = results.flat();
+
+      const uniqueGames = [
+        ...new Map(
+          allGames.map(g => [g.game, g])
+        ).values()
+      ];
+
+      discovery = {
+        ok: true,
+        discovery: true,
+        games: uniqueGames
+      };
+
+      console.log(
+        "PARTITE TROVATE DA WEBPONT:",
+        discovery.games.length
+      );
+
+      console.log(
+        "CONTROLLO ID WEBPONT 426:",
+        discovery.games.filter(
+          g => g.game === "ita3_b_426"
+        )
+      );
+
+    } catch (error) {
       console.error(
         "ERRORE DISCOVERY WEBPONT:",
         error
       );
-
       return;
     }
 
-
-    if(
+    if (
       !discovery ||
       discovery.ok !== true ||
       !Array.isArray(discovery.games)
-    ){
-
+    ) {
       console.error(
         "DISCOVERY WEBPONT NON VALIDA:",
         discovery
       );
-
       return;
     }
-
-
-    console.log(
-      "PARTITE TROVATE DA WEBPONT:",
-      discovery.games.length
-    );
-
-console.log(
-  "CONTROLLO ID WEBPONT 426:",
-  discovery.games.filter(g => g.game === "ita3_b_426")
-);
      
     /* =========================================================
        6. NORMALIZZAZIONE
