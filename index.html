@@ -7950,6 +7950,31 @@ const teamCandidates = discovery.games.filter(g => {
 
         if(!found){
 
+const partialCandidates = discovery.games
+  .filter(g =>
+    teamMatches(g.home, realGame.home?.name) ||
+    teamMatches(g.away, realGame.home?.name) ||
+    teamMatches(g.home, realGame.away?.name) ||
+    teamMatches(g.away, realGame.away?.name)
+  )
+  .map(g => ({
+    game: g.game,
+    date: g.date,
+    home: g.home,
+    away: g.away
+  }));
+
+console.warn(
+  "DEBUG WEBPONT MATCH FALLITO:",
+  {
+    giornata: Number(md.number),
+    casa: realGame.home?.name,
+    trasferta: realGame.away?.name,
+    data: realGame.scheduled_at,
+    partiteSimiliTrovate: partialCandidates
+  }
+);
+           
           console.warn(
             "NESSUN WEBPONT PER REAL GAME:",
             {
