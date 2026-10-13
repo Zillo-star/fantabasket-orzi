@@ -17283,22 +17283,30 @@ let selectedMatches = matches.filter(x =>
           border-radius:15px;
         }
 
-        .calendar-teams{
-          grid-template-columns:minmax(0,1fr) 54px minmax(0,1fr);
-          gap:7px;
-        }
 
-        .calendar-team-name{
-          font-size:14px;
-        }
+.calendar-teams {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+}
 
-        .calendar-manager{
-          font-size:10px;
-        }
+.calendar-team {
+  padding: 11px 7px;
+}
 
-        .calendar-score{
-          font-size:16px;
-        }
+.calendar-team-name {
+  font-size: 12px;
+  min-height: 32px;
+}
+
+.calendar-manager {
+  font-size: 10px;
+}
+
+.calendar-score {
+  margin-top: 10px;
+  padding-top: 8px;
+  font-size: 20px;
+}
 
         .calendar-formations{
           grid-template-columns:1fr;
