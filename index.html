@@ -17322,15 +17322,11 @@ let selectedMatches = matches.filter(x =>
 
         <div>
 
-          <h2 style="
-            margin:0;
-          ">
+          <h2 style="margin:0">
             🏀 Calendario
           </h2>
 
-          <p class="muted" style="
-            margin:5px 0 0;
-          ">
+          <p class="muted" style="margin:5px 0 0">
             Risultati e formazioni del campionato
           </p>
 
@@ -17338,56 +17334,93 @@ let selectedMatches = matches.filter(x =>
 
       </div>
 
-<div style="
-  margin-top:16px;
-  max-width:300px;
-">
-  <label style="
-    display:block;
-    margin-bottom:6px;
-    font-size:12px;
-    font-weight:800;
-    text-transform:uppercase;
-    letter-spacing:.3px;
-  ">
-    Giornata
-  </label>
+      <div style="
+        margin-top:16px;
+        max-width:300px;
+      ">
 
+        <label style="
+          display:block;
+          margin-bottom:6px;
+          font-size:12px;
+          font-weight:800;
+          text-transform:uppercase;
+          letter-spacing:.3px;
+        ">
+          Giornata
+        </label>
 
-<div style="
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:10px;
-  border-radius:10px;
-  background:rgba(99,102,241,.12);
-">
-  <div
-    id="dayLabel"
-    style="
-      text-align:center;
-      font-weight:800;
-      font-size:15px;
-    "
-  >
-    Giornata ${window.currentLineupDay || selectedDay}
-  </div>
-</div>
+        <div style="
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          gap:16px;
+          padding:10px;
+          border-radius:10px;
+          background:rgba(99,102,241,.12);
+        ">
 
-  <select id="day" style="display:none">
-    ${
-      allDays.map(day => `
-        <option
-          value="${matchdays[day]?.id || ""}"
-          data-number="${day}"
-          ${selectedDay === day ? "selected" : ""}
-        >
-          Giornata ${day}
-        </option>
-      `).join("")
-    }
-  </select>
-</div>
+          <button
+            id="dayPrev"
+            type="button"
+            onclick="window.changeCalendarDay(-1)"
+            style="
+              padding:6px 12px;
+              border:0;
+              border-radius:8px;
+              cursor:pointer;
+              font-size:16px;
+              font-weight:800;
+            "
+          >
+            ◀
+          </button>
+
+          <div
+            id="dayLabel"
+            style="
+              text-align:center;
+              font-weight:800;
+              font-size:15px;
+              min-width:115px;
+            "
+          >
+            Giornata ${selectedDay}
+          </div>
+
+          <button
+            id="dayNext"
+            type="button"
+            onclick="window.changeCalendarDay(1)"
+            style="
+              padding:6px 12px;
+              border:0;
+              border-radius:8px;
+              cursor:pointer;
+              font-size:16px;
+              font-weight:800;
+            "
+          >
+            ▶
+          </button>
+
+        </div>
+
+        <select id="day" style="display:none">
+          ${
+            allDays.map(day => `
+              <option
+                value="${matchdays[day]?.id || ""}"
+                data-number="${day}"
+                ${selectedDay === day ? "selected" : ""}
+              >
+                Giornata ${day}
+              </option>
+            `).join("")
+          }
+        </select>
+
+      </div>
 
     </div>
 
