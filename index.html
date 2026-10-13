@@ -12957,6 +12957,35 @@ const matchdayId = currentOption.value;
 
 
 window.changeFormationDay = function(direction) { const select = document.getElementById("day"); if (!select || !select.options.length) return; const currentIndex = select.selectedIndex; const nextIndex = currentIndex + direction; if (nextIndex < 0 || nextIndex >= select.options.length) { return; } select.selectedIndex = nextIndex; window.calendarSelectedDay = Number( select.options[nextIndex].dataset.number ); const label = document.getElementById("dayLabel"); if (label) { label.textContent = "Giornata " + window.calendarSelectedDay; } const prev = document.getElementById("dayPrev"); const next = document.getElementById("dayNext"); if (prev) prev.disabled = nextIndex === 0; if (next) next.disabled = nextIndex === select.options.length - 1; calendar(); };
+
+
+window.changeCalendarDay = function(direction) {
+  const select = document.getElementById("day");
+
+  if (!select || !select.options.length) {
+    console.error("Calendario: selettore giornate non trovato");
+    return;
+  }
+
+  const currentIndex = select.selectedIndex;
+  const nextIndex = currentIndex + direction;
+
+  if (
+    nextIndex < 0 ||
+    nextIndex >= select.options.length
+  ) {
+    return;
+  }
+
+  const nextOption = select.options[nextIndex];
+  const nextDay = Number(nextOption.dataset.number);
+
+  if (!nextDay) return;
+
+  window.calendarSelectedDay = nextDay;
+
+  calendar(nextDay);
+};
    
 async function trades(){
 
