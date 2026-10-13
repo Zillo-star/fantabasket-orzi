@@ -12735,6 +12735,56 @@ async function saveLineup(){
 
 
   /* =========================
+     BLOCCA AVVERSARI DI ORZINUOVI
+  ========================= */
+
+  const ORZINUOVI_TEAM_ID =
+    "9edb5c6a-88a8-4991-b7cf-8271bb833fe9";
+
+  // Recupera le partite della giornata selezionata
+  const gamesResult = await db
+    .from("real_games")
+    .select("home_team_id, away_team_id")
+    .eq("matchday_id", matchdayId);
+
+  if (gamesResult.error) {
+    return message(
+      "Errore nel controllo della partita di Orzinuovi",
+      "err"
+    );
+  }
+
+  const orziGame = (gamesResult.data || []).find(game =>
+    game.home_team_id === ORZINUOVI_TEAM_ID ||
+    game.away_team_id === ORZINUOVI_TEAM_ID
+  );
+
+  if (!orziGame) {
+    return message(
+      "Non trovo la partita di Orzinuovi per questa giornata. Formazione non salvata.",
+      "err"
+    );
+  }
+
+  const opponentTeamId =
+    orziGame.home_team_id === ORZINUOVI_TEAM_ID
+      ? orziGame.away_team_id
+      : orziGame.home_team_id;
+
+  const forbiddenPlayers = selectedIds.filter(playerId => {
+    const player = formationPlayer(playerId);
+
+    return player?.players?.real_team_id === opponentTeamId;
+  });
+
+  if (forbiddenPlayers.length > 0) {
+    return message(
+      "Non puoi schierare giocatori della squadra che affronta Logiman Orzinuovi!",
+      "err"
+    );
+  }   
+
+  /* =========================
      TROVA / CREA LINEUP
   ========================= */
 
