@@ -15883,7 +15883,7 @@ const tripleDouble =
      CONTRIBUTO FANTASY
   ===================================== */
 
-let rows =
+  const rows = [];
 
 function addStat(
   label,
@@ -16022,55 +16022,66 @@ addStat(
 
   }
 
-  const romaStatsGiornata3 = {
-    "bcf3b514-152a-47af-ab64-f232aad2fe05": {
-      punti: 10, rimbalziDifensivi: 6, rimbalziOffensivi: 2, recuperi: 1
-    },
-    "132959a3-9a7d-40e1-9978-255488f715a8": {
-      punti: 20, rimbalziDifensivi: 6, rimbalziOffensivi: 1,
-      assist: 4, perse: 4, errori: 7
-    },
-    "93f2b176-e9a0-4bc6-a229-c6b2b40aa6a2": {
-      punti: 8, rimbalziDifensivi: 5, rimbalziOffensivi: 1,
-      assist: 2, recuperi: 1, stoppate: 3, errori: 2
-    },
-    "5ba03e33-6a91-4b4c-af67-17520f06941a": {
-      punti: 3, rimbalziDifensivi: 2, rimbalziOffensivi: 1,
-      assist: 1, recuperi: 1
-    },
-    "f9212b79-f509-41f6-b296-b91bbae1bb11": {
-      punti: 4, rimbalziDifensivi: 3, perse: 1, errori: 2
-    },
-    "d75cb4ce-21f4-4527-8615-fd52c5be70e5": {
-      punti: 14, rimbalziDifensivi: 4, perse: 2, errori: 3
-    },
-    "7aaa70a2-7426-4c32-bbda-f818418a2e19": {
-      punti: 7, rimbalziDifensivi: 4, rimbalziOffensivi: 1,
-      perse: 2, errori: 3
-    }
-  };
+const romaStatsGiornata3 = {
+"bcf3b514-152a-47af-ab64-f232aad2fe05": {
+punti: 10, rimbalziDifensivi: 6, rimbalziOffensivi: 2, recuperi: 1
+},
+"132959a3-9a7d-40e1-9978-255488f715a8": {
+punti: 20, rimbalziDifensivi: 6, rimbalziOffensivi: 1,
+assist: 4, perse: 4, errori: 7
+},
+"93f2b176-e9a0-4bc6-a229-c6b2b40aa6a2": {
+punti: 8, rimbalziDifensivi: 5, rimbalziOffensivi: 1,
+assist: 2, recuperi: 1, stoppate: 3, errori: 2
+},
+"5ba03e33-6a91-4b4c-af67-17520f06941a": {
+punti: 3, rimbalziDifensivi: 2, rimbalziOffensivi: 1,
+assist: 1, recuperi: 1
+},
+"f9212b79-f509-41f6-b296-b91bbae1bb11": {
+punti: 4, rimbalziDifensivi: 3, perse: 1, errori: 2
+},
+"d75cb4ce-21f4-4527-8615-fd52c5be70e5": {
+punti: 14, rimbalziDifensivi: 4, perse: 2, errori: 3
+},
+"7aaa70a2-7426-4c32-bbda-f818418a2e19": {
+punti: 7, rimbalziDifensivi: 4, rimbalziOffensivi: 1,
+perse: 2, errori: 3
+}
+};
 
-  const romaPlayerId = p.player_id || p.id;
-  const romaStats = Number(dayNumber) === 3
-    ? romaStatsGiornata3[romaPlayerId]
-    : null;
+const romaPlayerId = p.player_id || p.id;
 
-  if (romaStats) {
-    const labels = {
-      punti: ["Punti", 1],
-      rimbalziDifensivi: ["Rimbalzi difensivi", 1.25],
-      rimbalziOffensivi: ["Rimbalzi offensivi", 1.5],
-      assist: ["Assist", 1.5],
-      recuperi: ["Recuperi", 1.5],
-      stoppate: ["Stoppate", 1.5],
-      perse: ["Palle perse", -1.5],
-      errori: ["Errori al tiro", -0.5]
-    };
+if (
+  Number(dayNumber) === 3 &&
+  romaStatsGiornata3[romaPlayerId]
+) {
+const s = romaStatsGiornata3[romaPlayerId];
 
-    Object.entries(romaStats).forEach(([key, value]) => {
-      addStat(labels[key][0], value, labels[key][1]);
-    });
-  }
+const etichette = {
+  punti: "Punti",
+  rimbalziDifensivi: "Rimbalzi difensivi",
+  rimbalziOffensivi: "Rimbalzi offensivi",
+  assist: "Assist",
+  recuperi: "Recuperi",
+  stoppate: "Stoppate",
+  perse: "Palle perse",
+  errori: "Errori al tiro"
+};
+
+rows = Object.entries(s).map(([chiave, valore]) => `
+  <div style="
+    display:flex;
+    justify-content:space-between;
+    padding:8px 0;
+    border-bottom:1px solid rgba(255,255,255,.08);
+  ">
+    <span>${etichette[chiave]}</span>
+    <b>${valore}</b>
+  </div>
+`);
+
+}
    
   /* =====================================
      MODALE
