@@ -7008,6 +7008,143 @@ function updateLineupSummary(){
   `;
 
 }   
+
+
+window.showRomaPlayerStats = async function(playerId) {
+  const giornata3 = "a9126f03-b070-4033-980d-f2583ef019c6";
+
+  const stats = {
+    "bcf3b514-152a-47af-ab64-f232aad2fe05": {
+      nome: "Giorgio Piunti",
+      punti: 10, rimbalziDifensivi: 6, rimbalziOffensivi: 2,
+      assist: 0, recuperi: 1, stoppate: 0, perse: 0, errori: 0
+    },
+    "132959a3-9a7d-40e1-9978-255488f715a8": {
+      nome: "Yancarlos Rodriguez",
+      punti: 20, rimbalziDifensivi: 6, rimbalziOffensivi: 1,
+      assist: 4, recuperi: 0, stoppate: 0, perse: 4, errori: 7
+    },
+    "93f2b176-e9a0-4bc6-a229-c6b2b40aa6a2": {
+      nome: "Matias Bortolin",
+      punti: 8, rimbalziDifensivi: 5, rimbalziOffensivi: 1,
+      assist: 2, recuperi: 1, stoppate: 3, perse: 0, errori: 2
+    },
+    "5ba03e33-6a91-4b4c-af67-17520f06941a": {
+      nome: "Daniele Toscano",
+      punti: 3, rimbalziDifensivi: 2, rimbalziOffensivi: 1,
+      assist: 1, recuperi: 1, stoppate: 0, perse: 0, errori: 0
+    },
+    "f9212b79-f509-41f6-b296-b91bbae1bb11": {
+      nome: "Gianmarco Leggio",
+      punti: 4, rimbalziDifensivi: 3, rimbalziOffensivi: 0,
+      assist: 0, recuperi: 0, stoppate: 0, perse: 1, errori: 2
+    },
+    "d75cb4ce-21f4-4527-8615-fd52c5be70e5": {
+      nome: "Adrian Chiera",
+      punti: 14, rimbalziDifensivi: 4, rimbalziOffensivi: 0,
+      assist: 0, recuperi: 0, stoppate: 0, perse: 2, errori: 3
+    },
+    "7aaa70a2-7426-4c32-bbda-f818418a2e19": {
+      nome: "Rei Pullazi",
+      punti: 7, rimbalziDifensivi: 4, rimbalziOffensivi: 1,
+      assist: 0, recuperi: 0, stoppate: 0, perse: 2, errori: 3
+    }
+  };
+
+  const p = stats[playerId];
+  if (!p) return;
+
+  const result = await db
+    .from("fantasy_scores")
+    .select("manager_id, raw_score, lineup_multiplier, captain_multiplier, final_score")
+    .eq("matchday_id", giornata3)
+    .eq("player_id", playerId);
+
+  if (result.error) {
+    message("Errore nel caricamento del punteggio: " + result.error.message, "err");
+    return;
+  }
+
+  const punteggi = result.data || [];
+
+  document.getElementById("romaStatsModal")?.remove();
+
+  const righe = [
+    ["Punti", p.punti],
+    ["Rimbalzi difensivi", p.rimbalziDifensivi],
+    ["Rimbalzi offensivi", p.rimbalziOffensivi],
+    ["Assist", p.assist],
+    ["Recuperi", p.recuperi],
+    ["Stoppate", p.stoppate],
+    ["Palle perse", p.perse],
+    ["Errori al tiro", p.errori]
+  ];
+
+  const modal = document.createElement("div");
+  modal.id = "romaStatsModal";
+  modal.style.cssText = `
+    position:fixed; inset:0; z-index:99999;
+    background:rgba(0,0,0,.78); display:flex;
+    align-items:center; justify-content:center;
+    padding:16px; overflow:auto;
+  `;
+
+  modal.innerHTML = `
+    <div style="
+      width:100%; max-width:460px; max-height:90vh;
+      overflow:auto; background:#121a30; color:white;
+      border:1px solid #343e59; border-radius:16px;
+      padding:20px;
+    ">
+      <h2 style="margin-top:0">🏀 ${p.nome}</h2>
+      <p class="muted">Virtus Roma · Giornata 3</p>
+
+      <h3>Statistiche partita</h3>
+      ${righe.map(([label, valore]) => `
+        <div style="
+          display:flex; justify-content:space-between;
+          gap:12px; padding:9px 0;
+          border-bottom:1px solid rgba(255,255,255,.08);
+        ">
+          <span>${label}</span><b>${valore}</b>
+        </div>
+      `).join("")}
+
+      <h3 style="margin-top:20px">Punteggio FantaBasket salvato</h3>
+      ${
+        punteggi.length
+          ? punteggi.map(s => `
+            <div style="
+              padding:12px; margin:8px 0;
+              background:rgba(255,255,255,.05);
+              border-radius:10px;
+            ">
+              <div>Fantallenatore ID: ${s.manager_id}</div>
+              <div>Punteggio base: <b>${Number(s.raw_score ?? 0).toFixed(1)}</b></div>
+              <div>Moltiplicatore formazione: ${s.lineup_multiplier}</div>
+              <div>Moltiplicatore capitano: ${s.captain_multiplier}</div>
+              <div style="margin-top:6px;font-size:20px;color:#a78bfa">
+                Totale: <b>${Number(s.final_score ?? 0).toFixed(1)}</b>
+              </div>
+            </div>
+          `).join("")
+          : `<p class="muted">Nessun punteggio trovato per questa giornata.</p>`
+      }
+
+      <button id="closeRomaStats" style="width:100%;margin-top:16px">
+        Chiudi
+      </button>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  document.getElementById("closeRomaStats").onclick = () => modal.remove();
+  modal.addEventListener("click", e => {
+    if (e.target === modal) modal.remove();
+  });
+};
+
    
 async function lineup(){
 
