@@ -16050,8 +16050,13 @@ perse: 2, errori: 3
 }
 };
 
-if (Number(dayNumber) === 3 && romaStatsGiornata3[p.id]) {
-const s = romaStatsGiornata3[p.id];
+const romaPlayerId = p.player_id || p.id;
+
+if (
+  Number(dayNumber) === 3 &&
+  romaStatsGiornata3[romaPlayerId]
+) {
+const s = romaStatsGiornata3[romaPlayerId];
 
 const etichette = {
   punti: "Punti",
