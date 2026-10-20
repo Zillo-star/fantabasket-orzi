@@ -8261,6 +8261,15 @@ console.table(partialCandidates);
 
       }
 
+console.log(
+  "CONTROLLO GIORNATA",
+  Number(md.number),
+  "PARTITE REALI:", realGames.length,
+  "PARTITE ABBINATE:",
+  matchedRealGames.filter(x => x.webGame).length,
+  "ID WEBPONT:",
+  matchedRealGames.map(x => x.webGame).filter(Boolean)
+);       
 
       dayContexts.push({
         matchday:md,
