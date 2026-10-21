@@ -7765,14 +7765,24 @@ window.playerStatsRequestedMatchdayId = null;
     
       const allGames = results.flat();
 
-      // Recupera esplicitamente le 5 partite che mancavano
-      const requiredGames = [
-        "ita3_a_425",
-        "ita3_a_426",
-        "ita3_b_424",
-        "ita3_b_425",
-        "ita3_b_426"
-      ];
+const requiredGames = [
+  "ita3_a_434",
+  "ita3_a_433",
+  "ita3_a_435",
+  "ita3_a_427",
+  "ita3_a_432",
+  "ita3_a_428",
+  "ita3_a_429",
+  "ita3_a_430",
+  "ita3_b_427",
+  "ita3_b_428",
+  "ita3_b_430",
+  "ita3_b_431",
+  "ita3_b_432",
+  "ita3_b_433",
+  "ita3_b_434",
+  "ita3_b_435"
+];
 
       const missingGames = requiredGames.filter(
         id => !allGames.some(g => g.game === id)
