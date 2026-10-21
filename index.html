@@ -7702,6 +7702,16 @@ if(
 
     }
 
+if (window.forceOnlyMatchday4 === true) {
+  for (let i = daysToProcess.length - 1; i >= 0; i--) {
+    if (Number(daysToProcess[i].number) !== 4) {
+      daysToProcess.splice(i, 1);
+    }
+  }
+
+  window.forceOnlyMatchday4 = false;
+}
+     
 window.playerStatsRequestedMatchdayId = null;     
 
     console.log(
