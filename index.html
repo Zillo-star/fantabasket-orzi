@@ -18864,10 +18864,57 @@ vittoria/sconfitta in base allo scarto:
 
 `;
 
-el("content").innerHTML=html;
+
+html += `
+<div class="card">
+  <h2>Calcolo e chiusura giornata</h2>
+  <p>Calcola i risultati degli scontri diretti e aggiorna la classifica.</p>
+
+  <label>Giornata da elaborare</label>
+  <select id="finalizeMatchday">
+    ${Array.from({length: 34}, (_, i) => i + 1)
+      .map(n => `<option value="${n}">Giornata ${n}</option>`)
+      .join("")}
+  </select>
+
+  <button onclick="finalizeFantasyMatchday()">
+    Calcola e chiudi giornata
+  </button>
+
+  <p class="muted">
+    La giornata viene chiusa solo se il controllo dei punteggi va a buon fine.
+  </p>
+</div>
+`;
+
+el("content").innerHTML = html;
 }
 
-async function adminRealGames(){
+async function finalizeFantasyMatchday() {
+  if (!me || !me.is_admin) {
+    return message("Accesso riservato all'admin.", "err");
+  }
+
+  const day = Number(el("finalizeMatchday").value);
+
+  if (!confirm(
+    `Confermi il calcolo e la chiusura della giornata ${day}?`
+  )) return;
+
+  const result = await db.rpc("finalize_fantasy_matchday", {
+    p_matchday_number: day
+  });
+
+  if (result.error) {
+    return message("Errore: " + result.error.message, "err");
+  }
+
+  message(
+    `Giornata ${day} elaborata: ${result.data.matches_completed} partite aggiornate.`,
+    "ok"
+  );
+}
+async function addCoachToManager(){
 
   if(!me || !me.is_admin)
     return;
