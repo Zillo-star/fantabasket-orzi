@@ -4023,11 +4023,11 @@ const currentDayNumber = lastCompletedDay;
 
   try{
 
-    [lastInfo,currentInfo] = await Promise.all([
-      getDayStats(lastCompletedDay),
-      getDayStats(currentDayNumber)
-    ]);
-
+[lastInfo,currentInfo] = await Promise.all([
+  getDayStats(currentDayNumber),
+  getDayStats(currentDayNumber)
+]);
+     
   }catch(err){
     return message(err.message||"Errore caricamento giornate","err");
   }
