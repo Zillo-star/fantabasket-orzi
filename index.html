@@ -3793,30 +3793,28 @@ async function home(){
      INDIVIDUAZIONE GIORNATE
   ========================= */
 
-const dayNumbers = [...new Set(
-  allMatches.map(m => Number(m.matchday_number))
-)]
-.filter(n => Number.isFinite(n) && n > 0)
-.sort((a, b) => a - b);
+function getDayMatch(day) {
+  if (day === null) return null;
 
-const completedDayNumbers = dayNumbers.filter(day => {
-  const games = allMatches.filter(
-    m => Number(m.matchday_number) === day
-  );
+  return allMatches.find(m =>
+    Number(m.matchday_number) === Number(day) &&
+    (
+      m.home_manager_id === me.id ||
+      m.away_manager_id === me.id
+    )
+  ) || null;
+}
 
-  return games.length > 0 &&
-    games.every(m => m.completed === true);
-});
+function getOpponentName(match) {
+  if (!match) return "Da definire";
 
-const lastCompletedDay = completedDayNumbers.length
-  ? completedDayNumbers[completedDayNumbers.length - 1]
-  : null;
+  const id = match.home_manager_id === me.id
+    ? match.away_manager_id
+    : match.home_manager_id;
 
-// Mostra la giornata più recente presente nel calendario
-const currentDayNumber = dayNumbers.length
-  ? dayNumbers[dayNumbers.length - 1]
-  : null;
-
+  return standingsMap[id]?.teamName || "Avversario";
+}
+   
   /* =========================
      ULTIME TRE GIORNATE
   ========================= */
