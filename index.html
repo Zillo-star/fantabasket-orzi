@@ -8931,15 +8931,21 @@ if(!player)
    MOTORE FANTASY: NON MODIFICARE LA CHIAVE
 ========================================= */
 
-ctx.playerToGame[
-  player.id
-] = {
-
+ctx.playerToGame[player.id] = {
   game,
   wp,
   realGame
-
 };
+
+console.log(
+  "ASSOCIAZIONE GIOCATORE:",
+  player.name,
+  player.surname,
+  "| WebPont ID:",
+  player.webpont_id,
+  "| Partita:",
+  game
+);
 
 
 /* =========================================
