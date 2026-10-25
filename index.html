@@ -3808,13 +3808,24 @@ async function home(){
       games.every(m => m.completed === true);
   });
 
-  const lastCompletedDay = completedDayNumbers.length
-    ? completedDayNumbers[completedDayNumbers.length - 1]
-    : null;
+  // Giornata attuale: quella con deadline già scaduta
+  const currentDayNumber = [...allMatches]
+    .map(m => Number(m.matchday_number))
+    .filter(n => Number.isFinite(n) && n > 0)
+    .sort((a, b) => a - b)
+    .filter(day => {
+      const matchday = allMatchdays?.find(
+        md => Number(md.number) === day
+      );
 
-  // Ultima giornata presente nel calendario
-  const currentDayNumber = dayNumbers.length
-    ? dayNumbers[dayNumbers.length - 1]
+      return matchday?.lineup_deadline &&
+        new Date(matchday.lineup_deadline).getTime() <= Date.now();
+    })
+    .pop() ?? null;
+
+  // Ultima giornata: quella immediatamente precedente
+  const lastCompletedDay = currentDayNumber !== null
+    ? currentDayNumber - 1
     : null;
 
   function getDayMatch(day) {
