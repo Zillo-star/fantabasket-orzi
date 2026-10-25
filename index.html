@@ -3794,16 +3794,28 @@ async function home(){
   ========================= */
 
 const dayNumbers = [...new Set(
-  allMatches.map(m=>Number(m.matchday_number))
-)].filter(n=>Number.isFinite(n)&&n>0)
-  .sort((a,b)=>a-b);
+  allMatches.map(m => Number(m.matchday_number))
+)]
+.filter(n => Number.isFinite(n) && n > 0)
+.sort((a, b) => a - b);
 
-// Ultima giornata presente nel calendario, anche se non conclusa
-const lastCompletedDay = dayNumbers.length
-  ? dayNumbers[dayNumbers.length-1]
+const completedDayNumbers = dayNumbers.filter(day => {
+  const games = allMatches.filter(
+    m => Number(m.matchday_number) === day
+  );
+
+  return games.length > 0 &&
+    games.every(m => m.completed === true);
+});
+
+const lastCompletedDay = completedDayNumbers.length
+  ? completedDayNumbers[completedDayNumbers.length - 1]
   : null;
 
-const currentDayNumber = lastCompletedDay;
+// Mostra la giornata più recente presente nel calendario
+const currentDayNumber = dayNumbers.length
+  ? dayNumbers[dayNumbers.length - 1]
+  : null;
 
   /* =========================
      ULTIME TRE GIORNATE
