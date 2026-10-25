@@ -10207,7 +10207,7 @@ window.loadAllFantasyScores = async function(){
 
   const mdRes = await db
     .from("matchdays")
-    .select("id,number")
+    .select("id,number,lineup_deadline")
     .order("number");
 
   if(mdRes.error){
