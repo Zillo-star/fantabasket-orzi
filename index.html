@@ -3793,65 +3793,17 @@ async function home(){
      INDIVIDUAZIONE GIORNATE
   ========================= */
 
-  const dayNumbers = [...new Set(
-    allMatches.map(m=>Number(m.matchday_number))
-  )].filter(n=>Number.isFinite(n)&&n>0)
-    .sort((a,b)=>a-b);
+const dayNumbers = [...new Set(
+  allMatches.map(m=>Number(m.matchday_number))
+)].filter(n=>Number.isFinite(n)&&n>0)
+  .sort((a,b)=>a-b);
 
-  const completedDayNumbers = dayNumbers.filter(day=>{
-    const games = allMatches.filter(
-      m=>Number(m.matchday_number)===day
-    );
+// Ultima giornata presente nel calendario, anche se non conclusa
+const lastCompletedDay = dayNumbers.length
+  ? dayNumbers[dayNumbers.length-1]
+  : null;
 
-    return games.length>0 &&
-      games.every(m=>m.completed===true);
-  });
-
-  const lastCompletedDay = completedDayNumbers.length
-    ? completedDayNumbers[completedDayNumbers.length-1]
-    : null;
-
-// La giornata corrente dipende dalla deadline formazione,
-// non dal completamento di tutte le partite.
-const dashboardMatchdays = (mdRes.data || [])
-  .slice()
-  .sort((a,b)=>Number(a.number)-Number(b.number));
-
-const expiredMatchdays = dashboardMatchdays.filter(md=>{
-  if(!md.lineup_deadline) return false;
-
-  const deadline = new Date(md.lineup_deadline);
-
-  return Number.isFinite(deadline.getTime()) &&
-    Date.now() >= deadline.getTime();
-});
-
-const currentDayNumber = expiredMatchdays.length
-  ? Number(expiredMatchdays[expiredMatchdays.length-1].number)
-  : (dayNumbers[0] ?? null);
-
-  function getDayMatch(day){
-    if(day===null) return null;
-
-    return allMatches.find(m=>
-      Number(m.matchday_number)===Number(day) &&
-      (
-        m.home_manager_id===me.id ||
-        m.away_manager_id===me.id
-      )
-    ) || null;
-  }
-
-  function getOpponentName(match){
-    if(!match) return "Da definire";
-
-    const id = match.home_manager_id===me.id
-      ? match.away_manager_id
-      : match.home_manager_id;
-
-    return standingsMap[id]?.teamName || "Avversario";
-  }
-
+const currentDayNumber = lastCompletedDay;
 
   /* =========================
      ULTIME TRE GIORNATE
