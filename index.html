@@ -3716,7 +3716,7 @@ async function home(){
       .eq("manager_id",me.id),
 
     db.from("matchdays")
-      .select("id,number")
+      .select("id,number,lineup_deadline")
       .order("number"),
 
     db.from("league_matches")
