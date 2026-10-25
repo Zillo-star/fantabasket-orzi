@@ -7859,6 +7859,66 @@ const requiredGames = [
       );
       return;
     }
+
+/* =========================================================
+   CORREZIONI MANUALI WEBPONT DA SUPABASE
+========================================================= */
+
+const manualWebPontByRealGameId = {};
+
+const manualLinksResult = await db
+  .from("webpont_game_links")
+  .select("real_game_id, webpont_id");
+
+if (manualLinksResult.error) {
+  console.error(
+    "ERRORE LETTURA CORREZIONI WEBPONT:",
+    manualLinksResult.error
+  );
+} else {
+  for (const link of manualLinksResult.data || []) {
+    manualWebPontByRealGameId[link.real_game_id] =
+      link.webpont_id;
+
+    // Se il codice non è nella discovery, recuperiamo
+    // direttamente quella partita.
+    const alreadyFound = discovery.games.some(
+      g => g.game === link.webpont_id
+    );
+
+    if (!alreadyFound) {
+      try {
+        const response = await fetch(
+          "https://fantabasket-webpont.davzil2005.workers.dev?game=" +
+          encodeURIComponent(link.webpont_id)
+        );
+
+        const data = await response.json();
+
+        if (response.ok && data.ok && data.info) {
+          discovery.games.push({
+            game: link.webpont_id,
+            group: link.webpont_id.includes("_a_") ? "A" : "B",
+            home: data.info.home,
+            away: data.info.away,
+            date: data.info.date || data.date || null
+          });
+        }
+      } catch (error) {
+        console.error(
+          "ERRORE RECUPERO CODICE MANUALE:",
+          link.webpont_id,
+          error
+        );
+      }
+    }
+  }
+}
+
+console.log(
+  "CORREZIONI WEBPONT CARICATE:",
+  manualWebPontByRealGameId
+);
      
     /* =========================================================
        6. NORMALIZZAZIONE
@@ -8129,170 +8189,174 @@ const requiredGames = [
     }
 
 
-    /* =========================================================
-       8. TROVA GAME WEBPONT PER OGNI REAL GAME
-    ========================================================= */
 
-    const dayContexts = [];
+/* =========================================================
+   8. TROVA GAME WEBPONT PER OGNI REAL GAME
+========================================================= */
 
+const dayContexts = [];
 
-    for(const md of daysToProcess){
+for (const md of daysToProcess) {
 
-      const realGames =
-        md.realGames || [];
+  const realGames = md.realGames || [];
+  const matchedRealGames = [];
 
+  for (const realGame of realGames) {
 
-      const matchedRealGames = [];
+    let found = null;
 
-
-      for(const realGame of realGames){
-
-let found = null;
-         
-        if(realGame.cancelled){
-
-          matchedRealGames.push({
-            realGame,
-            webGame:null
-          });
-
-          continue;
-        }
-
-
-        const realDate =
-          dateOnly(realGame.scheduled_at);
-
-
-        /*
-          Prima proviamo con squadra + data.
-        */
-
-
-const teamCandidates = discovery.games.filter(g => {
-  return (
-    teamMatches(g.home, realGame.home?.name) &&
-    teamMatches(g.away, realGame.away?.name)
-  );
-});
-
-// Associazione partita reale -> WebPont
-// NON dichiarare di nuovo found qui!
-
-        // Prima cerchiamo le squadre esatte, anche se
-        // la data WebPont differisce da quella Supabase.
-        if(teamCandidates.length === 1){
-
-          found = teamCandidates[0];
-
-        }else if(teamCandidates.length > 1 && realDate){
-
-          // Se ci sono più partite con le stesse squadre,
-          // usiamo prima la data esatta.
-          found = teamCandidates.find(g => {
-            return webGameDate(g) === realDate;
-          }) || null;
-
-          // Se la data esatta manca, accettiamo soltanto
-          // un candidato privo di data.
-          if(!found){
-
-            const withoutDate = teamCandidates.filter(g => {
-              return !webGameDate(g);
-            });
-
-            if(withoutDate.length === 1){
-              found = withoutDate[0];
-            }
-
-          }
-
-        }
-
-        if(!found){
-
-const partialCandidates = discovery.games
-  .filter(g =>
-    teamMatches(g.home, realGame.home?.name) ||
-    teamMatches(g.away, realGame.home?.name) ||
-    teamMatches(g.home, realGame.away?.name) ||
-    teamMatches(g.away, realGame.away?.name)
-  )
-  .map(g => ({
-    game: g.game,
-    date: g.date,
-    home: g.home,
-    away: g.away
-  }));
-
-console.warn(
-  "DEBUG WEBPONT MATCH FALLITO:",
-  {
-    giornata: Number(md.number),
-    casa: realGame.home?.name,
-    trasferta: realGame.away?.name,
-    data: realGame.scheduled_at,
-    partiteSimiliTrovate: partialCandidates
-  }
-);
-
-console.table(partialCandidates);           
-           
-          console.warn(
-            "NESSUN WEBPONT PER REAL GAME:",
-            {
-              giornata:Number(md.number),
-              real_game_id:realGame.id,
-              home:realGame.home?.name,
-              away:realGame.away?.name,
-              scheduled_at:realGame.scheduled_at
-            }
-          );
-
-        }else{
-
-          console.log(
-            "REAL GAME -> WEBPONT:",
-            {
-              giornata:Number(md.number),
-              home:realGame.home?.name,
-              away:realGame.away?.name,
-              scheduled_at:realGame.scheduled_at,
-              game:found.game,
-              webpont_date:found.date
-            }
-          );
-
-        }
-
-        matchedRealGames.push({
-          realGame,
-          webGame:found?.game || null
-        });
-
-      }
-
-console.log(
-  "CONTROLLO GIORNATA",
-  Number(md.number),
-  "PARTITE REALI:", realGames.length,
-  "PARTITE ABBINATE:",
-  matchedRealGames.filter(x => x.webGame).length,
-  "ID WEBPONT:",
-  matchedRealGames.map(x => x.webGame).filter(Boolean)
-);       
-
-      dayContexts.push({
-        matchday:md,
-        realGames,
-        matchedRealGames,
-        gamesData:{},
-        teamToGame:{},
-        playerToGame:{}
+    if (realGame.cancelled) {
+      matchedRealGames.push({
+        realGame,
+        webGame: null
       });
-
+      continue;
     }
 
+    // 1. PRIORITÀ AL CODICE INSERITO MANUALMENTE IN SUPABASE
+    const manualWebPontId =
+      manualWebPontByRealGameId?.[realGame.id];
+
+    if (manualWebPontId) {
+
+      found = discovery.games.find(
+        g => g.game === manualWebPontId
+      ) || {
+        game: manualWebPontId,
+        home: realGame.home?.name,
+        away: realGame.away?.name,
+        date: null
+      };
+
+      console.log(
+        "WEBPONT MANUALE UTILIZZATO:",
+        {
+          giornata: Number(md.number),
+          real_game_id: realGame.id,
+          casa: realGame.home?.name,
+          trasferta: realGame.away?.name,
+          game: manualWebPontId
+        }
+      );
+
+    } else {
+
+      // 2. FALLBACK: ABBINAMENTO AUTOMATICO ESISTENTE
+      const realDate =
+        dateOnly(realGame.scheduled_at);
+
+      const teamCandidates = discovery.games.filter(g => {
+        return (
+          teamMatches(g.home, realGame.home?.name) &&
+          teamMatches(g.away, realGame.away?.name)
+        );
+      });
+
+      if (teamCandidates.length === 1) {
+
+        found = teamCandidates[0];
+
+      } else if (teamCandidates.length > 1 && realDate) {
+
+        found = teamCandidates.find(g => {
+          return webGameDate(g) === realDate;
+        }) || null;
+
+        if (!found) {
+          const withoutDate = teamCandidates.filter(g => {
+            return !webGameDate(g);
+          });
+
+          if (withoutDate.length === 1) {
+            found = withoutDate[0];
+          }
+        }
+      }
+    }
+
+    // 3. DIAGNOSTICA SE NON È STATA TROVATA LA PARTITA
+    if (!found) {
+
+      const partialCandidates = discovery.games
+        .filter(g =>
+          teamMatches(g.home, realGame.home?.name) ||
+          teamMatches(g.away, realGame.home?.name) ||
+          teamMatches(g.home, realGame.away?.name) ||
+          teamMatches(g.away, realGame.away?.name)
+        )
+        .map(g => ({
+          game: g.game,
+          date: g.date,
+          home: g.home,
+          away: g.away
+        }));
+
+      console.warn(
+        "DEBUG WEBPONT MATCH FALLITO:",
+        {
+          giornata: Number(md.number),
+          real_game_id: realGame.id,
+          casa: realGame.home?.name,
+          trasferta: realGame.away?.name,
+          data: realGame.scheduled_at,
+          partiteSimiliTrovate: partialCandidates
+        }
+      );
+
+      console.table(partialCandidates);
+
+      console.warn(
+        "NESSUN WEBPONT PER REAL GAME:",
+        {
+          giornata: Number(md.number),
+          real_game_id: realGame.id,
+          home: realGame.home?.name,
+          away: realGame.away?.name,
+          scheduled_at: realGame.scheduled_at
+        }
+      );
+
+    } else {
+
+      console.log(
+        "REAL GAME -> WEBPONT:",
+        {
+          giornata: Number(md.number),
+          home: realGame.home?.name,
+          away: realGame.away?.name,
+          game: found.game,
+          webpont_date: found.date,
+          manuale: Boolean(manualWebPontId)
+        }
+      );
+    }
+
+    matchedRealGames.push({
+      realGame,
+      webGame: found?.game || null
+    });
+  }
+
+  console.log(
+    "CONTROLLO GIORNATA",
+    Number(md.number),
+    "PARTITE REALI:",
+    realGames.length,
+    "PARTITE ABBINATE:",
+    matchedRealGames.filter(x => x.webGame).length,
+    "ID WEBPONT:",
+    matchedRealGames.map(x => x.webGame).filter(Boolean)
+  );
+
+  dayContexts.push({
+    matchday: md,
+    realGames,
+    matchedRealGames,
+    gamesData: {},
+    teamToGame: {},
+    playerToGame: {}
+  });
+}
 
     /* =========================================================
        9. SCARICO SOLO I WEBPONT NECESSARI
