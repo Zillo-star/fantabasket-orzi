@@ -3811,14 +3811,24 @@ async function home(){
     ? completedDayNumbers[completedDayNumbers.length-1]
     : null;
 
-  const currentDayNumber = dayNumbers.find(day=>{
-    const games = allMatches.filter(
-      m=>Number(m.matchday_number)===day
-    );
+// La giornata corrente dipende dalla deadline formazione,
+// non dal completamento di tutte le partite.
+const dashboardMatchdays = (mdRes.data || [])
+  .slice()
+  .sort((a,b)=>Number(a.number)-Number(b.number));
 
-    return !games.every(m=>m.completed===true) &&
-      (lastCompletedDay===null || day>lastCompletedDay);
-  }) ?? null;
+const expiredMatchdays = dashboardMatchdays.filter(md=>{
+  if(!md.lineup_deadline) return false;
+
+  const deadline = new Date(md.lineup_deadline);
+
+  return Number.isFinite(deadline.getTime()) &&
+    Date.now() >= deadline.getTime();
+});
+
+const currentDayNumber = expiredMatchdays.length
+  ? Number(expiredMatchdays[expiredMatchdays.length-1].number)
+  : (dayNumbers[0] ?? null);
 
   function getDayMatch(day){
     if(day===null) return null;
