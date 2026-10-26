@@ -9194,20 +9194,15 @@ if(!pg){
 
 }
 
-if (
-  day === 5 &&
-  ["ita3_a_437", "ita3_a_439"].includes(pg.game)
-) {
-  console.log("DEBUG PUNTEGGIO PARTITE MANCANTI", {
+if (day === 5) {
+  console.log("DEBUG PG GIORNATA 5", {
     giocatore: player.name,
-    cognome: player.surname,
-    partita: pg.game,
-    fantasyScore: pg.wp?.fantasyScore,
-    rawScore: pg.wp?.rawScore,
-    matchdayId
+    squadra: player.real_team_id,
+    associato: Boolean(pg),
+    partita: pg?.game
   });
-}
-           
+}           
+
           const gameInfo =
             globalGamesData[
               pg.game
