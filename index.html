@@ -8362,16 +8362,22 @@ for (const md of daysToProcess) {
        9. SCARICO SOLO I WEBPONT NECESSARI
     ========================================================= */
 
-    const gamesToFetch = [
-      ...new Set(
-        dayContexts.flatMap(
-          ctx =>
-            ctx.matchedRealGames
-              .map(x => x.webGame)
-              .filter(Boolean)
-        )
-      )
-    ];
+const gamesToFetch = [
+  ...new Set([
+    ...dayContexts.flatMap(
+      ctx =>
+        ctx.matchedRealGames
+          .map(x => x.webGame)
+          .filter(Boolean)
+    ),
+
+    ...(
+      dayContexts.some(ctx => Number(ctx.matchday.number) === 5)
+        ? ["ita3_a_437", "ita3_a_439"]
+        : []
+    )
+  ])
+];
 
 
     console.log(
