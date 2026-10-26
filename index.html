@@ -8965,40 +8965,46 @@ console.log("CONTROLLO LEGNANO-BRESCIA", {
         }
 
 
-        for(const wp of data.players){
+let player = null;
 
-          let player =
-            null;
+// Il giocatore deve appartenere a una delle due squadre
+// della partita che stiamo elaborando.
+const teamIds = new Set([
+  String(realGame.home_team_id),
+  String(realGame.away_team_id)
+]);
 
+if (wp.webpont_id != null) {
+  const candidates =
+    playersByWebPontId.get(String(wp.webpont_id)) || [];
 
-          if(wp.webpont_id != null){
+  player = candidates.find(
+    p => teamIds.has(String(p.real_team_id))
+  ) || null;
+}
 
-            player =
-              playersByWebPontId.get(
-                String(wp.webpont_id)
-              ) || null;
+if (!player) {
+  const name1 = normalizeTeamName(
+    `${wp.name || ""} ${wp.surname || ""}`
+  );
 
-          }
+  const name2 = normalizeTeamName(
+    `${wp.surname || ""} ${wp.name || ""}`
+  );
 
+  const candidates = [
+    ...(playersByName.get(name1) || []),
+    ...(name2 !== name1
+      ? (playersByName.get(name2) || [])
+      : [])
+  ];
 
-          if(!player){
+  player = candidates.find(
+    p => teamIds.has(String(p.real_team_id))
+  ) || null;
+}
 
-            const fullName =
-              normalizeTeamName(
-                `${wp.name || ""} ${wp.surname || ""}`
-              );
-
-
-            player =
-              playersByName.get(
-                fullName
-              ) || null;
-
-          }
-
-
-if(!player)
-  continue;
+if (!player) continue;
 
 
 /* =========================================
