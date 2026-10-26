@@ -8288,6 +8288,7 @@ if (Number(md.number) === 5) {
       away: "TAV Treviglio Brianza Basket",
       date: null
     };
+
   } else if (
     squadre.includes("legnano") &&
     squadre.includes("brescia")
@@ -8298,9 +8299,23 @@ if (Number(md.number) === 5) {
       away: "A2A Leonessa Brescia",
       date: null
     };
+
+  } else if (
+    squadre.includes("livorno") &&
+    squadre.includes("napoli")
+  ) {
+    found = {
+      game: "ita3_b_439",
+      home: "Pielle Livorno",
+      away: "Napoli Est",
+      date: null
+    };
   }
 
-  if (found && ["ita3_a_437", "ita3_a_439"].includes(found.game)) {
+  if (
+    found &&
+    ["ita3_a_437", "ita3_a_439", "ita3_b_439"].includes(found.game)
+  ) {
     console.log(
       "ABBINAMENTO FORZATO GIORNATA 5:",
       realGame.home?.name,
