@@ -8274,6 +8274,47 @@ for (const md of daysToProcess) {
       }
     }
 
+// FIX MANUALE GIORNATA 5: DESIO/TREVIGLIO E LEGNANO/BRESCIA
+if (!found && Number(md.number) === 5) {
+
+  const squadre = normalizeTeamName(
+    `${realGame.home?.name || ""} ${realGame.away?.name || ""}`
+  );
+
+  if (
+    squadre.includes("desio") &&
+    squadre.includes("treviglio")
+  ) {
+    found = {
+      game: "ita3_a_437",
+      home: "Rimadesio Desio",
+      away: "TAV Treviglio Brianza Basket",
+      date: null
+    };
+  } else if (
+    squadre.includes("legnano") &&
+    squadre.includes("brescia")
+  ) {
+    found = {
+      game: "ita3_a_439",
+      home: "SAE Legnano Knights",
+      away: "A2A Leonessa Brescia",
+      date: null
+    };
+  }
+
+  if (found) {
+    console.log(
+      "ABBINAMENTO MANUALE GIORNATA 5:",
+      realGame.home?.name,
+      "-",
+      realGame.away?.name,
+      "=>",
+      found.game
+    );
+  }
+}
+     
     // 3. DIAGNOSTICA SE NON È STATA TROVATA LA PARTITA
     if (!found) {
 
