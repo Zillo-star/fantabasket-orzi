@@ -8820,23 +8820,7 @@ const gamesToFetch = [
 
       console.log("=================================");
       console.log("ELABORO GIORNATA:",day);
-      console.log("=================================");
-
-if (day === 5) {
-  console.log("DEBUG GIORNATA 5 - PARTITE FORZATE", {
-    matchdayId,
-    webpont437: globalGamesData["ita3_a_437"]?.info,
-    webpont439: globalGamesData["ita3_a_439"]?.info,
-    partiteAbbinate: ctx.matchedRealGames.map(x => ({
-      casa: x.realGame?.home?.name,
-      trasferta: x.realGame?.away?.name,
-      webGame: x.webGame,
-      datiScaricati: Boolean(globalGamesData[x.webGame])
-    })),
-    squadreCollegate: Object.keys(ctx.teamToGame).length,
-    giocatoriCollegati: Object.keys(ctx.playerToGame).length
-  });
-}       
+      console.log("================================="); 
 
       /* =====================================================
          MAPPATURA REAL GAME -> WEBPONT
@@ -8879,6 +8863,23 @@ if (day === 5) {
         };
 
       }
+
+if (day === 5) {
+  console.log("DEBUG GIORNATA 5 - PARTITE FORZATE", {
+    matchdayId,
+    webpont437: globalGamesData["ita3_a_437"]?.info,
+    webpont439: globalGamesData["ita3_a_439"]?.info,
+    partiteAbbinate: ctx.matchedRealGames.map(x => ({
+      casa: x.realGame?.home?.name,
+      trasferta: x.realGame?.away?.name,
+      webGame: x.webGame,
+      datiScaricati: Boolean(globalGamesData[x.webGame])
+    })),
+    squadreCollegate: Object.keys(ctx.teamToGame).length,
+    giocatoriCollegati: Object.keys(ctx.playerToGame).length
+  });
+}       
+
 
  console.log("CONTROLLO DESIO-TREVIGLIO", {
   partita: ctx.teamToGame[
