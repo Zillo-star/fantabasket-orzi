@@ -8525,37 +8525,39 @@ const gamesToFetch = [
       new Map();
 
 
-    dbPlayers.forEach(player => {
+dbPlayers.forEach(player => {
 
-      playersById[player.id] =
-        player;
+  playersById[player.id] = player;
 
+  if (player.webpont_id != null) {
+    const webpontKey = String(player.webpont_id);
 
-      if(player.webpont_id != null){
+    if (!playersByWebPontId.has(webpontKey)) {
+      playersByWebPontId.set(webpontKey, []);
+    }
 
-        playersByWebPontId.set(
-          String(player.webpont_id),
-          player
-        );
+    playersByWebPontId.get(webpontKey).push(player);
+  }
 
-      }
+  const fullName = normalizeTeamName(
+    `${player.name || ""} ${player.surname || ""}`
+  );
 
+  const reverseName = normalizeTeamName(
+    `${player.surname || ""} ${player.name || ""}`
+  );
 
-      const fullName =
-        normalizeTeamName(
-          `${player.name || ""} ${player.surname || ""}`
-        );
+  for (const nameKey of new Set([fullName, reverseName])) {
+    if (!nameKey) continue;
 
-      if(fullName){
+    if (!playersByName.has(nameKey)) {
+      playersByName.set(nameKey, []);
+    }
 
-        playersByName.set(
-          fullName,
-          player
-        );
+    playersByName.get(nameKey).push(player);
+  }
 
-      }
-
-    });
+});
 
 
     /* =========================================================
