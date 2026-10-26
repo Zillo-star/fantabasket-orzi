@@ -9081,6 +9081,17 @@ for(
         Object.keys(ctx.playerToGame).length
       );
 
+if (day === 5) {
+  console.log("DEBUG GIOCATORI GIORNATA 5", {
+    giocatoriCollegati: Object.keys(ctx.playerToGame || {}).length,
+    esempi: Object.entries(ctx.playerToGame || {}).slice(0, 10).map(([id, x]) => ({
+      id,
+      nome: x.wp?.name,
+      cognome: x.wp?.surname,
+      webpont: x.game
+    }))
+  });
+}
 
       /* =====================================================
          LINEUPS DELLA GIORNATA
