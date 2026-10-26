@@ -8831,8 +8831,29 @@ const gamesToFetch = [
         const realGame =
           item.realGame;
 
-        const game =
-          item.webGame;
+let game = item.webGame;
+
+if (Number(ctx.matchday.number) === 5) {
+
+  const home = realGame.home?.name || "";
+  const away = realGame.away?.name || "";
+
+  if (
+    teamMatches(home, "Rimadesio Desio") &&
+    teamMatches(away, "TAV Treviglio Brianza Basket")
+  ) {
+    game = "ita3_a_437";
+    item.webGame = game;
+  }
+
+  if (
+    teamMatches(home, "SAE Scientifica-Soevis Legnano Knights") &&
+    teamMatches(away, "A2A Leonessa Brescia")
+  ) {
+    game = "ita3_a_439";
+    item.webGame = game;
+  }
+}
 
 
         if(game){
