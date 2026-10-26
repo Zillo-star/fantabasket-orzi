@@ -8274,17 +8274,14 @@ for (const md of daysToProcess) {
       }
     }
 
-// FIX MANUALE GIORNATA 5: DESIO/TREVIGLIO E LEGNANO/BRESCIA
-if (!found && Number(md.number) === 5) {
+// FIX DEFINITIVO GIORNATA 5: abbinamenti forzati
+if (Number(md.number) === 5) {
 
   const squadre = normalizeTeamName(
     `${realGame.home?.name || ""} ${realGame.away?.name || ""}`
   );
 
-  if (
-    squadre.includes("desio") &&
-    squadre.includes("treviglio")
-  ) {
+  if (squadre.includes("desio") && squadre.includes("treviglio")) {
     found = {
       game: "ita3_a_437",
       home: "Rimadesio Desio",
@@ -8297,15 +8294,15 @@ if (!found && Number(md.number) === 5) {
   ) {
     found = {
       game: "ita3_a_439",
-      home: "SAE Legnano Knights",
+      home: "SAE Scientifica-Soevis Legnano Knights",
       away: "A2A Leonessa Brescia",
       date: null
     };
   }
 
-  if (found) {
+  if (found && ["ita3_a_437", "ita3_a_439"].includes(found.game)) {
     console.log(
-      "ABBINAMENTO MANUALE GIORNATA 5:",
+      "ABBINAMENTO FORZATO GIORNATA 5:",
       realGame.home?.name,
       "-",
       realGame.away?.name,
