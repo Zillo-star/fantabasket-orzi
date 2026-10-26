@@ -8281,48 +8281,41 @@ if (Number(md.number) === 5) {
     `${realGame.home?.name || ""} ${realGame.away?.name || ""}`
   );
 
+  let manualWebPontId = null;
+
   if (squadre.includes("desio") && squadre.includes("treviglio")) {
-    found = {
-      game: "ita3_a_437",
-      home: "Rimadesio Desio",
-      away: "TAV Treviglio Brianza Basket",
-      date: null
-    };
+    manualWebPontId = "ita3_a_437";
 
   } else if (
     squadre.includes("legnano") &&
     squadre.includes("brescia")
   ) {
-    found = {
-      game: "ita3_a_439",
-      home: "SAE Scientifica-Soevis Legnano Knights",
-      away: "A2A Leonessa Brescia",
-      date: null
-    };
+    manualWebPontId = "ita3_a_439";
 
   } else if (
     squadre.includes("livorno") &&
     squadre.includes("napoli")
   ) {
-    found = {
-      game: "ita3_b_439",
-      home: "Pielle Livorno",
-      away: "Napoli Est",
-      date: null
-    };
+    manualWebPontId = "ita3_b_439";
   }
 
-  if (
-    found &&
-    ["ita3_a_437", "ita3_a_439", "ita3_b_439"].includes(found.game)
-  ) {
+  if (manualWebPontId) {
+    found = discovery.games.find(
+      g => g.game === manualWebPontId
+    ) || {
+      game: manualWebPontId,
+      home: realGame.home?.name || "",
+      away: realGame.away?.name || "",
+      date: null
+    };
+
     console.log(
-      "ABBINAMENTO FORZATO GIORNATA 5:",
+      "ABBINAMENTO MANUALE GIORNATA 5:",
       realGame.home?.name,
       "-",
       realGame.away?.name,
       "=>",
-      found.game
+      manualWebPontId
     );
   }
 }
