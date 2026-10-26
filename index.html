@@ -8865,6 +8865,20 @@ const gamesToFetch = [
 
       }
 
+ console.log("CONTROLLO DESIO-TREVIGLIO", {
+  partita: ctx.teamToGame[
+    String(
+      ctx.realGames?.find(g =>
+        g.home?.name?.includes("DESIO")
+      )?.home_team_id
+    )
+  ],
+  webpont437: globalGamesData["ita3_a_437"]?.info
+});
+
+console.log("CONTROLLO LEGNANO-BRESCIA", {
+  webpont439: globalGamesData["ita3_a_439"]?.info
+});      
 
       /* =====================================================
          MAPPATURA GIOCATORI
