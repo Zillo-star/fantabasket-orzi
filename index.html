@@ -8276,9 +8276,8 @@ for (const md of daysToProcess) {
 
 // FIX DEFINITIVO GIORNATA 5: abbinamenti forzati
 if (Number(md.number) === 5) {
-
   const squadre = normalizeTeamName(
-    ${realGame.home?.name || ""} ${realGame.away?.name || ""}
+    `$DIL0 $DIL1`
   );
 
   if (squadre.includes("desio") && squadre.includes("treviglio")) {
@@ -8288,61 +8287,14 @@ if (Number(md.number) === 5) {
       away: "TAV Treviglio Brianza Basket",
       date: null
     };
-  } else if (
-    squadre.includes("legnano") &&
-    squadre.includes("brescia")
-  ) {
+  } else if (squadre.includes("legnano") && squadre.includes("brescia")) {
     found = {
       game: "ita3_a_439",
       home: "SAE Scientifica-Soevis Legnano Knights",
       away: "A2A Leonessa Brescia",
       date: null
     };
-  }
-
-  if (found && ["ita3_a_437", "ita3_a_439"].includes(found.game)) {
-    console.log(
-      "ABBINAMENTO FORZATO GIORNATA 5:",
-      realGame.home?.name,
-      "-",
-      realGame.away?.name,
-      "=>",
-      found.game
-    );
-  }
-}
-Sostituisci tutto il blocco che mi hai mandato con questo, già completo dei tre abbinamenti:
-
-// FIX DEFINITIVO GIORNATA 5: abbinamenti forzati
-if (Number(md.number) === 5) {
-
-  const squadre = normalizeTeamName(
-    `${realGame.home?.name || ""} ${realGame.away?.name || ""}`
-  );
-
-  if (squadre.includes("desio") && squadre.includes("treviglio")) {
-    found = {
-      game: "ita3_a_437",
-      home: "Rimadesio Desio",
-      away: "TAV Treviglio Brianza Basket",
-      date: null
-    };
-
-  } else if (
-    squadre.includes("legnano") &&
-    squadre.includes("brescia")
-  ) {
-    found = {
-      game: "ita3_a_439",
-      home: "SAE Scientifica-Soevis Legnano Knights",
-      away: "A2A Leonessa Brescia",
-      date: null
-    };
-
-  } else if (
-    squadre.includes("livorno") &&
-    squadre.includes("napoli")
-  ) {
+  } else if (squadre.includes("livorno") && squadre.includes("napoli")) {
     found = {
       game: "ita3_b_439",
       home: "Pielle Livorno",
@@ -8351,10 +8303,7 @@ if (Number(md.number) === 5) {
     };
   }
 
-  if (
-    found &&
-    ["ita3_a_437", "ita3_a_439", "ita3_b_439"].includes(found.game)
-  ) {
+  if (found && ["ita3_a_437", "ita3_a_439", "ita3_b_439"].includes(found.game)) {
     console.log(
       "ABBINAMENTO FORZATO GIORNATA 5:",
       realGame.home?.name,
@@ -8364,10 +8313,8 @@ if (Number(md.number) === 5) {
       found.game
     );
   }
-}
+}     
 
-Dopo averlo incollato, salva e pubblica. Poi aggiorna FantaBasket con Ctrl + F5 e avvia il ricalcolo della giornata 5.
-     
     // 3. DIAGNOSTICA SE NON È STATA TROVATA LA PARTITA
     if (!found) {
 
