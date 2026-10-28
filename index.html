@@ -9876,31 +9876,22 @@ if (day === 5) {
           );
 
 
-      if(
-        playerScores.error
-      ){
-
-        console.error(
-          "ERRORE LETTURA FANTASY SCORES:",
-          playerScores.error
-        );
-
-        continue;
-      }
+if (playerScores.error) {
+  console.error(
+    "ERRORE LETTURA FANTASY SCORES:",
+    playerScores.error
+  );
+  return;
+}
 
 
-      if(
-        coachScores.error
-      ){
-
-        console.error(
-          "ERRORE LETTURA COACH SCORES:",
-          coachScores.error
-        );
-
-        continue;
-      }
-
+if (coachScores.error) {
+  console.error(
+    "ERRORE LETTURA COACH SCORES:",
+    coachScores.error
+  );
+  return;
+}
 
       const totals = {};
 
