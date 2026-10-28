@@ -8276,9 +8276,11 @@ for (const md of daysToProcess) {
 
 // FIX DEFINITIVO GIORNATA 5: abbinamenti forzati
 if (Number(md.number) === 5) {
-  const squadre = normalizeTeamName(
-    `$DIL0 $DIL1`
-  );
+
+const squadre = normalizeTeamName(
+  `${realGame.home?.name || ""} ${realGame.away?.name || ""}`
+);
+
 
   if (squadre.includes("desio") && squadre.includes("treviglio")) {
     found = {
