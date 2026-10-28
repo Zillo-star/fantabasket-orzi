@@ -18928,6 +18928,169 @@ html += `
 el("content").innerHTML = html;
 }
 
+<CodeBlock language="javascript" editable>
+async function adminWebPontLinks() {
+  if (!me || !me.is_admin) {
+    return message("Accesso riservato all'admin.", "err");
+  }
+
+
+const result = await db
+.from("matchdays")
+.select("id, number")
+.order("number");
+
+if (result.error) {
+return message(result.error.message, "err");
+}
+
+const matchdays = result.data || [];
+
+if (!matchdays.length) {
+return message("Nessuna giornata trovata.", "err");
+}
+
+el("content").innerHTML =     DIL0  ;
+
+await loadAdminWebPontLinks(matchdays[0].id);
+}
+
+async function loadAdminWebPontLinks(matchdayId) {
+  if (!me || !me.is_admin) return;
+
+const list = el("adminWebPontList");
+  if (!list) return;
+
+  list.innerHTML = "Caricamento partite...";
+
+const [gamesResult, linksResult] = await Promise.all([
+    db.from("real_games")
+      .select(`
+        id,
+        scheduled_at,
+        postponed,
+        cancelled,
+        home:home_team_id(name),
+        away:away_team_id(name)
+      `)
+      .eq("matchday_id", matchdayId)
+      .order("scheduled_at"),
+
+db.from("webpont_game_links")
+      .select("real_game_id, webpont_id")
+  ]);
+
+if (gamesResult.error) {
+    list.innerHTML = "";
+    return message(
+      "Errore caricamento partite: " + gamesResult.error.message,
+      "err"
+    );
+  }
+
+if (linksResult.error) {
+    list.innerHTML = "";
+    return message(
+      "Errore caricamento codici: " + linksResult.error.message,
+      "err"
+    );
+  }
+
+const games = gamesResult.data || [];
+  const links = linksResult.data || [];
+
+const linksByGame = {};
+  links.forEach(link => {
+    linksByGame[link.real_game_id] = link.webpont_id;
+  });
+
+if (!games.length) {
+    list.innerHTML = `
+
+`;
+    return;
+  }
+
+list.innerHTML = `
+    
+`;
+}
+
+async function saveAdminWebPontLink(gameId) {
+  if (!me || !me.is_admin) {
+    return message("Accesso riservato all'admin.", "err");
+  }
+
+const input = el("adminWebPontCode_" + gameId);
+  const webpontId = input?.value.trim();
+
+if (!webpontId) {
+    return message("Inserisci un codice WebPont.", "err");
+  }
+
+const result = await db
+    .from("webpont_game_links")
+    .upsert(
+      {
+        real_game_id: gameId,
+        webpont_id: webpontId
+      },
+      {
+        onConflict: "real_game_id"
+      }
+    );
+
+if (result.error) {
+    if (result.error.code === "23505") {
+      return message(
+        "Questo codice WebPont è già assegnato a un'altra partita. " +
+        "Controlla il codice inserito.",
+        "err"
+      );
+    }
+
+return message(
+      "Errore salvataggio: " + result.error.message,
+      "err"
+    );
+  }
+
+  message("Codice WebPont salvato correttamente.", "ok");
+
+await loadAdminWebPontLinks(
+    el("adminWebPontDay").value
+  );
+}
+
+async function removeAdminWebPontLink(gameId) {
+  if (!me || !me.is_admin) {
+    return message("Accesso riservato all'admin.", "err");
+  }
+
+if (!confirm("Vuoi rimuovere il collegamento WebPont di questa partita?")) {
+    return;
+  }
+
+const result = await db
+    .from("webpont_game_links")
+    .delete()
+    .eq("real_game_id", gameId);
+
+if (result.error) {
+    return message(
+      "Errore rimozione: " + result.error.message,
+      "err"
+    );
+  }
+
+  message("Collegamento WebPont rimosso.", "ok");
+
+await loadAdminWebPontLinks(
+    el("adminWebPontDay").value
+  );
+}
+</CodeBlock>
+   
 async function finalizeFantasyMatchday() {
   if (!me || !me.is_admin) {
     return message("Accesso riservato all'admin.", "err");
