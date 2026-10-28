@@ -18928,42 +18928,69 @@ html += `
 el("content").innerHTML = html;
 }
 
-<CodeBlock language="javascript" editable>
+
 async function adminWebPontLinks() {
   if (!me || !me.is_admin) {
     return message("Accesso riservato all'admin.", "err");
   }
 
+  const result = await db
+    .from("matchdays")
+    .select("id, number")
+    .order("number");
 
-const result = await db
-.from("matchdays")
-.select("id, number")
-.order("number");
+  if (result.error) {
+    return message(result.error.message, "err");
+  }
 
-if (result.error) {
-return message(result.error.message, "err");
+  const matchdays = result.data || [];
+
+  if (!matchdays.length) {
+    return message("Nessuna giornata trovata.", "err");
+  }
+
+  el("content").innerHTML = `
+    <div class="card">
+      <h2>🔗 Codici WebPont mancanti</h2>
+      <p class="muted">
+        Collega manualmente le partite reali ai codici WebPont.
+      </p>
+
+      <label>Giornata</label>
+      <select id="adminWebPontDay"
+        onchange="loadAdminWebPontLinks(this.value)">
+        ${matchdays.map(day => `
+          <option value="${day.id}">
+            Giornata ${day.number}
+          </option>
+        `).join("")}
+      </select>
+
+      <div id="adminWebPontList" style="margin-top:16px">
+        Caricamento partite...
+      </div>
+
+      <button class="secondary"
+        onclick="admin()"
+        style="margin-top:16px">
+        ← Torna all'Admin
+      </button>
+    </div>
+  `;
+
+  await loadAdminWebPontLinks(matchdays[0].id);
 }
 
-const matchdays = result.data || [];
-
-if (!matchdays.length) {
-return message("Nessuna giornata trovata.", "err");
-}
-
-el("content").innerHTML =     DIL0  ;
-
-await loadAdminWebPontLinks(matchdays[0].id);
-}
 
 async function loadAdminWebPontLinks(matchdayId) {
   if (!me || !me.is_admin) return;
 
-const list = el("adminWebPontList");
+  const list = el("adminWebPontList");
   if (!list) return;
 
   list.innerHTML = "Caricamento partite...";
 
-const [gamesResult, linksResult] = await Promise.all([
+  const [gamesResult, linksResult] = await Promise.all([
     db.from("real_games")
       .select(`
         id,
@@ -18976,11 +19003,11 @@ const [gamesResult, linksResult] = await Promise.all([
       .eq("matchday_id", matchdayId)
       .order("scheduled_at"),
 
-db.from("webpont_game_links")
+    db.from("webpont_game_links")
       .select("real_game_id, webpont_id")
   ]);
 
-if (gamesResult.error) {
+  if (gamesResult.error) {
     list.innerHTML = "";
     return message(
       "Errore caricamento partite: " + gamesResult.error.message,
@@ -18988,7 +19015,7 @@ if (gamesResult.error) {
     );
   }
 
-if (linksResult.error) {
+  if (linksResult.error) {
     list.innerHTML = "";
     return message(
       "Errore caricamento codici: " + linksResult.error.message,
@@ -18996,39 +19023,94 @@ if (linksResult.error) {
     );
   }
 
-const games = gamesResult.data || [];
+  const games = gamesResult.data || [];
   const links = linksResult.data || [];
+  const linksByGame = {};
 
-const linksByGame = {};
   links.forEach(link => {
     linksByGame[link.real_game_id] = link.webpont_id;
   });
 
-if (!games.length) {
+  if (!games.length) {
     list.innerHTML = `
-
-`;
+      <p class="muted">
+        Nessuna partita trovata per questa giornata.
+      </p>
+    `;
     return;
   }
 
-list.innerHTML = `
-    
-`;
+  const linkedCount = games.filter(
+    game => linksByGame[game.id]
+  ).length;
+
+  list.innerHTML = `
+    <p class="muted">
+      ${linkedCount} partite collegate su ${games.length}.
+    </p>
+
+    <div style="display:flex;flex-direction:column;gap:12px">
+      ${games.map(game => {
+        const code = linksByGame[game.id] || "";
+        const status = game.cancelled
+          ? "Annullata"
+          : game.postponed
+            ? "Rinviata"
+            : "In calendario";
+
+        return `
+          <div class="card" style="margin:0;padding:14px">
+            <b>
+              ${game.home?.name || "Casa"}
+              — ${game.away?.name || "Trasferta"}
+            </b>
+
+            <div class="muted" style="margin:4px 0 8px">
+              ${status}
+              · ${code ? "Codice registrato" : "Codice mancante"}
+            </div>
+
+            <label>Codice WebPont</label>
+            <input
+              id="adminWebPontCode_${game.id}"
+              value="${code}"
+              placeholder="Es. ita3_a_437"
+              autocomplete="off"
+            >
+
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+              <button onclick="saveAdminWebPontLink('${game.id}')">
+                💾 Salva codice
+              </button>
+
+              ${code ? `
+                <button class="secondary"
+                  onclick="removeAdminWebPontLink('${game.id}')">
+                  Rimuovi collegamento
+                </button>
+              ` : ""}
+            </div>
+          </div>
+        `;
+      }).join("")}
+    </div>
+  `;
 }
+
 
 async function saveAdminWebPontLink(gameId) {
   if (!me || !me.is_admin) {
     return message("Accesso riservato all'admin.", "err");
   }
 
-const input = el("adminWebPontCode_" + gameId);
+  const input = el("adminWebPontCode_" + gameId);
   const webpontId = input?.value.trim();
 
-if (!webpontId) {
+  if (!webpontId) {
     return message("Inserisci un codice WebPont.", "err");
   }
 
-const result = await db
+  const result = await db
     .from("webpont_game_links")
     .upsert(
       {
@@ -19040,16 +19122,15 @@ const result = await db
       }
     );
 
-if (result.error) {
+  if (result.error) {
     if (result.error.code === "23505") {
       return message(
-        "Questo codice WebPont è già assegnato a un'altra partita. " +
-        "Controlla il codice inserito.",
+        "Questo codice WebPont è già assegnato a un'altra partita. Controlla il codice.",
         "err"
       );
     }
 
-return message(
+    return message(
       "Errore salvataggio: " + result.error.message,
       "err"
     );
@@ -19057,26 +19138,29 @@ return message(
 
   message("Codice WebPont salvato correttamente.", "ok");
 
-await loadAdminWebPontLinks(
+  await loadAdminWebPontLinks(
     el("adminWebPontDay").value
   );
 }
+
 
 async function removeAdminWebPontLink(gameId) {
   if (!me || !me.is_admin) {
     return message("Accesso riservato all'admin.", "err");
   }
 
-if (!confirm("Vuoi rimuovere il collegamento WebPont di questa partita?")) {
+  if (!confirm(
+    "Vuoi rimuovere il collegamento WebPont di questa partita?"
+  )) {
     return;
   }
 
-const result = await db
+  const result = await db
     .from("webpont_game_links")
     .delete()
     .eq("real_game_id", gameId);
 
-if (result.error) {
+  if (result.error) {
     return message(
       "Errore rimozione: " + result.error.message,
       "err"
@@ -19085,16 +19169,11 @@ if (result.error) {
 
   message("Collegamento WebPont rimosso.", "ok");
 
-await loadAdminWebPontLinks(
+  await loadAdminWebPontLinks(
     el("adminWebPontDay").value
   );
 }
-</CodeBlock>
-   
-async function finalizeFantasyMatchday() {
-  if (!me || !me.is_admin) {
-    return message("Accesso riservato all'admin.", "err");
-  }
+
 
   const day = Number(el("finalizeMatchday").value);
 
