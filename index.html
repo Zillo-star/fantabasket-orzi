@@ -2819,6 +2819,8 @@ function message(t,c=""){
     t?`<div class="${c}">${t}</div>`:"";
 }
 async function login(){let r=await db.auth.signInWithPassword({email:el("email").value.trim(),password:el("password").value});if(r.error)return message(r.error.message,"err");hideAuth();boot()}
+
+window.login = login;
 async function forgotPassword(){
 
   let email=el("email").value.trim();
