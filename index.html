@@ -8971,11 +8971,13 @@ console.log("CONTROLLO LEGNANO-BRESCIA", {
         }
 
 
-let player = null;
+for (const wp of data.players) {
 
-// Il giocatore deve appartenere a una delle due squadre
-// della partita che stiamo elaborando.
-const teamIds = new Set([
+  let player = null;
+
+  // Il giocatore deve appartenere a una delle due squadre
+  // della partita che stiamo elaborando.
+  const teamIds = new Set([
   String(realGame.home_team_id),
   String(realGame.away_team_id)
 ]);
