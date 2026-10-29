@@ -17776,6 +17776,46 @@ let selectedMatches = matches.filter(x =>
 
       }
 
+/* FIX LARGHEZZA CALENDARIO */
+.calendar-day-card {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  grid-column: 1 / -1 !important;
+}
+
+.calendar-day-card > div:last-child {
+  width: 100%;
+  min-width: 0;
+  align-items: stretch;
+}
+
+.calendar-day-card .calendar-match {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.calendar-day-card .calendar-teams {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+
+.calendar-day-card .calendar-team {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.calendar-day-card .calendar-team-name {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
     </style>
 
   `;
