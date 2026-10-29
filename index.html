@@ -17837,43 +17837,54 @@ let selectedMatches = matches.filter(x =>
         ">
 
 
-<div id="calendarDayPicker" style="display:flex;align-items:center;justify-content:center;gap:8px;margin:12px 0;">
+
+<div id="calendarDayPicker" style="display:flex;align-items:center;justify-content:center;gap:10px;margin:12px 0;">
+
   <button
     type="button"
     onclick="window.changeCalendarDay(-1)"
     style="padding:8px 12px;border:0;border-radius:8px;background:#202b49;color:#fff;cursor:pointer;font-size:18px;"
   >‹</button>
 
-  <div id="calendarDayOptions" style="display:flex;align-items:center;justify-content:center;gap:6px;flex:1;max-width:360px;">
-  </div>
+  <select
+    id="calendarDayQuickSelect"
+    onchange="window.selectCalendarDay(this.value)"
+    style="padding:10px 12px;border:1px solid #303b5c;border-radius:9px;background:#11182c;color:#fff;font-weight:800;font-size:14px;min-width:180px;"
+  >
+    ${
+      allDays.map((day, index) => `
+        <option
+          value="${index}"
+          ${selectedDay === day ? "selected" : ""}
+        >
+          Giornata ${day}${Number(day) === Number(currentDay) ? " · CORRENTE" : ""}
+        </option>
+      `).join("")
+    }
+  </select>
 
   <button
     type="button"
     onclick="window.changeCalendarDay(1)"
     style="padding:8px 12px;border:0;border-radius:8px;background:#202b49;color:#fff;cursor:pointer;font-size:18px;"
   >›</button>
+
 </div>
 
+<select id="day" style="display:none">
+  ${
+    allDays.map(day => `
+      <option
+        value="${matchdays[day]?.id || ""}"
+        data-number="${day}"
+        ${selectedDay === day ? "selected" : ""}
+      >
+        Giornata ${day}
+      </option>
+    `).join("")
+  }
+</select>
 
-        <select id="day" style="display:none">
-          ${
-            allDays.map(day => `
-              <option
-                value="${matchdays[day]?.id || ""}"
-                data-number="${day}"
-                ${selectedDay === day ? "selected" : ""}
-              >
-                Giornata ${day}
-              </option>
-            `).join("")
-          }
-        </select>
-
-      </div>
-
-    </div>
-
-  `;
 
 
   /* =========================
