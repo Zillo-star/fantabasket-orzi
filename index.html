@@ -2821,18 +2821,6 @@ function message(t,c=""){
 async function login(){let r=await db.auth.signInWithPassword({email:el("email").value.trim(),password:el("password").value});if(r.error)return message(r.error.message,"err");hideAuth();boot()}
 
 window.login = login;
-
-window.login = async function() {
-  let r = await db.auth.signInWithPassword({
-    email: el("email").value.trim(),
-    password: el("password").value
-  });
-
-  if (r.error) return message(r.error.message, "err");
-
-  hideAuth();
-  boot();
-};   
    
 async function forgotPassword(){
 
