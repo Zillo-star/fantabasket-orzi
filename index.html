@@ -15519,6 +15519,21 @@ window.loadSinglePlayerGameStats = async function(
 
   const key = `${playerId}_${matchdayId}`;
 
+// Recupera la discovery condivisa con il sistema live.
+if (!window.liveWebPontDiscovery) {
+  if (typeof window.loadLiveFantasyScores === "function") {
+    await window.loadLiveFantasyScores();
+  }
+}
+
+const discovery = window.liveWebPontDiscovery;
+
+if (!discovery || !Array.isArray(discovery.games)) {
+  throw new Error(
+    "Discovery WebPont non disponibile. Riprova tra qualche secondo."
+  );
+}
+   
   window.livePlayerGameStats =
     window.livePlayerGameStats || {};
 
