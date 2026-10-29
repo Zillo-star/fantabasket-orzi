@@ -15651,105 +15651,100 @@ if (!Array.isArray(discovery.games)) {
     );
   };
 
-const realDate = realGame.scheduled_at
-  ? new Date(realGame.scheduled_at)
-      .toISOString()
-      .slice(0, 10)
-  : null;
-
-
 /* =====================================
    ABBINAMENTO PARTITA WEBPONT
-   1. Prima prova squadre + data
-   2. Se la data non coincide, riprova
-      usando soltanto le due squadre
+   1. Priorità al collegamento salvato in Admin
+   2. Se manca, usa la discovery automatica
 ===================================== */
 
-const sameTeams = g => {
+let gameId = null;
 
-  const direct =
-    teamMatches(g.home, realGame.home?.name) &&
-    teamMatches(g.away, realGame.away?.name);
+// 1. Cerca prima il collegamento manuale/salvato in Admin
+const linkRes = await db
+  .from("webpont_game_links")
+  .select("webpont_id")
+  .eq("real_game_id", realGame.id)
+  .maybeSingle();
 
-  const reverse =
-    teamMatches(g.home, realGame.away?.name) &&
-    teamMatches(g.away, realGame.home?.name);
-
-  return direct || reverse;
-
-};
-
-
-const sameDate = g => {
-
-  const value = g.date || g.info?.date;
-
-  if(!realDate || !value)
-    return true;
-
-  const d = new Date(value);
-
-  if(!Number.isFinite(d.getTime()))
-    return true;
-
-  return d.toISOString().slice(0, 10) === realDate;
-
-};
-
-
-/* Primo tentativo: squadre e data */
-
-let candidates =
-  discovery.games.filter(g =>
-    sameTeams(g) && sameDate(g)
-  );
-
-
-/* Secondo tentativo: solo le squadre */
-
-if(!candidates.length){
-
-  candidates =
-    discovery.games.filter(sameTeams);
-
+if (linkRes.error) {
+  throw linkRes.error;
 }
 
-
-if(!candidates.length){
-
-  console.error(
-    "PARTITA WEBPONT NON ABBINATA",
-    {
-      giornata: realGame.matchday_id,
-      dataReale: realDate,
-      casaReale: realGame.home?.name,
-      trasfertaReale: realGame.away?.name,
-      partiteWebPont: discovery.games.map(g => ({
-        game: g.game,
-        data: g.date,
-        casa: g.home,
-        trasferta: g.away
-      }))
-    }
-  );
-
-  throw new Error(
-    "Non trovo la partita WebPont corrispondente."
-  );
-
+if (linkRes.data?.webpont_id) {
+  gameId = String(linkRes.data.webpont_id).trim();
 }
 
+// 2. Solo se manca il collegamento, prova la discovery
+if (!gameId) {
+  const normalize = value =>
+    String(value || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]/g, "");
 
-const selectedGame = candidates[0];
+  const teamMatches = (a, b) => {
+    const x = normalize(a);
+    const y = normalize(b);
 
-const gameId = selectedGame.game;
+    return Boolean(
+      x && y && (x === y || x.includes(y) || y.includes(x))
+    );
+  };
 
-if(!gameId){
+  const sameTeams = g => {
+    const direct =
+      teamMatches(g.home, realGame.home?.name) &&
+      teamMatches(g.away, realGame.away?.name);
 
-  throw new Error(
-    "La partita trovata non ha un ID WebPont valido."
+    const reverse =
+      teamMatches(g.home, realGame.away?.name) &&
+      teamMatches(g.away, realGame.home?.name);
+
+    return direct || reverse;
+  };
+
+  const realDate = realGame.scheduled_at
+    ? new Date(realGame.scheduled_at).toISOString().slice(0, 10)
+    : null;
+
+  const sameDate = g => {
+    const value = g.date || g.info?.date;
+
+    if (!realDate || !value) return true;
+
+    const d = new Date(value);
+
+    if (!Number.isFinite(d.getTime())) return true;
+
+    return d.toISOString().slice(0, 10) === realDate;
+  };
+
+  let candidates = discovery.games.filter(
+    g => sameTeams(g) && sameDate(g)
   );
 
+  if (!candidates.length) {
+    candidates = discovery.games.filter(sameTeams);
+  }
+
+  if (!candidates.length) {
+    throw new Error(
+      "Partita non trovata: manca il collegamento Admin e la discovery non trova una corrispondenza."
+    );
+  }
+
+  if (candidates.length > 1) {
+    throw new Error(
+      "Trovate più partite WebPont possibili: inserisci il collegamento corretto in Admin."
+    );
+  }
+
+  gameId = String(candidates[0].game || "").trim();
+}
+
+if (!gameId) {
+  throw new Error("ID WebPont della partita mancante.");
 }
 
   /* Scarica soltanto questa partita */
