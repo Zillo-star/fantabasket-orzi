@@ -15519,19 +15519,59 @@ window.loadSinglePlayerGameStats = async function(
 
   const key = `${playerId}_${matchdayId}`;
 
-// Recupera la discovery condivisa con il sistema live.
-if (!window.liveWebPontDiscovery) {
-  if (typeof window.loadLiveFantasyScores === "function") {
-    await window.loadLiveFantasyScores();
-  }
-}
-
-const discovery = window.liveWebPontDiscovery;
+// Recupera la discovery direttamente dal Worker WebPont.
+let discovery = window.liveWebPontDiscovery;
 
 if (!discovery || !Array.isArray(discovery.games)) {
-  throw new Error(
-    "Discovery WebPont non disponibile. Riprova tra qualche secondo."
+  const discoveryBase =
+    "https://fantabasket-webpont.davzil2005.workers.dev";
+
+  const ranges = [
+    [400, 439],
+    [440, 479],
+    [480, 519],
+    [520, 559],
+    [560, 600]
+  ];
+
+  const results = await Promise.all(
+    ranges.map(async ([start, end]) => {
+      const response = await fetch(
+        `${discoveryBase}?discover=1&start=${start}&end=${end}`
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Errore discovery WebPont ${start}-${end}: HTTP ${response.status}`
+        );
+      }
+
+      const data = await response.json();
+
+      if (!data.ok || !Array.isArray(data.games)) {
+        throw new Error(
+          `Risposta discovery WebPont non valida (${start}-${end}).`
+        );
+      }
+
+      return data.games;
+    })
   );
+
+  discovery = {
+    ok: true,
+    games: [
+      ...new Map(
+        results.flat().map(game => [game.game, game])
+      ).values()
+    ]
+  };
+
+  window.liveWebPontDiscovery = discovery;
+}
+
+if (!Array.isArray(discovery.games)) {
+  throw new Error("La discovery WebPont non contiene partite.");
 }
    
   window.livePlayerGameStats =
