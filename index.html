@@ -17795,51 +17795,24 @@ let selectedMatches = matches.filter(x =>
           background:rgba(99,102,241,.12);
         ">
 
-          <button
-            id="dayPrev"
-            type="button"
-            onclick="window.changeCalendarDay(-1)"
-            style="
-              padding:6px 12px;
-              border:0;
-              border-radius:8px;
-              cursor:pointer;
-              font-size:16px;
-              font-weight:800;
-            "
-          >
-            ◀
-          </button>
 
-          <div
-            id="dayLabel"
-            style="
-              text-align:center;
-              font-weight:800;
-              font-size:15px;
-              min-width:115px;
-            "
-          >
-            Giornata ${selectedDay}
-          </div>
+<div id="calendarDayPicker" style="display:flex;align-items:center;justify-content:center;gap:8px;margin:12px 0;">
+  <button
+    type="button"
+    onclick="window.changeCalendarDay(-1)"
+    style="padding:8px 12px;border:0;border-radius:8px;background:#202b49;color:#fff;cursor:pointer;font-size:18px;"
+  >‹</button>
 
-          <button
-            id="dayNext"
-            type="button"
-            onclick="window.changeCalendarDay(1)"
-            style="
-              padding:6px 12px;
-              border:0;
-              border-radius:8px;
-              cursor:pointer;
-              font-size:16px;
-              font-weight:800;
-            "
-          >
-            ▶
-          </button>
+  <div id="calendarDayOptions" style="display:flex;align-items:center;justify-content:center;gap:6px;flex:1;max-width:360px;">
+  </div>
 
-        </div>
+  <button
+    type="button"
+    onclick="window.changeCalendarDay(1)"
+    style="padding:8px 12px;border:0;border-radius:8px;background:#202b49;color:#fff;cursor:pointer;font-size:18px;"
+  >›</button>
+</div>
+
 
         <select id="day" style="display:none">
           ${
