@@ -13373,9 +13373,63 @@ window.changeCalendarDay = function(direction) {
   if (!nextDay) return;
 
   window.calendarSelectedDay = nextDay;
-
+select.selectedIndex = nextIndex;
+window.renderCalendarDayPicker();
   calendar(nextDay);
 };
+
+
+window.renderCalendarDayPicker = function() {
+  const box = document.getElementById("calendarDayOptions");
+  const select = document.getElementById("day");
+
+  if (!box || !select || !select.options.length) return;
+
+  const index = select.selectedIndex;
+  if (index < 0) return;
+
+  box.innerHTML = "";
+
+  for (let i = index - 1; i <= index + 1; i++) {
+    const button = document.createElement("button");
+    button.type = "button";
+
+    if (i < 0 || i >= select.options.length) {
+      button.textContent = "";
+      button.disabled = true;
+      button.style.visibility = "hidden";
+    } else {
+      const option = select.options[i];
+      const number = Number(option.dataset.number);
+      const selected = i === index;
+
+      button.textContent = "Giornata " + number;
+      button.style.background = selected ? "#29365c" : "#11182c";
+      button.style.color = selected ? "#fff" : "#aeb8d0";
+      button.style.borderColor = selected ? "#818cf8" : "#303b5c";
+
+      button.onclick = () => {
+        select.selectedIndex = i;
+        window.calendarSelectedDay = number;
+        window.renderCalendarDayPicker();
+        calendar(number);
+      };
+    }
+
+    button.style.cssText += `
+      min-width:92px;
+      padding:10px 6px;
+      border:1px solid;
+      border-radius:9px;
+      font-size:12px;
+      font-weight:${i === index ? "800" : "500"};
+      cursor:pointer;
+    `;
+
+    box.appendChild(button);
+  }
+};
+
    
 async function trades(){
 
