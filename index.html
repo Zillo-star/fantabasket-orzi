@@ -7233,26 +7233,36 @@ window.currentRosterPlayers =
 let currentDay = null;
 
 for (const day of days) {
-  if (!day.lineup_deadline) continue;
+  if (!day.lineup_open_at) continue;
 
-  const deadline = new Date(day.lineup_deadline);
+  const openAt = new Date(day.lineup_open_at);
+  const deadline = day.lineup_deadline
+    ? new Date(day.lineup_deadline)
+    : null;
 
   if (
-    Number.isFinite(deadline.getTime()) &&
-    Date.now() >= deadline.getTime()
+    Number.isFinite(openAt.getTime()) &&
+    now >= openAt &&
+    (!deadline || now < deadline)
   ) {
     currentDay = Number(day.number);
   }
 }
 
-/* Se nessuna deadline è scaduta,
-   usa la prima giornata. */
-
 if (currentDay === null && days.length) {
-  currentDay = Number(days[0].number);
+  const available = days.filter(day => {
+    if (!day.lineup_open_at) return false;
+
+    const openAt = new Date(day.lineup_open_at);
+    return Number.isFinite(openAt.getTime()) && now >= openAt;
+  });
+
+  if (available.length) {
+    currentDay = Number(available[available.length - 1].number);
+  } else {
+    currentDay = Number(days[0].number);
+  }
 }
-
-
 
   /* =========================
      GIORNATE DISPONIBILI
