@@ -19172,7 +19172,35 @@ async function adminWebPontLinks() {
   await loadAdminWebPontLinks(matchdays[0].id);
 }
 
+async function discoverAdminWebPontGames() {
+  const ranges = [
+    [400, 439],
+    [440, 479],
+    [480, 519],
+    [520, 559],
+    [560, 600]
+  ];
 
+  const results = await Promise.all(
+    ranges.map(async ([start, end]) => {
+      const response = await fetch(
+        `https://fantabasket-webpont.davzil2005.workers.dev/?discover=1&start=${start}&end=${end}`
+      );
+
+      if (!response.ok) {
+        throw new Error(`Discovery WebPont ${start}-${end}: HTTP ${response.status}`);
+      }
+
+      return response.json();
+    })
+  );
+
+  return results.flatMap(result => {
+    if (Array.isArray(result)) return result;
+    return result.games || result.data || [];
+  });
+}
+   
 async function loadAdminWebPontLinks(matchdayId) {
   if (!me || !me.is_admin) return;
 
@@ -19214,13 +19242,74 @@ async function loadAdminWebPontLinks(matchdayId) {
     );
   }
 
-  const games = gamesResult.data || [];
-  const links = linksResult.data || [];
-  const linksByGame = {};
+const games = gamesResult.data || [];
+const links = linksResult.data || [];
+const linksByGame = {};
+const autoLinksByGame = {};
 
-  links.forEach(link => {
-    linksByGame[link.real_game_id] = link.webpont_id;
+links.forEach(link => {
+  linksByGame[link.real_game_id] = link.webpont_id;
+});
+
+// Cerca i codici WebPont non ancora salvati.
+try {
+  const discoveredGames = await discoverAdminWebPontGames();
+
+  const normalize = value => String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+
+  const getName = (value, keys) => {
+    for (const key of keys) {
+      if (value?.[key] != null) return value[key];
+    }
+    return "";
+  };
+
+  const discovered = discoveredGames.map(item => ({
+    ...item,
+    code: getName(item, [
+      "webpont_id", "webpontId", "game_id", "gameId",
+      "id", "code", "slug"
+    ]),
+    homeName: getName(item, [
+      "home", "home_team", "homeTeam", "home_name",
+      "homeTeamName", "casa"
+    ]),
+    awayName: getName(item, [
+      "away", "away_team", "awayTeam", "away_name",
+      "awayTeamName", "trasferta"
+    ])
+  })).map(item => ({
+    ...item,
+    homeName: typeof item.homeName === "object"
+      ? item.homeName?.name || item.homeName?.team_name || ""
+      : item.homeName,
+    awayName: typeof item.awayName === "object"
+      ? item.awayName?.name || item.awayName?.team_name || ""
+      : item.awayName
+  })).filter(item => item.code && item.homeName && item.awayName);
+
+  games.forEach(game => {
+    if (linksByGame[game.id]) return;
+
+    const home = normalize(game.home?.name);
+    const away = normalize(game.away?.name);
+
+    const matches = discovered.filter(item =>
+      normalize(item.homeName) === home &&
+      normalize(item.awayName) === away
+    );
+
+    if (matches.length === 1) {
+      autoLinksByGame[game.id] = matches[0].code;
+    }
   });
+} catch (error) {
+  console.warn("Discovery automatica WebPont non disponibile:", error);
+}
 
   if (!games.length) {
     list.innerHTML = `
@@ -19242,7 +19331,9 @@ async function loadAdminWebPontLinks(matchdayId) {
 
     <div style="display:flex;flex-direction:column;gap:12px">
       ${games.map(game => {
-        const code = linksByGame[game.id] || "";
+        const savedCode = linksByGame[game.id] || "";
+const autoCode = autoLinksByGame[game.id] || "";
+const code = savedCode || autoCode;
         const status = game.cancelled
           ? "Annullata"
           : game.postponed
@@ -19258,7 +19349,11 @@ async function loadAdminWebPontLinks(matchdayId) {
 
             <div class="muted" style="margin:4px 0 8px">
               ${status}
-              · ${code ? "Codice registrato" : "Codice mancante"}
+              · ${savedCode
+  ? "Codice registrato"
+  : autoCode
+    ? "🔎 Codice trovato automaticamente · non salvato"
+    : "Codice mancante"}
             </div>
 
             <label>Codice WebPont</label>
