@@ -4792,13 +4792,13 @@ async function players(){
 
     <div class="card">
 
-      <h2>Listone · ${window.pc.length} giocatori</h2>
+      <h2>📋 Listone</h2>
 
       <label>Cerca giocatore</label>
 
       <input
         id="q"
-        placeholder="Nome giocatore..."
+        placeholder="Nome"
       >
 
       <label>Stato</label>
@@ -4812,7 +4812,7 @@ async function players(){
       <label>Ruolo</label>
 
       <select id="roleFilter">
-        <option value="">Tutti i ruoli</option>
+        <option value="">Tutti</option>
         <option value="G">Guardie</option>
         <option value="A">Ali</option>
         <option value="C">Centri</option>
@@ -4822,7 +4822,7 @@ async function players(){
 
       <select id="teamFilter">
 
-        <option value="">Tutte le squadre</option>
+        <option value="">Tutte</option>
 
         ${window.realTeams.map(t=>`
 
@@ -4940,7 +4940,7 @@ function renderPlayers(a){
         <thead>
           <tr>
             <th>Giocatore</th>
-            <th>R.</th>
+            <th>P</th>
             <th>Squadra</th>
             <th>Stato</th>
           </tr>
