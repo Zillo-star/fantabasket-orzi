@@ -15102,9 +15102,9 @@ if (
 ) {
   selectedDay = Number(dayNumber);
 } else {
-  // Navigazione normale dal selettore
-  // o apertura del calendario.
-selectedDay = Number(currentDay);
+  selectedDay = Number(
+    window.calendarSelectedDay || currentDay
+  );
 }
 
 // Controllo di sicurezza
