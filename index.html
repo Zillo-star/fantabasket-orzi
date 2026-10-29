@@ -11788,6 +11788,9 @@ box.innerHTML=`
 }
 async function loadSavedLineup(){
 
+const requestId = (window.lineupLoadRequestId || 0) + 1;
+window.lineupLoadRequestId = requestId;
+   
   let select=
     el("day");
 
