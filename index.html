@@ -17836,39 +17836,20 @@ let selectedMatches = matches.filter(x =>
           background:rgba(99,102,241,.12);
         ">
 
+<div id="calendarDayPicker" style="display:flex;align-items:center;justify-content:center;gap:6px;margin:4px 0;">
+  <button type="button" onclick="window.changeCalendarDay(-1)" style="padding:4px 9px;border:0;border-radius:7px;background:#202b49;color:#fff;font-size:16px;">‹</button>
 
-
-<div id="calendarDayPicker" style="display:flex;align-items:center;justify-content:center;gap:10px;margin:12px 0;">
-
-  <button
-    type="button"
-    onclick="window.changeCalendarDay(-1)"
-    style="padding:8px 12px;border:0;border-radius:8px;background:#202b49;color:#fff;cursor:pointer;font-size:18px;"
-  >‹</button>
-
-  <select
-    id="calendarDayQuickSelect"
-    onchange="window.selectCalendarDay(this.value)"
-    style="padding:10px 12px;border:1px solid #303b5c;border-radius:9px;background:#11182c;color:#fff;font-weight:800;font-size:14px;min-width:180px;"
-  >
+  <select id="calendarDayQuickSelect" onchange="window.selectCalendarDay(this.value)" style="padding:6px 8px;max-width:180px;border:1px solid #303b5c;border-radius:8px;background:#11182c;color:#fff;font-weight:700;font-size:13px;">
     ${
       allDays.map((day, index) => `
-        <option
-          value="${index}"
-          ${selectedDay === day ? "selected" : ""}
-        >
-          Giornata ${day}${Number(day) === Number(currentDay) ? " · CORRENTE" : ""}
+        <option value="${index}" ${Number(selectedDay) === Number(day) ? "selected" : ""}>
+          Giornata ${day}${Number(day) === Number(currentDay) ? " · ATTUALE" : ""}
         </option>
       `).join("")
     }
   </select>
 
-  <button
-    type="button"
-    onclick="window.changeCalendarDay(1)"
-    style="padding:8px 12px;border:0;border-radius:8px;background:#202b49;color:#fff;cursor:pointer;font-size:18px;"
-  >›</button>
-
+  <button type="button" onclick="window.changeCalendarDay(1)" style="padding:4px 9px;border:0;border-radius:7px;background:#202b49;color:#fff;font-size:16px;">›</button>
 </div>
 
 <select id="day" style="display:none">
