@@ -11790,6 +11790,92 @@ box.innerHTML=`
     });
 
 }
+
+
+window.lineupPickerOpen = false;
+
+function renderLineupDayPicker() {
+  const select = el("day");
+  const menu = el("lineupDayMenu");
+  const optionsBox = el("lineupDayOptions");
+  const label = el("lineupDayLabel");
+
+  if (!select || !menu || !optionsBox || !label) return;
+
+  const index = select.selectedIndex;
+  const selected = select.options[index];
+  if (!selected) return;
+
+  const number = Number(selected.dataset.number);
+  const current = Number(window.currentLineupDay);
+
+  label.textContent =
+    `Giornata ${number}` +
+    (number === current ? " · ATTUALE" : "");
+
+  menu.style.display = window.lineupPickerOpen ? "block" : "none";
+
+  const rows = [];
+
+  for (let i = index - 1; i <= index + 1; i++) {
+    if (i < 0 || i >= select.options.length) {
+      rows.push('<div style="height:46px"></div>');
+      continue;
+    }
+
+    const option = select.options[i];
+    const n = Number(option.dataset.number);
+    const isSelected = i === index;
+
+    rows.push(`
+      <button
+        type="button"
+        onclick="chooseLineupDay(${i})"
+        style="display:block;width:100%;height:46px;border:0;background:${isSelected ? "#29365c" : "#11182c"};color:${isSelected ? "#fff" : "#aeb8d0"};font-weight:${isSelected ? "800" : "500"};font-size:14px;cursor:pointer;"
+      >
+        Giornata ${n}${n === current ? " · ATTUALE" : ""}
+      </button>
+    `);
+  }
+
+  optionsBox.innerHTML = rows.join("");
+}
+
+function toggleLineupDayPicker() {
+  window.lineupPickerOpen = !window.lineupPickerOpen;
+  renderLineupDayPicker();
+}
+
+async function chooseLineupDay(index) {
+  const select = el("day");
+  if (!select || index < 0 || index >= select.options.length) return;
+
+  select.selectedIndex = index;
+  window.lineupPickerOpen = false;
+  renderLineupDayPicker();
+
+  const summary = el("lineupSummary");
+  if (summary) {
+    summary.innerHTML = '<div class="muted">Caricamento formazione...</div>';
+  }
+
+  await loadSavedLineup();
+
+  renderLineupDayPicker();
+  updateLineupSummary();
+  loadPlayerGames();
+}
+
+document.addEventListener("click", function(event) {
+  const picker = el("lineupDayPicker");
+
+  if (picker && !picker.contains(event.target)) {
+    window.lineupPickerOpen = false;
+    renderLineupDayPicker();
+  }
+});
+   
+   
 async function loadSavedLineup(){
 
 const requestId = (window.lineupLoadRequestId || 0) + 1;
