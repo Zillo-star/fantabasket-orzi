@@ -7319,34 +7319,38 @@ if (currentDay === null && days.length) {
       <h3>Formazione</h3>
 
 
+<div id="lineupDayPicker" style="position:relative;margin:12px 0;z-index:20;">
+  <button
+    type="button"
+    onclick="toggleLineupDayPicker()"
+    style="width:100%;padding:12px 16px;border-radius:10px;border:1px solid #303b5c;background:#11182c;color:#fff;font-size:15px;font-weight:800;text-align:left;cursor:pointer;"
+  >
+    <span id="lineupDayLabel">Giornata ${currentDay} · ATTUALE</span>
+    <span style="float:right">⌄</span>
+  </button>
 
-<div style="
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  padding:10px;
-  margin-bottom:12px;
-  border-radius:10px;
-  background:rgba(99,102,241,.12);
-  font-size:15px;
-  font-weight:800;
-">
-  Giornata ${currentDay} · ATTUALE
+  <div
+    id="lineupDayMenu"
+    style="display:none;position:absolute;top:calc(100% + 5px);left:0;right:0;background:#11182c;border:1px solid #303b5c;border-radius:10px;overflow:hidden;box-shadow:0 8px 24px #0006;"
+  >
+    <div id="lineupDayOptions"></div>
+    <div style="padding:7px;text-align:center;font-size:11px;color:#aeb8d0;">
+      Scorri per cambiare giornata
+    </div>
+  </div>
 </div>
 
-<select
-  id="day"
-  style="display:none"
->
+<select id="day" style="display:none">
   ${availableDays.map(x=>`
     <option
       value="${x.id}"
       data-number="${x.number}"
-      ${x.number===currentDay?"selected":""}>
+      ${Number(x.number)===Number(currentDay)?"selected":""}>
       Giornata ${x.number}
     </option>
   `).join("")}
 </select>
+
 
       <div id="deadlineBox" class="card">
 
