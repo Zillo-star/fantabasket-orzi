@@ -11846,34 +11846,36 @@ function toggleLineupDayPicker() {
   renderLineupDayPicker();
 }
 
+
 async function chooseLineupDay(index) {
   const select = el("day");
+
   if (!select || index < 0 || index >= select.options.length) return;
+  if (window.lineupDayChanging) return;
 
-  select.selectedIndex = index;
-  window.lineupPickerOpen = false;
-  renderLineupDayPicker();
+  window.lineupDayChanging = true;
 
-  const summary = el("lineupSummary");
-  if (summary) {
-    summary.innerHTML = '<div class="muted">Caricamento formazione...</div>';
-  }
-
-  await loadSavedLineup();
-
-  renderLineupDayPicker();
-  updateLineupSummary();
-  loadPlayerGames();
-}
-
-document.addEventListener("click", function(event) {
-  const picker = el("lineupDayPicker");
-
-  if (picker && !picker.contains(event.target)) {
+  try {
+    select.selectedIndex = index;
     window.lineupPickerOpen = false;
     renderLineupDayPicker();
+
+    const summary = el("lineupSummary");
+    if (summary) {
+      summary.innerHTML =
+        '<div class="muted">Caricamento formazione...</div>';
+    }
+
+    await loadSavedLineup();
+
+    renderLineupDayPicker();
+    updateLineupSummary();
+    await loadPlayerGames();
+  } finally {
+    window.lineupDayChanging = false;
   }
-});
+}
+
    
    
 async function loadSavedLineup(){
