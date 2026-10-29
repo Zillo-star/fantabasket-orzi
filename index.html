@@ -11868,6 +11868,10 @@ window.lineupLoadRequestId = requestId;
       .eq("matchday_id",matchdayId)
       .maybeSingle();
 
+if (
+  requestId !== window.lineupLoadRequestId ||
+  el("day")?.value !== matchdayId
+) return;   
 
   if(x.error)
     return message(
@@ -11921,16 +11925,15 @@ setTimeout(()=>{
      GIOCATORI SALVATI
   ========================= */
 
-  let lp=
-    await db
-      .from("lineup_players")
-      .select(
-        "player_id,role,captain"
-      )
-      .eq(
-        "lineup_id",
-        x.data.id
-      );
+let lp = await db
+  .from("lineup_players")
+  .select("player_id,role,captain")
+  .eq("lineup_id", x.data.id);
+
+if (
+  requestId !== window.lineupLoadRequestId ||
+  el("day")?.value !== matchdayId
+) return;
 
 
   if(lp.error)
