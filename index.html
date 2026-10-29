@@ -9239,14 +9239,43 @@ const pg =
 if(!pg){
 
   console.warn(
-    "GIOCATORE NON ASSOCIATO - PUNTEGGIO NON MODIFICATO:",
+    "GIOCATORE NON A REFERTO - PUNTEGGIO 0:",
     lp.player_id
   );
 
+  const multiplier =
+    lp.role === "starter" || lp.role === "sixth"
+      ? 1
+      : lp.role === "bench"
+        ? 0.5
+        : 0;
+
+  const captainMultiplier =
+    lp.captain ? 1.5 : 1;
+
+  const saveZero = await db
+    .from("fantasy_scores")
+    .upsert({
+      manager_id: lineup.manager_id,
+      matchday_id: matchdayId,
+      player_id: lp.player_id,
+      raw_score: 0,
+      lineup_multiplier: multiplier,
+      captain_multiplier: captainMultiplier,
+      final_score: 0
+    }, {
+      onConflict: "manager_id,matchday_id,player_id"
+    });
+
+  if(saveZero.error){
+    console.error(
+      "ERRORE SALVATAGGIO PUNTEGGIO ZERO:",
+      saveZero.error
+    );
+  }
+
   continue;
-
 }
-
 if (day === 5) {
   console.log("DEBUG PG GIORNATA 5", {
     giocatore: player.name,
