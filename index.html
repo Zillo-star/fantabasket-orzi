@@ -19307,6 +19307,32 @@ try {
       autoLinksByGame[game.id] = matches[0].code;
     }
   });
+// Salva automaticamente solo gli abbinamenti univoci trovati.
+const automaticLinks = Object.entries(autoLinksByGame).map(
+  ([real_game_id, webpont_id]) => ({
+    real_game_id,
+    webpont_id: String(webpont_id)
+  })
+);
+
+if (automaticLinks.length > 0) {
+  const { error: saveError } = await db
+    .from("webpont_game_links")
+    .upsert(automaticLinks, {
+      onConflict: "real_game_id"
+    });
+
+  if (saveError) {
+    console.error(
+      "Errore salvataggio codici WebPont automatici:",
+      saveError
+    );
+  } else {
+    automaticLinks.forEach(link => {
+      linksByGame[link.real_game_id] = link.webpont_id;
+    });
+  }
+}
 } catch (error) {
   console.warn("Discovery automatica WebPont non disponibile:", error);
 }
