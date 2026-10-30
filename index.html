@@ -3791,55 +3791,54 @@ async function home(){
 
   const myRank = standingsRows.findIndex(x=>x.id===me.id)+1;
 
-console.log("CONTROLLO DASHBOARD:", {
-  allDays,
-  allMatches,
-  me,
-  standingsMap
-});
-   
 /* =========================
    INDIVIDUAZIONE GIORNATE
 ========================= */
 
-// Giornate disponibili nel calendario
+// Manteniamo la logica originale
 const dayNumbers = [...new Set(
-  allDays
-    .map(day => Number(day.number))
+  allMatches.map(m => Number(m.matchday_number))
 )]
   .filter(n => Number.isFinite(n) && n > 0)
   .sort((a, b) => a - b);
 
-// Data e ora attuali
-const now = Date.now();
+const completedDayNumbers = dayNumbers.filter(day => {
+  const games = allMatches.filter(
+    m => Number(m.matchday_number) === day
+  );
 
-// Giornata attuale:
-// ultima giornata il cui lineup_deadline è già scaduto
+  return games.length > 0 &&
+    games.every(m => m.completed === true);
+});
+
+// Giornate effettivamente presenti nel calendario
+const calendarDayNumbers = [...new Set(
+  allDays.map(day => Number(day.number))
+)]
+  .filter(n => Number.isFinite(n) && n > 0)
+  .sort((a, b) => a - b);
+
+// Giornata attuale: ultima deadline scaduta
 const currentDayNumber = [...allDays]
   .filter(day => {
     const deadline = new Date(day.lineup_deadline).getTime();
 
-    return (
-      day.lineup_deadline &&
+    return day.lineup_deadline &&
       Number.isFinite(deadline) &&
-      now >= deadline
-    );
+      Date.now() >= deadline;
   })
   .map(day => Number(day.number))
-  .filter(n => dayNumbers.includes(n))
+  .filter(n => calendarDayNumbers.includes(n))
   .sort((a, b) => a - b)
   .pop() ?? null;
 
-// Ultima giornata:
-// sempre la giornata precedente a quella attuale,
-// indipendentemente da risultati, recuperi e calcoli
+// Ultima giornata: precedente nel calendario
 const lastCompletedDay = currentDayNumber !== null
-  ? dayNumbers
+  ? calendarDayNumbers
       .filter(n => n < currentDayNumber)
       .pop() ?? null
   : null;
 
-// Partita del manager nella giornata indicata
 function getDayMatch(day) {
   if (day === null) return null;
 
@@ -3852,7 +3851,6 @@ function getDayMatch(day) {
   ) || null;
 }
 
-// Nome dell'avversario
 function getOpponentName(match) {
   if (!match) return "Da definire";
 
@@ -3862,6 +3860,7 @@ function getOpponentName(match) {
 
   return standingsMap[id]?.teamName || "Avversario";
 }
+
    
   /* =========================
      ULTIME TRE GIORNATE
