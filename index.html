@@ -3791,7 +3791,13 @@ async function home(){
 
   const myRank = standingsRows.findIndex(x=>x.id===me.id)+1;
 
-
+console.log("CONTROLLO DASHBOARD:", {
+  allDays,
+  allMatches,
+  me,
+  standingsMap
+});
+   
 /* =========================
    INDIVIDUAZIONE GIORNATE
 ========================= */
