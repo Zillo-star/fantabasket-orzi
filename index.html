@@ -4394,20 +4394,20 @@ function getOpponentName(match) {
 
     </div>
 
-    ${renderDayCard(
-      lastInfo,
-      "ULTIMA GIORNATA",
-      "#4ade80",
-      "Il riepilogo comparirà quando sarà conclusa la prima giornata."
-    )}
 
-    ${renderDayCard(
-      currentInfo,
-      "GIORNATA ATTUALE",
-      "#818cf8",
-      "Non ci sono altre giornate programmate."
-    )}
+${renderDayCard(
+  currentInfo,
+  "GIORNATA ATTUALE",
+  "#818cf8",
+  "Non ci sono altre giornate programmate."
+)}
 
+${renderDayCard(
+  lastInfo,
+  "ULTIMA GIORNATA",
+  "#4ade80",
+  "Non ci sono ancora giornate precedenti."
+)}
   `;
 
   updateDashboardNotification();
