@@ -3791,63 +3791,71 @@ async function home(){
 
   const myRank = standingsRows.findIndex(x=>x.id===me.id)+1;
 
-  /* =========================
-     INDIVIDUAZIONE GIORNATE
-  ========================= */
 
-  const dayNumbers = [...new Set(
-    allMatches.map(m => Number(m.matchday_number))
-  )]
-    .filter(n => Number.isFinite(n) && n > 0)
-    .sort((a, b) => a - b);
+/* =========================
+   INDIVIDUAZIONE GIORNATE
+========================= */
 
-  const completedDayNumbers = dayNumbers.filter(day => {
-    const games = allMatches.filter(
-      m => Number(m.matchday_number) === day
-    );
-
-    return games.length > 0 &&
-      games.every(m => m.completed === true);
-  });
-
-  // Giornata attuale: ultima giornata con deadline scaduta
-  const currentDayNumber = [...allDays]
-    .filter(day =>
-      day.lineup_deadline &&
-      Number.isFinite(new Date(day.lineup_deadline).getTime()) &&
-      Date.now() >= new Date(day.lineup_deadline).getTime()
-    )
+// Giornate disponibili nel calendario
+const dayNumbers = [...new Set(
+  allDays
     .map(day => Number(day.number))
-    .filter(n => Number.isFinite(n) && n > 0)
-    .sort((a, b) => a - b)
-    .pop() ?? null;
+)]
+  .filter(n => Number.isFinite(n) && n > 0)
+  .sort((a, b) => a - b);
 
-  // Ultima giornata: quella immediatamente precedente
-  const lastCompletedDay = currentDayNumber !== null
-    ? currentDayNumber - 1
-    : null;
+// Data e ora attuali
+const now = Date.now();
 
-  function getDayMatch(day) {
-    if (day === null) return null;
+// Giornata attuale:
+// ultima giornata il cui lineup_deadline è già scaduto
+const currentDayNumber = [...allDays]
+  .filter(day => {
+    const deadline = new Date(day.lineup_deadline).getTime();
 
-    return allMatches.find(m =>
-      Number(m.matchday_number) === Number(day) &&
-      (
-        m.home_manager_id === me.id ||
-        m.away_manager_id === me.id
-      )
-    ) || null;
-  }
+    return (
+      day.lineup_deadline &&
+      Number.isFinite(deadline) &&
+      now >= deadline
+    );
+  })
+  .map(day => Number(day.number))
+  .filter(n => dayNumbers.includes(n))
+  .sort((a, b) => a - b)
+  .pop() ?? null;
 
-  function getOpponentName(match) {
-    if (!match) return "Da definire";
+// Ultima giornata:
+// sempre la giornata precedente a quella attuale,
+// indipendentemente da risultati, recuperi e calcoli
+const lastCompletedDay = currentDayNumber !== null
+  ? dayNumbers
+      .filter(n => n < currentDayNumber)
+      .pop() ?? null
+  : null;
 
-    const id = match.home_manager_id === me.id
-      ? match.away_manager_id
-      : match.home_manager_id;
+// Partita del manager nella giornata indicata
+function getDayMatch(day) {
+  if (day === null) return null;
 
-    return standingsMap[id]?.teamName || "Avversario";
-  }
+  return allMatches.find(m =>
+    Number(m.matchday_number) === Number(day) &&
+    (
+      m.home_manager_id === me.id ||
+      m.away_manager_id === me.id
+    )
+  ) || null;
+}
+
+// Nome dell'avversario
+function getOpponentName(match) {
+  if (!match) return "Da definire";
+
+  const id = match.home_manager_id === me.id
+    ? match.away_manager_id
+    : match.home_manager_id;
+
+  return standingsMap[id]?.teamName || "Avversario";
+}
    
   /* =========================
      ULTIME TRE GIORNATE
