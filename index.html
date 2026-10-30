@@ -4075,19 +4075,21 @@ function getOpponentName(match) {
     };
   }
 
-  let lastInfo = null;
-  let currentInfo = null;
 
-  try{
+let lastInfo = null;
+let currentInfo = null;
 
-[lastInfo,currentInfo] = await Promise.all([
-  getDayStats(currentDayNumber),
-  getDayStats(currentDayNumber)
-]);
-     
-  }catch(err){
-    return message(err.message||"Errore caricamento giornate","err");
-  }
+try {
+
+  [lastInfo, currentInfo] = await Promise.all([
+    getDayStats(lastCompletedDay),
+    getDayStats(currentDayNumber)
+  ]);
+
+} catch(err) {
+  return message(err.message || "Errore caricamento giornate", "err");
+}
+
 
   /* =========================
      CARD TOP / FLOP
