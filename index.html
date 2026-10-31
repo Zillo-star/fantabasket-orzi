@@ -2896,23 +2896,25 @@ async function enablePushNotifications() {
       throw new Error("Dati dell'iscrizione push incompleti.");
     }
 
-    const { error } = await db
-      .from("push_subscriptions")
-      .upsert(
-        {
-          manager_id: me.id,
-          endpoint,
-          p256dh,
-          auth,
-          user_agent: navigator.userAgent,
-          updated_at: new Date().toISOString()
-        },
-        {
-          onConflict: "endpoint"
-        }
-      );
+const { error: deleteError } = await db
+  .from("push_subscriptions")
+  .delete()
+  .eq("manager_id", me.id)
+  .eq("endpoint", endpoint);
 
-    if (error) throw error;
+if (deleteError) throw deleteError;
+
+const { error } = await db
+  .from("push_subscriptions")
+  .insert({
+    manager_id: me.id,
+    endpoint,
+    p256dh,
+    auth,
+    user_agent: navigator.userAgent
+  });
+
+if (error) throw error;
 
     message("Notifiche attivate correttamente!", "ok");
 
