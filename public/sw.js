@@ -41,8 +41,10 @@ self.addEventListener("notificationclick", event => {
           return client.focus();
         }
       }
-// Service Worker FantaBasket Orzi
+
       return clients.openWindow(targetUrl);
     })
   );
 });
+
+// Service Worker FantaBasket Orzi
