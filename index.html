@@ -3404,6 +3404,7 @@ window.notificationInterval=null;
   let notifications=
     r.data||[];
 
+const pushEnabled = await getPushSubscriptionStatus();   
 
   el("content").innerHTML=`
 
