@@ -2823,6 +2823,183 @@ const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{
 });
 const el=id=>document.getElementById(id);
 
+/* =========================================
+   NOTIFICHE PUSH - FANTABASKET ORZI
+========================================= */
+
+const VAPID_PUBLIC_KEY =
+  "BDxh0LZ0FVX4Ia0JqvbgBWuo0lT5Z2QzRTImFg1Dq3ROiWZPpHxMm_VHIQHmZGC58SBPfn8EUuxUWIS-QcsmSVA";
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - base64String.length % 4) % 4);
+
+  const base64 = (base64String + padding)
+    .replace(/-/g, "+")
+    .replace(/_/g, "/");
+
+  const rawData = atob(base64);
+
+  return Uint8Array.from(
+    [...rawData].map(char => char.charCodeAt(0))
+  );
+}
+
+async function enablePushNotifications() {
+  try {
+    if (!me?.id) {
+      return message("Devi prima accedere al tuo account.", "err");
+    }
+
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+      return message(
+        "Questo browser non supporta le notifiche push.",
+        "err"
+      );
+    }
+
+    if (!window.isSecureContext) {
+      return message(
+        "Le notifiche richiedono una connessione HTTPS.",
+        "err"
+      );
+    }
+
+    const permission = await Notification.requestPermission();
+
+    if (permission !== "granted") {
+      return message(
+        "Non hai autorizzato le notifiche.",
+        "err"
+      );
+    }
+
+    const registration = await navigator.serviceWorker.register("/sw.js");
+
+    await navigator.serviceWorker.ready;
+
+    let subscription = await registration.pushManager.getSubscription();
+
+    if (!subscription) {
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+    }
+
+    const subscriptionJson = subscription.toJSON();
+
+    const endpoint = subscriptionJson.endpoint;
+    const p256dh = subscriptionJson.keys?.p256dh;
+    const auth = subscriptionJson.keys?.auth;
+
+    if (!endpoint || !p256dh || !auth) {
+      throw new Error("Dati dell'iscrizione push incompleti.");
+    }
+
+    const { error } = await db
+      .from("push_subscriptions")
+      .upsert(
+        {
+          manager_id: me.id,
+          endpoint,
+          p256dh,
+          auth,
+          user_agent: navigator.userAgent,
+          updated_at: new Date().toISOString()
+        },
+        {
+          onConflict: "endpoint"
+        }
+      );
+
+    if (error) throw error;
+
+    message("Notifiche attivate correttamente!", "ok");
+
+    await showNotifications();
+
+  } catch (error) {
+    console.error("Errore attivazione notifiche:", error);
+
+    message(
+      "Errore attivazione notifiche: " + error.message,
+      "err"
+    );
+  }
+}
+
+async function disablePushNotifications() {
+  try {
+    const registration = await navigator.serviceWorker.getRegistration("/");
+
+    if (!registration) {
+      return message("Nessuna iscrizione push trovata.", "err");
+    }
+
+    const subscription = await registration.pushManager.getSubscription();
+
+    if (!subscription) {
+      return message("Le notifiche risultano già disattivate.", "err");
+    }
+
+    const endpoint = subscription.endpoint;
+
+    const { error } = await db
+      .from("push_subscriptions")
+      .delete()
+      .eq("manager_id", me.id)
+      .eq("endpoint", endpoint);
+
+    if (error) throw error;
+
+    await subscription.unsubscribe();
+
+    message("Notifiche disattivate.", "ok");
+
+    await showNotifications();
+
+  } catch (error) {
+    console.error("Errore disattivazione notifiche:", error);
+
+    message(
+      "Errore disattivazione: " + error.message,
+      "err"
+    );
+  }
+}
+
+async function getPushSubscriptionStatus() {
+  try {
+    if (!("serviceWorker" in navigator)) return false;
+
+    const registration = await navigator.serviceWorker.getRegistration("/");
+
+    if (!registration) return false;
+
+    const subscription = await registration.pushManager.getSubscription();
+
+    if (!subscription) return false;
+
+    const { data, error } = await db
+      .from("push_subscriptions")
+      .select("id")
+      .eq("manager_id", me.id)
+      .eq("endpoint", subscription.endpoint)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    return !!data;
+
+  } catch (error) {
+    console.error("Errore controllo iscrizione push:", error);
+    return false;
+  }
+}
+
+window.enablePushNotifications = enablePushNotifications;
+window.disablePushNotifications = disablePushNotifications;
+   
 function showAuth(){
   document.getElementById("auth").classList.remove("hidden");
 }
