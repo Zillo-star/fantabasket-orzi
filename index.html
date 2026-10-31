@@ -5737,124 +5737,81 @@ async function roster(){
   }
 
 
-  /*
-    PAGINA PRINCIPALE
-  */
 
-  let html=`
+/*
+  PAGINA PRINCIPALE
+*/
 
-    <div class="card">
+let html = `
 
-      <h2>🎮 Rose</h2>
+  <div class="card">
 
-      <label>
-        Squadra
-      </label>
+    <h2>🎮 Rose</h2>
 
+    <label>Seleziona fantallenatore</label>
 
-      <select
-        id="rosterManagerSelect"
-        onchange="
-          if(this.value==='all'){
-            window.renderAllRosters();
-          }else{
-            window.renderSelectedRoster(this.value);
-          }
-        "
-      >
-
-        <option value="all" selected>
-          Tutte
-        </option>
-
-
-        ${
-          managers.map(manager=>`
-
-            <option value="${manager.id}">
-
-              ${manager.team_name || manager.name}
-              ·
-              ${manager.name}
-
-            </option>
-
-          `).join("")
+    <select
+      id="rosterManagerSelect"
+      onchange="
+        if(this.value){
+          window.renderSelectedRoster(this.value);
+        }else{
+          document.getElementById('selectedRoster').innerHTML='';
         }
+      "
+    >
 
-      </select>
+      <option value="" selected>
+        Seleziona una rosa...
+      </option>
 
-    </div>
+      ${
+        managers.map(manager => `
 
+          <option value="${manager.id}">
+            ${manager.team_name || manager.name}
+            ·
+            ${manager.name}
+          </option>
 
-    <div id="selectedRoster"></div>
+        `).join("")
+      }
 
-  `;
+    </select>
 
+  </div>
 
-  el("content").innerHTML=html;
+  <div id="selectedRoster"></div>
 
-
-  /*
-    Rende disponibile la funzione
-    per mostrare una singola rosa
-  */
-
-  window.renderSelectedRoster=
-    renderSelectedRoster;
-
-
-  /*
-    Mostra tutte le rose
-  */
-
-  window.renderAllRosters=function(){
-
-    let box=el("selectedRoster");
-
-    if(!box)
-      return;
+`;
 
 
-    let allHtml="";
+el("content").innerHTML = html;
 
 
-    managers.forEach(manager=>{
+/*
+  Rende disponibile la funzione
+  per mostrare una singola rosa
+*/
 
-      /*
-        Renderizza temporaneamente
-        la singola rosa
-      */
-
-      renderSelectedRoster(manager.id);
+window.renderSelectedRoster = renderSelectedRoster;
 
 
-      /*
-        Recupera l'HTML appena creato
-      */
+/*
+  Rimuove la visualizzazione di tutte le rose
+*/
 
-      allHtml+=box.innerHTML;
+window.renderAllRosters = function() {
 
-    });
+  const box = el("selectedRoster");
 
+  if(box) {
+    box.innerHTML = "";
+  }
 
-    /*
-      Rimette tutte le rose insieme
-    */
-
-    box.innerHTML=allHtml;
-
-  };
+};
 
 
-  /*
-    All'apertura della pagina
-    vengono mostrate TUTTE le rose
-  */
-
-  window.renderAllRosters();
-
-}
 
 /* =========================================================
    BUILDER FORMAZIONE
