@@ -3436,6 +3436,44 @@ const pushEnabled = await getPushSubscriptionStatus();
 
       </div>
 
+      <div style="
+        padding:16px;
+        margin-bottom:18px;
+        border-radius:14px;
+        background:rgba(99,102,241,.10);
+        border:1px solid rgba(99,102,241,.25);
+      ">
+
+        <b>📲 Notifiche sul telefono</b>
+
+        <div class="muted" style="font-size:13px;margin:7px 0 12px">
+          Ricevi gli avvisi di FantaBasket Orzi anche quando non hai il sito aperto.
+        </div>
+
+        ${
+          pushEnabled
+          ? `
+            <div style="color:#4ade80;font-size:13px;font-weight:700;margin-bottom:10px">
+              ✓ Notifiche attive su questo dispositivo
+            </div>
+
+            <button
+              class="secondary"
+              onclick="disablePushNotifications()"
+            >
+              Disattiva notifiche
+            </button>
+          `
+          : `
+            <button
+              onclick="enablePushNotifications()"
+            >
+              🔔 Attiva notifiche
+            </button>
+          `
+        }
+
+      </div>
 
       ${
         notifications.length===0
