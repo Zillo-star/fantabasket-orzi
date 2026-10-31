@@ -15297,57 +15297,27 @@ let savedLineups = new Set(
 
 
 /* =========================
-   GIORNATA CORRENTE
+   GIORNATA CORRENTE CALENDARIO
 ========================= */
 
-// La giornata diventa attuale
-// quando scade la deadline della giornata precedente.
-// I recuperi non bloccano il passaggio.
+// Il calendario considera attuale
+// la prima giornata non ancora conclusa.
+// Non utilizza lineup_open_at o lineup_deadline.
 
 let currentDay = null;
 
-const now = new Date();
+const calendarDay = (md.data || [])
+  .slice()
+  .sort((a, b) => Number(a.number) - Number(b.number));
 
-for (let i = 0; i < allDays.length; i++) {
+const firstNotCompleted = calendarDay.find(day =>
+  day.status !== "completed"
+);
 
-  const dayNumber = Number(allDays[i]);
-  const previousDay = dayNumber - 1;
-
-  // La prima giornata è attuale
-  // fino alla deadline della prima giornata.
-  if (i === 0) {
-
-    const firstDeadline = matchdays[dayNumber]?.lineup_deadline;
-
-    if (
-      firstDeadline &&
-      now < new Date(firstDeadline)
-    ) {
-      currentDay = dayNumber;
-      break;
-    }
-
-    continue;
-  }
-
-  const previousDeadline =
-    matchdays[previousDay]?.lineup_deadline;
-
-  if (
-    previousDeadline &&
-    Number.isFinite(new Date(previousDeadline).getTime()) &&
-    now >= new Date(previousDeadline)
-  ) {
-    currentDay = dayNumber;
-  } else {
-    break;
-  }
-}
-
-// Se non è ancora scaduta la prima deadline,
-// la prima giornata rimane quella attuale.
-if (currentDay === null) {
-  currentDay = Number(allDays[0]);
+if (firstNotCompleted) {
+  currentDay = Number(firstNotCompleted.number);
+} else {
+  currentDay = Number(allDays[allDays.length - 1]);
 }
 
 
