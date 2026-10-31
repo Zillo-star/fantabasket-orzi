@@ -2860,8 +2860,11 @@ async function enablePushNotifications() {
 
     console.log("PUSH 4 - Service Worker disponibile");
 
-    const permission = await window.Notification.requestPermission();
+if (typeof Notification === "undefined") {
+  throw new Error("Le notifiche non sono disponibili in questo browser o contesto.");
+}
 
+const permission = await Notification.requestPermission();
     console.log("PUSH 5 - Permesso:", permission);
 
     if (permission !== "granted") {
