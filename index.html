@@ -5738,25 +5738,41 @@ async function roster(){
 
 
 /*
-    PAGINA PRINCIPALE
-  */
+  PAGINA PRINCIPALE
+*/
 
-  let html=`
+let html = `
+  <div class="card">
+    <h2>🎮 Rose</h2>
 
-    <div class="card">
+    <label>Seleziona fantallenatore</label>
 
-      <h2>🎮 Rose</h2>
+    <select
+      id="rosterManagerSelect"
+      onchange="
+        if(this.value){
+          window.renderSelectedRoster(this.value);
+        }else{
+          document.getElementById('selectedRoster').innerHTML='';
+        }
+      "
+    >
+      <option value="" selected>Seleziona una rosa...</option>
 
-      <label>
-        Squadra
-      </label>
+      ${managers.map(manager => `
+        <option value="${manager.id}">
+          ${manager.team_name || manager.name} · ${manager.name}
+        </option>
+      `).join("")}
+    </select>
+  </div>
 
+  <div id="selectedRoster"></div>
+`;
 
-      <select
-        id="rosterManagerSelect"
-        onchange="
-          if(this.value==='all'){
-            window.renderAllRosters();
+el("content").innerHTML = html;
+
+window.renderSelectedRoster = renderSelectedRoster;
           }else{
             window.renderSelectedRoster(this.value);
           }
