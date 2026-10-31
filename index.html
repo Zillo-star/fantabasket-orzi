@@ -2877,6 +2877,10 @@ if (!("serviceWorker" in navigator)) {
 
     await navigator.serviceWorker.ready;
 
+if (!registration.pushManager) {
+  throw new Error("Push API non disponibile in questo browser.");
+}
+     
     let subscription = await registration.pushManager.getSubscription();
 
     if (!subscription) {
