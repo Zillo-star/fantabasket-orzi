@@ -15244,12 +15244,13 @@ async function calendar(dayNumber = null, onlyMatchId = null){
 
 
 let md = await db.from("matchdays")
-  .select(`
-    id,
-    number,
-    lineup_open_at,
-    lineup_deadline
-  `)
+.select(`
+  id,
+  number,
+  lineup_open_at,
+  lineup_deadline,
+  status
+`)
   .order("number");
 
   if(md.error)
@@ -15300,27 +15301,35 @@ let savedLineups = new Set(
    GIORNATA CORRENTE CALENDARIO
 ========================= */
 
-// Il calendario considera attuale
-// la prima giornata non ancora conclusa.
-// Non utilizza lineup_open_at o lineup_deadline.
-
 let currentDay = null;
 
-const calendarDay = (md.data || [])
+const calendarDays = (md.data || [])
   .slice()
   .sort((a, b) => Number(a.number) - Number(b.number));
 
-const firstNotCompleted = calendarDay.find(day =>
-  day.status !== "completed"
+// Priorità alla giornata marcata LIVE
+const liveDay = calendarDays.find(
+  day => day.status === "live"
 );
 
-if (firstNotCompleted) {
-  currentDay = Number(firstNotCompleted.number);
+if (liveDay) {
+
+  currentDay = Number(liveDay.number);
+
 } else {
-  currentDay = Number(allDays[allDays.length - 1]);
+
+  // Altrimenti prima giornata non completata
+  const nextDay = calendarDays.find(
+    day => day.status !== "completed"
+  );
+
+  if (nextDay) {
+    currentDay = Number(nextDay.number);
+  } else {
+    currentDay = Number(allDays[allDays.length - 1]);
+  }
+
 }
-
-
 /* =========================
    GIORNATE
 ========================= */
