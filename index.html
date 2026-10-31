@@ -17868,6 +17868,13 @@ let selectedMatches = matches.filter(x =>
   word-break: normal;
 }
 
+/* Rimuove le barre decorative nella pagina Scambi */
+.trade-page-card::before,
+.trade-page-card::after {
+  display: none !important;
+  content: none !important;
+}
+
     </style>
 
   `;
