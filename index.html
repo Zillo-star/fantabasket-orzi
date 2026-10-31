@@ -15296,38 +15296,56 @@ let savedLineups = new Set(
   });
 
 
-
 /* =========================
    GIORNATA CORRENTE
 ========================= */
 
-// La giornata corrente è l'ultima
-// giornata con deadline già scaduta.
-// I rinvii delle partite non la bloccano.
+// La giornata diventa attuale
+// quando scade la deadline della giornata precedente.
+// I recuperi non bloccano il passaggio.
 
 let currentDay = null;
 
 const now = new Date();
 
 for (let i = 0; i < allDays.length; i++) {
-  const dayNumber = Number(allDays[i]);
-  const matchday = matchdays[dayNumber];
 
-  const deadline = matchday?.lineup_deadline
-    ? new Date(matchday.lineup_deadline)
-    : null;
+  const dayNumber = Number(allDays[i]);
+  const previousDay = dayNumber - 1;
+
+  // La prima giornata è attuale
+  // fino alla deadline della prima giornata.
+  if (i === 0) {
+
+    const firstDeadline = matchdays[dayNumber]?.lineup_deadline;
+
+    if (
+      firstDeadline &&
+      now < new Date(firstDeadline)
+    ) {
+      currentDay = dayNumber;
+      break;
+    }
+
+    continue;
+  }
+
+  const previousDeadline =
+    matchdays[previousDay]?.lineup_deadline;
 
   if (
-    deadline &&
-    Number.isFinite(deadline.getTime()) &&
-    now >= deadline
+    previousDeadline &&
+    Number.isFinite(new Date(previousDeadline).getTime()) &&
+    now >= new Date(previousDeadline)
   ) {
     currentDay = dayNumber;
+  } else {
+    break;
   }
 }
 
-// Se nessuna deadline è scaduta,
-// usa la prima giornata.
+// Se non è ancora scaduta la prima deadline,
+// la prima giornata rimane quella attuale.
 if (currentDay === null) {
   currentDay = Number(allDays[0]);
 }
