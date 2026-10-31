@@ -2758,6 +2758,20 @@ nav button.nav-item[data-page="Admin"].active::after{
     font-size: 12px;
   }
 }
+
+/* =========================================================
+   SCAMBI — RIMOZIONE LINEE COLORATE
+   ========================================================= */
+
+#content .trade-page-card {
+  border-top: none !important;
+}
+
+#content .trade-page-card::before,
+#content .trade-page-card::after {
+  content: none !important;
+  display: none !important;
+}
    
 </style></head><body>
 <header><div><b>🏀 FantaBasket Orzi</b><div id="who" class="muted">Non autenticato</div></div><div id="authBtn"><button onclick="document.getElementById('auth').classList.remove('hidden')">Accedi</button></div></header><main><div id="msg"></div>
