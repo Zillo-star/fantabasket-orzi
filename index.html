@@ -2850,12 +2850,12 @@ async function enablePushNotifications() {
       return message("Devi prima accedere al tuo account.", "err");
     }
 
-    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-      return message(
-        "Questo browser non supporta le notifiche push.",
-        "err"
-      );
-    }
+if (!("serviceWorker" in navigator)) {
+  return message(
+    "Il browser non supporta i Service Worker.",
+    "err"
+  );
+}
 
     if (!window.isSecureContext) {
       return message(
