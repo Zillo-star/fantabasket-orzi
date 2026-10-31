@@ -17957,12 +17957,30 @@ let selectedMatches = matches.filter(x =>
   word-break: normal;
 }
 
-/* Rimuove le barre decorative nella pagina Scambi */
+
+/* SCAMBI - RIMOZIONE DECORAZIONI COLORATE */
+.trade-page-card,
+.trade-page-card::before,
+.trade-page-card::after {
+  border-top: none !important;
+  background-image: none !important;
+}
+
 .trade-page-card::before,
 .trade-page-card::after {
   display: none !important;
   content: none !important;
+  opacity: 0 !important;
+  box-shadow: none !important;
 }
+
+/* Rimuove eventuali linee decorative dai titoli */
+.trade-page-card h2 {
+  border: none !important;
+  box-shadow: none !important;
+  background-image: none !important;
+}
+
 
     </style>
 
