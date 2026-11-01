@@ -11830,99 +11830,40 @@ if(coachScoresToSave.length){
   },300);
 
 
-  /* =========================
-     AGGIORNAMENTO AUTOMATICO
-     OGNI 20 SECONDI
-  ========================= */
 
-  clearInterval(
-    window.liveFantasyTimer
-  );
+/* =========================
+   AGGIORNAMENTO AUTOMATICO
+   OGNI 20 SECONDI
+========================= */
 
-window.liveFantasyTimer =
-  setInterval(async ()=>{
+clearInterval(window.liveFantasyTimer);
 
-    if(
-      typeof window.loadLiveFantasyScores ===
-      "function"
-    ){
+window.liveFantasyTimer = setInterval(async () => {
 
+  // Aggiorna i punteggi live senza cambiare sezione
+  if (
+    typeof window.loadLiveFantasyScores === "function"
+  ) {
+    try {
       await window.loadLiveFantasyScores();
-
+    } catch (e) {
+      console.error("Errore aggiornamento live:", e);
     }
-
-window.liveFantasyTimer =
-  setInterval(async ()=>{
-
-    if(
-      typeof window.loadLiveFantasyScores ===
-      "function"
-    ){
-
-      await window.loadLiveFantasyScores();
-
-    }
-
-    const isCalendarPage =
-      [...document.querySelectorAll("#content h2")]
-        .some(
-          h =>
-            h.textContent.trim() ===
-            "🏀 Calendario"
-        );
-
-    if(isCalendarPage){
-
-      try{
-
-        await calendar();
-
-      }catch(e){
-
-        console.error(
-          "Errore refresh calendario:",
-          e
-        );
-
-      }
-
-    }
-
-  },20000);     
-     
-if(
-  typeof refreshDashboardFantasyTotal ===
-  "function"
-){
-  await refreshDashboardFantasyTotal();
-}
-    /*
-      Aggiorna automaticamente le schermate
-      che mostrano i risultati.
-    */
-
-const calendarSelect =
-  document.querySelector(
-    'select[onchange*="calendarSelectedDay"]'
-  );
-
-if(calendarSelect){
-
-  try{
-
-    await calendar();
-
-  }catch(e){
-
-    console.error(
-      "Errore refresh calendario:",
-      e
-    );
-
   }
 
-}
-  },20000);
+  // Aggiorna il totale fantasy della dashboard
+  if (
+    typeof refreshDashboardFantasyTotal === "function"
+  ) {
+    try {
+      await refreshDashboardFantasyTotal();
+    } catch (e) {
+      console.error("Errore aggiornamento dashboard:", e);
+    }
+  }
+
+}, 20000);
+
 async function loadPlayerGames(){
 
 console.log("LOAD PLAYER GAMES PARTITA!");
