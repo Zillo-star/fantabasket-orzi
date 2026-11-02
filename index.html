@@ -7612,40 +7612,45 @@ if (currentDay === null && days.length) {
 
       <h2>⏰ Formazione</h2>
 
-<div id="lineupDayPicker" style="position:relative;margin:12px 0;z-index:20;">
-  <button
-    type="button"
-    onclick="toggleLineupDayPicker()"
-    style="width:100%;padding:12px 16px;border-radius:10px;border:1px solid #303b5c;background:#11182c;color:#fff;font-size:15px;font-weight:800;text-align:left;cursor:pointer;"
-  >
-    <span id="lineupDayLabel">Giornata ${currentDay}</span>
-<span style="float:right;display:flex;gap:8px;align-items:center;">
-  <span style="font-size:18px;">‹</span>
-  <span style="font-size:18px;">›</span>
-</span>
-  </button>
+      <div id="lineupDayPicker" style="position:relative;margin:12px 0;z-index:20;">
 
-  <div
-    id="lineupDayMenu"
-    style="display:none;position:absolute;top:calc(100% + 5px);left:0;right:0;background:#11182c;border:1px solid #303b5c;border-radius:10px;overflow:hidden;box-shadow:0 8px 24px #0006;"
-  >
-    <div id="lineupDayOptions"></div>
-    <div style="padding:7px;text-align:center;font-size:11px;color:#aeb8d0;">
-      Scorri per cambiare giornata
-    </div>
-  </div>
-</div>
+        <button
+          type="button"
+          onclick="toggleLineupDayPicker()"
+          style="width:100%;padding:12px 16px;border-radius:10px;border:1px solid #303b5c;background:#11182c;color:#fff;font-size:15px;font-weight:800;text-align:left;cursor:pointer;"
+        >
 
-<select id="day" style="display:none">
-  ${availableDays.map(x=>`
-    <option
-      value="${x.id}"
-      data-number="${x.number}"
-      ${Number(x.number)===Number(currentDay)?"selected":""}>
-      Giornata ${x.number}
-    </option>
-  `).join("")}
-</select>
+          <span id="lineupDayLabel">Giornata ${currentDay}</span>
+
+          <span style="float:right;display:flex;gap:8px;align-items:center;">
+            <span style="font-size:18px;">‹</span>
+            <span style="font-size:18px;">›</span>
+          </span>
+
+        </button>
+
+        <div
+          id="lineupDayMenu"
+          style="display:none;position:absolute;top:calc(100% + 5px);left:0;right:0;background:#11182c;border:1px solid #303b5c;border-radius:10px;overflow:hidden;box-shadow:0 8px 24px #0006;"
+        >
+          <div id="lineupDayOptions"></div>
+        </div>
+
+      </div>
+
+
+      <select id="day" style="display:none">
+
+        ${availableDays.map(x=>`
+          <option
+            value="${x.id}"
+            data-number="${x.number}"
+            ${Number(x.number)===Number(currentDay)?"selected":""}>
+            Giornata ${x.number}
+          </option>
+        `).join("")}
+
+      </select>
 
 
       <div id="deadlineBox" class="card">
@@ -7673,31 +7678,32 @@ if (currentDay === null && days.length) {
     </div>
 
 
-<div id="lp">
+    <div id="lp">
 
-  <div
-    id="formationBuilder"
-    class="formation-builder"
-  >
-  </div>
+      <div
+        id="formationBuilder"
+        class="formation-builder"
+      >
+      </div>
 
-</div>
-
-
-<div
-  id="lineupStatus"
-  class="muted"
-  style="margin-top:12px"
->
-</div>
+    </div>
 
 
-<button
-  id="saveLineupBtn"
-  onclick="saveLineup()"
->
-  💾 Salva formazione
-</button>
+    <div
+      id="lineupStatus"
+      class="muted"
+      style="margin-top:12px"
+    >
+    </div>
+
+
+    <button
+      id="saveLineupBtn"
+      onclick="saveLineup()"
+    >
+      💾 Salva formazione
+    </button>
+
 
     <p class="muted">
       5 titolari (100%): 2G-2A-1C · 1G-3A-1C · 1G-2A-2C · 2G-1A-2C · 3G-1A-1C
