@@ -15335,14 +15335,12 @@ let archivedDays =
 let futureDays =
   allDays.filter(day => day > currentDay);
 
-
-
 /* =========================
    GIORNATA SELEZIONATA
 ========================= */
 
-// Se la dashboard passa una giornata,
-// usa quella richiesta esplicitamente.
+// Se viene richiesta esplicitamente una giornata,
+// manteniamo quella selezione.
 let selectedDay;
 
 if (
@@ -15352,15 +15350,14 @@ if (
 ) {
   selectedDay = Number(dayNumber);
 } else {
-  selectedDay = Number(
-    window.calendarSelectedDay || currentDay
-  );
+  // Altrimenti apriamo sempre la giornata attuale
+  selectedDay = currentDay;
 }
 
 // Controllo di sicurezza
 if (
   !allDays.includes(selectedDay) ||
-  selectedDay === 0
+  !selectedDay
 ) {
   selectedDay = currentDay;
 }
