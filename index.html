@@ -4034,9 +4034,9 @@ async function home(){
 
   const [r,c,mdRes,matchesRes,managersRes] = await Promise.all([
 
-    db.from("fantasy_scores")
-      .select("final_score")
-      .eq("manager_id",me.id),
+db.from("fantasy_scores")
+  .select("matchday_id,final_score")
+  .eq("manager_id",me.id),
 
     db.from("fantasy_coach_scores")
       .select("final_score")
