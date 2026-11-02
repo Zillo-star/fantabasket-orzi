@@ -4116,6 +4116,7 @@ db.from("fantasy_scores")
 
   const myRank = standingsRows.findIndex(x=>x.id===me.id)+1;
 
+
 /* =========================
    INDIVIDUAZIONE GIORNATE
 ========================= */
@@ -4127,7 +4128,7 @@ const calendarDayNumbers = [...new Set(
   .filter(n => Number.isFinite(n) && n > 0)
   .sort((a, b) => a - b);
 
-// Identifichiamo le giornate con punteggi effettivamente salvati
+// Giornate con punteggi effettivamente salvati
 const savedMatchdayIds = new Set(
   (r.data || [])
     .filter(x => x.matchday_id)
@@ -4140,13 +4141,39 @@ const savedDayNumbers = allDays
   .filter(n => calendarDayNumbers.includes(n))
   .sort((a, b) => a - b);
 
-// Giornata attuale = ultima giornata salvata
-const currentDayNumber = savedDayNumbers.length
+// Ultima giornata salvata
+const lastSavedDay = savedDayNumbers.length
   ? savedDayNumbers[savedDayNumbers.length - 1]
-  : null;
+  : 0;
 
-// Ultima giornata = giornata più recente salvata
-const lastCompletedDay = currentDayNumber;
+// Ultima giornata la cui deadline è scaduta
+const lastExpiredDeadlineDay = allDays
+  .filter(day => {
+    if (!day.lineup_deadline) return false;
+
+    const deadline = new Date(day.lineup_deadline).getTime();
+
+    return Number.isFinite(deadline) &&
+      Date.now() >= deadline;
+  })
+  .map(day => Number(day.number))
+  .filter(n => calendarDayNumbers.includes(n))
+  .sort((a, b) => a - b)
+  .pop() ?? 0;
+
+// Giornata attuale:
+// avanza se la precedente è stata salvata
+// oppure se è scaduta la deadline della giornata stessa
+const currentDayNumber = calendarDayNumbers.find(n =>
+  n > Math.max(lastSavedDay, lastExpiredDeadlineDay - 1)
+) ?? null;
+
+// Ultima giornata = giornata precedente a quella attuale
+const lastCompletedDay = currentDayNumber !== null
+  ? calendarDayNumbers
+      .filter(n => n < currentDayNumber)
+      .pop() ?? null
+  : null;
 
 // Giornate concluse per lo storico risultati
 const dayNumbers = [...new Set(
@@ -4163,6 +4190,7 @@ const completedDayNumbers = dayNumbers.filter(day => {
   return games.length > 0 &&
     games.every(m => m.completed === true);
 });
+
 
 function getDayMatch(day) {
   if (day === null) return null;
