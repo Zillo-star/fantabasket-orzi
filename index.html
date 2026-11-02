@@ -15270,35 +15270,59 @@ let savedLineups = new Set(
    GIORNATA CORRENTE CALENDARIO
 ========================= */
 
-let currentDay = null;
-
+// Giornate presenti nel calendario
 const calendarDays = (md.data || [])
   .slice()
   .sort((a, b) => Number(a.number) - Number(b.number));
 
-// Priorità alla giornata marcata LIVE
-const liveDay = calendarDays.find(
-  day => day.status === "live"
+// Recuperiamo tutte le giornate con punteggi salvati
+const savedScoresRes = await db
+  .from("fantasy_scores")
+  .select("matchday_id");
+
+if (savedScoresRes.error)
+  return message(savedScoresRes.error.message, "err");
+
+const savedMatchdayIds = new Set(
+  (savedScoresRes.data || [])
+    .filter(x => x.matchday_id)
+    .map(x => x.matchday_id)
 );
 
-if (liveDay) {
+// Ultima giornata effettivamente salvata
+const savedDays = calendarDays
+  .filter(day => savedMatchdayIds.has(day.id))
+  .map(day => Number(day.number));
 
-  currentDay = Number(liveDay.number);
+const lastSavedDay = savedDays.length
+  ? Math.max(...savedDays)
+  : 0;
 
-} else {
+// Ultima deadline scaduta
+const lastExpiredDeadlineDay = calendarDays
+  .filter(day => {
+    if (!day.lineup_deadline) return false;
 
-  // Altrimenti prima giornata non completata
-  const nextDay = calendarDays.find(
-    day => day.status !== "completed"
-  );
+    const deadline = new Date(day.lineup_deadline).getTime();
 
-  if (nextDay) {
-    currentDay = Number(nextDay.number);
-  } else {
-    currentDay = Number(allDays[allDays.length - 1]);
-  }
+    return Number.isFinite(deadline) &&
+      Date.now() >= deadline;
+  })
+  .map(day => Number(day.number))
+  .sort((a, b) => a - b)
+  .pop() ?? 0;
 
-}
+// La giornata attuale avanza:
+// - quando viene salvata la precedente;
+// - oppure quando scade la deadline della giornata stessa.
+currentDay = calendarDays
+  .map(day => Number(day.number))
+  .filter(n =>
+    n > Math.max(lastSavedDay, lastExpiredDeadlineDay - 1)
+  )
+  .sort((a, b) => a - b)[0] ?? null;
+
+
 /* =========================
    GIORNATE
 ========================= */
