@@ -15270,6 +15270,8 @@ let savedLineups = new Set(
    GIORNATA CORRENTE CALENDARIO
 ========================= */
 
+let currentDay = null;
+   
 // Giornate presenti nel calendario
 const calendarDays = (md.data || [])
   .slice()
