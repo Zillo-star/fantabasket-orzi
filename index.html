@@ -7484,7 +7484,12 @@ async function lineup(){
 
   if(m.error)
     return message(m.error.message,"err");
-
+   
+// Giornate presenti nel calendario
+const calendarDays = (m.data || [])
+  .slice()
+  .sort((a, b) => Number(a.number) - Number(b.number));
+   
   let days=m.data||[];
 
   const now = new Date(); 
