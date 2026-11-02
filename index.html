@@ -15266,17 +15266,6 @@ let savedLineups = new Set(
   });
 
 
-/* =========================
-   GIORNATA CORRENTE CALENDARIO
-========================= */
-
-let currentDay = null;
-   
-// Giornate presenti nel calendario
-const calendarDays = (md.data || [])
-  .slice()
-  .sort((a, b) => Number(a.number) - Number(b.number));
-
 // Recuperiamo tutte le giornate con punteggi salvati
 const savedScoresRes = await db
   .from("fantasy_scores")
@@ -15285,44 +15274,27 @@ const savedScoresRes = await db
 if (savedScoresRes.error)
   return message(savedScoresRes.error.message, "err");
 
-const savedMatchdayIds = new Set(
-  (savedScoresRes.data || [])
-    .filter(x => x.matchday_id)
-    .map(x => x.matchday_id)
-);
+// Contiamo i punteggi per giornata
+const scoreCounts = {};
 
-// Ultima giornata effettivamente salvata
+(savedScoresRes.data || []).forEach(x => {
+  if (!x.matchday_id) return;
+
+  scoreCounts[x.matchday_id] =
+    (scoreCounts[x.matchday_id] || 0) + 1;
+});
+
+// Una giornata è considerata salvata solo
+// quando ha tutti i 117 punteggi attesi
 const savedDays = calendarDays
-  .filter(day => savedMatchdayIds.has(day.id))
+  .filter(day =>
+    (scoreCounts[day.id] || 0) >= 117
+  )
   .map(day => Number(day.number));
 
 const lastSavedDay = savedDays.length
   ? Math.max(...savedDays)
   : 0;
-
-// Ultima deadline scaduta
-const lastExpiredDeadlineDay = calendarDays
-  .filter(day => {
-    if (!day.lineup_deadline) return false;
-
-    const deadline = new Date(day.lineup_deadline).getTime();
-
-    return Number.isFinite(deadline) &&
-      Date.now() >= deadline;
-  })
-  .map(day => Number(day.number))
-  .sort((a, b) => a - b)
-  .pop() ?? 0;
-
-// La giornata attuale avanza:
-// - quando viene salvata la precedente;
-// - oppure quando scade la deadline della giornata stessa.
-currentDay = calendarDays
-  .map(day => Number(day.number))
-  .filter(n =>
-    n > Math.max(lastSavedDay, lastExpiredDeadlineDay - 1)
-  )
-  .sort((a, b) => a - b)[0] ?? null;
 
 
 /* =========================
