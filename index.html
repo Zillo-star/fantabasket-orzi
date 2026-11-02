@@ -15206,118 +15206,141 @@ async function calendar(dayNumber = null, onlyMatchId = null){
 
   }
 
-  /* =========================
-     GIORNATE
-  ========================= */
-
-  let allDays = [
-    ...new Set(
-      matches.map(x => Number(x.matchday_number))
-    )
-  ].sort((a,b) => a-b);
-
-
-let md = await db.from("matchdays")
-.select(`
-  id,
-  number,
-  lineup_open_at,
-  lineup_deadline,
-  status
-`)
-  .order("number");
-
-  if(md.error)
-    return message(md.error.message,"err");
-
-/* =========================
-   FORMAZIONI SALVATE
-========================= */
-
-let lineupsForDay = await db
-  .from("lineups")
-  .select(`
-    manager_id,
-    matchday_id
-  `)
-  .in(
-    "matchday_id",
-    (md.data || []).map(x => x.id)
-  );
-
-if(lineupsForDay.error)
-  return message(
-    lineupsForDay.error.message,
-    "err"
-  );
-
-let savedLineups = new Set(
-  (lineupsForDay.data || []).map(x =>
-    `${x.manager_id}_${x.matchday_id}`
-  )
-);
-
-
-  let matchdays = {};
-
-  (md.data || []).forEach(x => {
-
-    matchdays[Number(x.number)] = {
-      id:x.id,
-      number:Number(x.number),
-      lineup_deadline:x.lineup_deadline
-    };
-
-  });
-
-
-// Recuperiamo tutte le giornate con punteggi salvati
-const savedScoresRes = await db
-  .from("fantasy_scores")
-  .select("matchday_id");
-
-if (savedScoresRes.error)
-  return message(savedScoresRes.error.message, "err");
-
-// Contiamo i punteggi per giornata
-const scoreCounts = {};
-
-(savedScoresRes.data || []).forEach(x => {
-  if (!x.matchday_id) return;
-
-  scoreCounts[x.matchday_id] =
-    (scoreCounts[x.matchday_id] || 0) + 1;
-});
-
-// Una giornata è considerata salvata solo
-// quando ha tutti i 117 punteggi attesi
-const savedDays = calendarDays
-  .filter(day =>
-    (scoreCounts[day.id] || 0) >= 117
-  )
-  .map(day => Number(day.number));
-
-const lastSavedDay = savedDays.length
-  ? Math.max(...savedDays)
-  : 0;
-
 
 /* =========================
    GIORNATE
 ========================= */
 
-let archivedDays =
-  allDays.filter(day => day < currentDay);
+// Recuperiamo tutte le giornate
+let md = await db
+  .from("matchdays")
+  .select(`
+    id,
+    number,
+    lineup_open_at,
+    lineup_deadline,
+    status
+  `)
+  .order("number");
 
-let futureDays =
-  allDays.filter(day => day > currentDay);
+if (md.error)
+  return message(md.error.message, "err");
 
-/* =========================
-   GIORNATA SELEZIONATA
-========================= */
+// Giornate disponibili: unione di calendario e partite
+const calendarDays = (md.data || [])
+  .slice()
+  .sort((a, b) => Number(a.number) - Number(b.number));
 
-// Se viene richiesta esplicitamente una giornata,
-// manteniamo quella selezione.
+let allDays = [
+  ...new Set([
+    ...calendarDays.map(x => Number(x.number)),
+    ...matches.map(x => Number(x.matchday_number))
+  ])
+]
+.filter(Number.isFinite)
+.sort((a, b) => a - b);
+
+// Mappa delle giornate
+let matchdays = {};
+
+calendarDays.forEach(x => {
+  matchdays[Number(x.number)] = {
+    id: x.id,
+    number: Number(x.number),
+    lineup_open_at: x.lineup_open_at,
+    lineup_deadline: x.lineup_deadline
+  };
+});
+
+// =========================
+// CONTEGGIO PUNTEGGI SALVATI
+// =========================
+
+const scoreCounts = {};
+
+const scoreResults = await Promise.all(
+  calendarDays.map(async day => {
+    const result = await db
+      .from("fantasy_scores")
+      .select("id", {
+        count: "exact",
+        head: true
+      })
+      .eq("matchday_id", day.id);
+
+    return {
+      day: Number(day.number),
+      count: result.count || 0,
+      error: result.error
+    };
+  })
+);
+
+const scoreError = scoreResults.find(x => x.error);
+
+if (scoreError)
+  return message(scoreError.error.message, "err");
+
+scoreResults.forEach(x => {
+  scoreCounts[x.day] = x.count;
+});
+
+// Una giornata è completa con almeno 117 punteggi
+const savedDays = scoreResults
+  .filter(x => x.count >= 117)
+  .map(x => x.day);
+
+const lastSavedDay = savedDays.length
+  ? Math.max(...savedDays)
+  : 0;
+
+// =========================
+// AVANZAMENTO GIORNATA
+// =========================
+
+const now = new Date();
+
+// Ultima giornata con deadline scaduta
+const expiredDays = calendarDays
+  .filter(day =>
+    day.lineup_deadline &&
+    new Date(day.lineup_deadline) < now
+  )
+  .map(day => Number(day.number));
+
+const lastExpiredDay = expiredDays.length
+  ? Math.max(...expiredDays)
+  : 0;
+
+// Si avanza sia con punteggi salvati
+// sia quando scade la deadline
+const progressDay = Math.max(
+  lastSavedDay,
+  lastExpiredDay
+);
+
+// La giornata attuale è la successiva
+let currentDay =
+  allDays.find(day => day > progressDay) ||
+  allDays[allDays.length - 1] ||
+  null;
+
+// =========================
+// GIORNATE PRECEDENTI E FUTURE
+// =========================
+
+let archivedDays = allDays.filter(
+  day => day < currentDay
+);
+
+let futureDays = allDays.filter(
+  day => day > currentDay
+);
+
+// =========================
+// GIORNATA SELEZIONATA
+// =========================
+
 let selectedDay;
 
 if (
@@ -15327,7 +15350,6 @@ if (
 ) {
   selectedDay = Number(dayNumber);
 } else {
-  // Altrimenti apriamo sempre la giornata attuale
   selectedDay = currentDay;
 }
 
@@ -15339,9 +15361,8 @@ if (
   selectedDay = currentDay;
 }
 
-// Memorizza la giornata scelta
 window.calendarSelectedDay = selectedDay;
-
+   
   /* =========================
      LINEUP
   ========================= */
