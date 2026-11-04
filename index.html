@@ -3218,7 +3218,7 @@ async function boot(){
     return;
 
   }
-
+await syncExistingPushSubscription();
   el("who").innerHTML=`
 
     <b>${me.team_name || me.name}</b>
