@@ -11983,31 +11983,15 @@ async function loadPlayerGames(){
 
       }
 
-      let status="";
+box.innerHTML=`
 
-      if(game.cancelled){
+  ${game.home ? "🏠" : "✈️"}
+  <b>vs ${game.opponent}</b>
 
-        status=`<br>❌ <b>Partita annullata</b>`;
-
-      } else if(game.postponed){
-
-        status=`<br>⏸️ <b>Partita rinviata</b>`;
-
-      }
-
-      box.innerHTML=`
-
-        ${game.home ? "🏠" : "✈️"}
-        <b>vs ${game.opponent}</b>
-        ${status}
-
-      `;
-
+`;
     });
 
 }
-
-
 
 window.lineupPickerOpen = false;
 
