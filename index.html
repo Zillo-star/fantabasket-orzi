@@ -2935,6 +2935,51 @@ const permission = await Notification.requestPermission();
     message("Errore notifiche: " + error.message, "err");
   }
 }
+
+async function syncExistingPushSubscription() {
+  try {
+    if (!me?.id) return;
+    if (!("serviceWorker" in navigator)) return;
+    if (typeof Notification === "undefined") return;
+
+    // Non chiediamo nuovi permessi
+    if (Notification.permission !== "granted") return;
+
+    const registration = await navigator.serviceWorker.getRegistration("/");
+
+    if (!registration) return;
+
+    const subscription = await registration.pushManager.getSubscription();
+
+    // Se non esiste già, non ne creiamo una nuova
+    if (!subscription) return;
+
+    const data = subscription.toJSON();
+
+    if (!data.endpoint || !data.keys?.p256dh || !data.keys?.auth) return;
+
+    const { error } = await db
+      .from("push_subscriptions")
+      .upsert({
+        manager_id: me.id,
+        endpoint: data.endpoint,
+        p256dh: data.keys.p256dh,
+        auth: data.keys.auth,
+        user_agent: navigator.userAgent,
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: "manager_id,endpoint"
+      });
+
+    if (error) throw error;
+
+    console.log("PUSH: sottoscrizione sincronizzata");
+
+  } catch (error) {
+    console.error("Errore sincronizzazione PUSH:", error);
+  }
+}
+
 async function disablePushNotifications() {
   try {
     const registration = await navigator.serviceWorker.getRegistration("/");
