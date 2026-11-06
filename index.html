@@ -15307,28 +15307,37 @@ const lastSavedDay = savedDays.length
 
 const now = new Date();
 
+// Ultima giornata effettivamente salvata
+const lastSavedDay = scoreResults
+  .filter(x => x.count >= 117)
+  .reduce(
+    (max, x) => Math.max(max, x.day),
+    0
+  );
+
 // Ultima giornata con deadline scaduta
-const expiredDays = calendarDays
+const lastExpiredDay = calendarDays
   .filter(day =>
     day.lineup_deadline &&
-    new Date(day.lineup_deadline) < now
+    new Date(day.lineup_deadline).getTime() <= now.getTime()
   )
-  .map(day => Number(day.number));
+  .reduce(
+    (max, day) => Math.max(max, Number(day.number)),
+    0
+  );
 
-const lastExpiredDay = expiredDays.length
-  ? Math.max(...expiredDays)
-  : 0;
-
-// Si avanza sia con punteggi salvati
-// sia quando scade la deadline
+// Avanzamento:
+// 1. Se una giornata è salvata, si passa alla successiva.
+// 2. Se scade la deadline di una giornata,
+//    quella stessa giornata diventa attuale.
 const progressDay = Math.max(
-  lastSavedDay,
+  lastSavedDay + 1,
   lastExpiredDay
 );
 
-// La giornata attuale è la successiva
+// Giornata attuale
 let currentDay =
-  allDays.find(day => day > progressDay) ||
+  allDays.find(day => day >= progressDay) ||
   allDays[allDays.length - 1] ||
   null;
 
