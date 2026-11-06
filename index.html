@@ -4161,7 +4161,6 @@ db.from("fantasy_scores")
 
   const myRank = standingsRows.findIndex(x=>x.id===me.id)+1;
 
-
 /* =========================
    INDIVIDUAZIONE GIORNATE
 ========================= */
@@ -4173,25 +4172,37 @@ const calendarDayNumbers = [...new Set(
   .filter(n => Number.isFinite(n) && n > 0)
   .sort((a, b) => a - b);
 
-// Giornate con punteggi effettivamente salvati
-const savedMatchdayIds = new Set(
-  (r.data || [])
-    .filter(x => x.matchday_id)
-    .map(x => x.matchday_id)
-);
 
-const savedDayNumbers = allDays
-  .filter(day => savedMatchdayIds.has(day.id))
-  .map(day => Number(day.number))
-  .filter(n => calendarDayNumbers.includes(n))
-  .sort((a, b) => a - b);
+// CONTEGGIO GLOBALE PUNTEGGI SALVATI
+const savedScoresResult = await db
+  .from("fantasy_scores")
+  .select("matchday_id");
 
-// Ultima giornata salvata
-const lastSavedDay = savedDayNumbers.length
-  ? savedDayNumbers[savedDayNumbers.length - 1]
-  : 0;
+if (savedScoresResult.error)
+  return message(savedScoresResult.error.message, "err");
 
-// Ultima giornata la cui deadline è scaduta
+const savedCounts = {};
+
+(savedScoresResult.data || []).forEach(score => {
+  if (!score.matchday_id) return;
+
+  savedCounts[score.matchday_id] =
+    (savedCounts[score.matchday_id] || 0) + 1;
+});
+
+
+// Ultima giornata effettivamente salvata
+const lastSavedDay = allDays
+  .filter(day =>
+    (savedCounts[day.id] || 0) >= 117
+  )
+  .reduce(
+    (max, day) => Math.max(max, Number(day.number)),
+    0
+  );
+
+
+// Ultima giornata con deadline scaduta
 const lastExpiredDeadlineDay = allDays
   .filter(day => {
     if (!day.lineup_deadline) return false;
@@ -4201,19 +4212,26 @@ const lastExpiredDeadlineDay = allDays
     return Number.isFinite(deadline) &&
       Date.now() >= deadline;
   })
-  .map(day => Number(day.number))
-  .filter(n => calendarDayNumbers.includes(n))
-  .sort((a, b) => a - b)
-  .pop() ?? 0;
+  .reduce(
+    (max, day) => Math.max(max, Number(day.number)),
+    0
+  );
 
-// Giornata attuale:
-// avanza se la precedente è stata salvata
-// oppure se è scaduta la deadline della giornata stessa
-const currentDayNumber = calendarDayNumbers.find(n =>
-  n > Math.max(lastSavedDay, lastExpiredDeadlineDay - 1)
-) ?? null;
 
-// Ultima giornata = giornata precedente a quella attuale
+// Avanzamento giornata
+const progressDay = Math.max(
+  lastSavedDay + 1,
+  lastExpiredDeadlineDay
+);
+
+
+// Giornata attuale
+const currentDayNumber = calendarDayNumbers.find(
+  n => n >= progressDay
+) ?? calendarDayNumbers[calendarDayNumbers.length - 1] ?? null;
+
+
+// Ultima giornata
 const lastCompletedDay = currentDayNumber !== null
   ? calendarDayNumbers
       .filter(n => n < currentDayNumber)
