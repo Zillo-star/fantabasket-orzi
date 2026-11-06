@@ -15325,14 +15325,6 @@ const lastSavedDay = savedDays.length
 
 const now = new Date();
 
-// Ultima giornata effettivamente salvata
-const lastSavedDay = scoreResults
-  .filter(x => x.count >= 117)
-  .reduce(
-    (max, x) => Math.max(max, x.day),
-    0
-  );
-
 // Ultima giornata con deadline scaduta
 const lastExpiredDay = calendarDays
   .filter(day =>
