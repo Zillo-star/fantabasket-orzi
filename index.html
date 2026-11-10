@@ -15602,15 +15602,15 @@ window.calendarSelectedDay = selectedDay;
 
   if(managerIds.length && matchdayIds.length){
 
-    let fs = await db.from("fantasy_scores")
-      .select(`
-        manager_id,
-        matchday_id,
-        player_id,
-        final_score
-      `)
-      .in("manager_id",managerIds)
-      .in("matchday_id",matchdayIds);
+let fs = await db.from("fantasy_scores")
+  .select(`
+    manager_id,
+    matchday_id,
+    player_id,
+    final_score,
+    manual_override
+  `)
+  .in("matchday_id",matchdayIds);
 
     if(fs.error)
       return message(fs.error.message,"err");
