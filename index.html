@@ -9668,6 +9668,32 @@ if(!pg){
     );
   }
 
+  /* Mostra comunque il punteggio manuale */
+
+  if(
+    typeof me !== "undefined" &&
+    lineup.manager_id === me.id &&
+    manualScoresByPlayer[lp.player_id] !== undefined
+  ){
+
+    const scoreBox = document.querySelector(
+      `[data-live-score="${lp.player_id}"]`
+    );
+
+    if(scoreBox){
+
+      const visibleScore =
+        manualScoresByPlayer[lp.player_id];
+
+      scoreBox.textContent =
+        visibleScore > 0
+          ? "+" + visibleScore.toFixed(1)
+          : visibleScore.toFixed(1);
+
+    }
+
+  }
+
   continue;
 }
 if (day === 5) {
