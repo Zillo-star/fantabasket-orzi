@@ -9528,6 +9528,29 @@ if (day === 5) {
             matchdayId
         );
 
+ /* =========================
+   PUNTEGGI MANUALI
+========================= */
+
+const manualScoresResult = await db
+  .from("fantasy_scores")
+  .select("player_id, final_score")
+  .eq("matchday_id", matchdayId)
+  .eq("manual_override", true);
+
+const manualScoresByPlayer = {};
+
+if(manualScoresResult.error){
+  console.error(
+    "ERRORE LETTURA PUNTEGGI MANUALI:",
+    manualScoresResult.error
+  );
+}else{
+  (manualScoresResult.data || []).forEach(row => {
+    manualScoresByPlayer[row.player_id] =
+      Number(row.final_score);
+  });
+}      
 
       console.log(
         "FORMAZIONI GIORNATA",
