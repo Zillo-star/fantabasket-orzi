@@ -9942,10 +9942,15 @@ if (day === 5) {
 
             if(scoreBox){
 
-              scoreBox.textContent =
-                finalScore > 0
-                  ? "+" + finalScore.toFixed(1)
-                  : finalScore.toFixed(1);
+const visibleScore =
+  manualScoresByPlayer[lp.player_id] !== undefined
+    ? manualScoresByPlayer[lp.player_id]
+    : finalScore;
+
+scoreBox.textContent =
+  visibleScore > 0
+    ? "+" + visibleScore.toFixed(1)
+    : visibleScore.toFixed(1);
 
             }
 
