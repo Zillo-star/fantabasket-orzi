@@ -9556,7 +9556,45 @@ if(manualScoresResult.error){
       Number(row.final_score);
   });
 }      
+/* =========================
+   MOSTRA PUNTEGGI MANUALI
+   ========================= */
 
+lineups.forEach(lineup => {
+
+  if(
+    typeof me === "undefined" ||
+    lineup.manager_id !== me.id
+  ){
+    return;
+  }
+
+  (lineup.lineup_players || []).forEach(lp => {
+
+    if(
+      manualScoresByPlayer[lp.player_id] === undefined
+    ){
+      return;
+    }
+
+    const scoreBox = document.querySelector(
+      `[data-live-score="${lp.player_id}"]`
+    );
+
+    if(!scoreBox){
+      return;
+    }
+
+    const score = manualScoresByPlayer[lp.player_id];
+
+    scoreBox.textContent =
+      score > 0
+        ? "+" + score.toFixed(1)
+        : score.toFixed(1);
+
+  });
+
+});
       console.log(
         "FORMAZIONI GIORNATA",
         day,
