@@ -12010,50 +12010,6 @@ if(coachScoresToSave.length){
 
 };
 
-  /* =========================
-     PRIMO CARICAMENTO LIVE
-  ========================= */
-
-  setTimeout(()=>{
-    loadLiveFantasyScores();
-  },300);
-
-
-
-/* =========================
-   AGGIORNAMENTO AUTOMATICO
-   OGNI 20 SECONDI
-========================= */
-
-clearInterval(window.liveFantasyTimer);
-
-window.liveFantasyTimer = setInterval(async () => {
-
-  // Aggiorna i punteggi live senza cambiare sezione
-  if (
-    typeof window.loadLiveFantasyScores === "function"
-  ) {
-    try {
-      await window.loadLiveFantasyScores();
-    } catch (e) {
-      console.error("Errore aggiornamento live:", e);
-    }
-  }
-
-  // Aggiorna il totale fantasy della dashboard
-  if (
-    typeof refreshDashboardFantasyTotal === "function"
-  ) {
-    try {
-      await refreshDashboardFantasyTotal();
-    } catch (e) {
-      console.error("Errore aggiornamento dashboard:", e);
-    }
-  }
-
-}, 20000);
-
-
 async function loadPlayerGames(){
 
   console.log("LOAD PLAYER GAMES PARTITA!");
