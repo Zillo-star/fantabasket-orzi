@@ -2818,6 +2818,7 @@ nav button.nav-item[data-page="Admin"].active::after{
 </section>
 <section id="app" class="hidden"><nav id="nav"></nav><div id="content"></div></section>
 </main>
+<script src="/live-runtime.js"></script>
 <script>
 const SUPABASE_URL="https://ejzipstmvofhjsqrzvfs.supabase.co";
 const SUPABASE_KEY="sb_publishable_nNqB08asItxVhY0WAeGXKQ_fKGRC5va";
@@ -2829,6 +2830,8 @@ const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{
   }
 });
 const el=id=>document.getElementById(id);
+let user = null;
+let me = null;
 
 /* =========================================
    NOTIFICHE PUSH - FANTABASKET ORZI
@@ -3239,7 +3242,13 @@ await syncExistingPushSubscription();
   home();
 
 }
-async function logout(){await db.auth.signOut();location.reload()}
+async function logout(){
+  stopLiveUpdates();
+  dashboardPolling.stop();
+  calendarPolling.stop();
+  await db.auth.signOut();
+  location.reload();
+}
 function nav(){
 
 let isAdmin =
@@ -3385,58 +3394,10 @@ let isAdmin =
 
 }
 async function loadNotificationCount(){
-
-  if(!me?.id)
-    return;
-
-
-  let r=await db
-    .from("notifications")
-    .select("id", {count:"exact", head:true})
-    .eq("manager_id",me.id)
-    .eq("read",false);
-
-
-  if(r.error){
-    console.error(
-      "Errore notifiche:",
-      r.error
-    );
-    return;
-  }
-
-
-  let badge=
-    el("notificationBadge");
-
-  if(!badge)
-    return;
-
-
-  let count=r.count||0;
-
-
-  if(count>0){
-
-    badge.style.display="block";
-
-    badge.textContent=
-      count>99
-        ? "99+"
-        : count;
-
-  }else{
-
-    badge.style.display="none";
-
-  }
-
+  return updateDashboardNotification();
 }
 async function showNotifications(){
-if(window.notificationInterval){
-clearInterval(window.notificationInterval);
-window.notificationInterval=null;
-}
+dashboardPolling.stop();
 
   let r=await db
     .from("notifications")
@@ -4828,15 +4789,7 @@ ${renderDayCard(
 )}
   `;
 
-  updateDashboardNotification();
-
-  if(window.notificationInterval)
-    clearInterval(window.notificationInterval);
-
-  window.notificationInterval = setInterval(
-    updateDashboardNotification,
-    5000
-  );
+  dashboardPolling.start();
 
 }
 async function refreshDashboardFantasyTotal(){
@@ -4935,9 +4888,11 @@ async function refreshDashboardFantasyTotal(){
 
 }
    
-async function updateDashboardNotification(){
+const updateDashboardNotification = FantaRuntime.singleFlight(async function(){
 
-  if(!me?.id)
+  const badge = el("dashboardNotificationBadge");
+  const managerId = me?.id;
+  if(!managerId || !badge || document.visibilityState === "hidden")
     return;
 
 
@@ -4947,7 +4902,7 @@ async function updateDashboardNotification(){
       "id",
       {count:"exact",head:true}
     )
-    .eq("manager_id",me.id)
+    .eq("manager_id",managerId)
     .eq("read",false);
 
 
@@ -4960,11 +4915,7 @@ async function updateDashboardNotification(){
   }
 
 
-  let badge=
-    el("dashboardNotificationBadge");
-
-
-  if(!badge)
+  if(me?.id !== managerId || el("dashboardNotificationBadge") !== badge)
     return;
 
 
@@ -4987,7 +4938,81 @@ async function updateDashboardNotification(){
 
   }
 
+});
+
+// Polling legato alla vista/sessione, mai avviato globalmente.
+let calendarView = null;
+let liveUpdatesEnabled = false;
+const dashboardPolling = FantaRuntime.polling({
+  active: () => !!me?.id && !!el("dashboardNotificationBadge"),
+  run: () => updateDashboardNotification()
+});
+const calendarPolling = FantaRuntime.polling({
+  active: () => !!me?.id && !!calendarView &&
+    el("content")?.firstElementChild === calendarView.node,
+  run: () => {
+    // Non sostituire un popup aperto durante il refresh della vista.
+    if(el("calendarLineupModal") || el("playerGameStatsModal")) return;
+    return calendar(calendarView.day, calendarView.match);
+  }
+});
+const adminLivePolling = FantaRuntime.polling({
+  active: () => liveUpdatesEnabled && me?.is_admin === true,
+  run: async () => {
+    const run = async () => {
+      const status = el("liveUpdateStatus");
+      if(status) status.textContent = "Aggiornamento in corso…";
+      await window.loadLiveFantasyScores();
+      if(status?.isConnected) status.textContent = "Ultimo tentativo: " + new Date().toLocaleTimeString("it-IT");
+      await refreshDashboardFantasyTotal();
+    };
+    // Il lock evita sovrapposizioni tra schede dello stesso browser.
+    // Non sostituisce un lock backend tra dispositivi.
+    if(navigator.locks){
+      return navigator.locks.request("fantabasket-live-writer", {ifAvailable:true}, async lock => {
+        if(!lock) return;
+        const stamp = Number(localStorage.getItem("fantabasket-live-attempt") || 0);
+        if(Date.now() - stamp < 60000) return;
+        localStorage.setItem("fantabasket-live-attempt", String(Date.now()));
+        return run();
+      });
+    }
+    return run();
+  }
+});
+function stopLiveUpdates(){
+  liveUpdatesEnabled = false;
+  adminLivePolling.stop();
 }
+function toggleLiveUpdates(){
+  if(!me?.is_admin) return;
+  if(liveUpdatesEnabled) stopLiveUpdates();
+  else {
+    liveUpdatesEnabled = true;
+    adminLivePolling.start();
+  }
+  const button = el("liveUpdateToggle");
+  if(button) button.textContent = liveUpdatesEnabled ? "Ferma aggiornamenti live" : "Avvia aggiornamenti live (60 s)";
+}
+// Il contenuto cambia anche tramite azioni inline: osserviamo la rimozione della vista.
+new MutationObserver(() => {
+  if(!el("dashboardNotificationBadge")) dashboardPolling.stop();
+  if(calendarView && el("content")?.firstElementChild !== calendarView.node){
+    calendarPolling.stop();
+    calendarView = null;
+  }
+}).observe(el("content"), {childList:true});
+document.addEventListener("visibilitychange", () => {
+  for(const poll of [dashboardPolling, calendarPolling, adminLivePolling]) poll.visibilityChanged();
+});
+window.addEventListener("pagehide", () => {
+  dashboardPolling.stop(); calendarPolling.stop(); stopLiveUpdates();
+});
+db.auth.onAuthStateChange(event => {
+  if(event === "SIGNED_OUT"){
+    dashboardPolling.stop(); calendarPolling.stop(); stopLiveUpdates();
+  }
+});
 
 async function saveTeamName(){
 
@@ -7797,7 +7822,8 @@ setTimeout(()=>{
    LIVE FANTASY SCORE
 ========================= */
 
-window.loadLiveFantasyScores = async function(){
+window.loadLiveFantasyScores = FantaRuntime.singleFlight(async function(){
+  if(!me?.is_admin) return;
 
   try{
 
@@ -8103,9 +8129,12 @@ window.playerStatsRequestedMatchdayId = null;
     const discoveryBase =
       "https://fantabasket-webpont.davzil2005.workers.dev";
 
-    let discovery;
+    // Cache solo degli abbinamenti: le statistiche delle gare restano fresche a ogni tick.
+    let discovery = Date.now() - (window.liveWebPontDiscoveryFetchedAt || 0) < 300000
+      ? window.liveWebPontDiscovery : null;
 
     try {
+      if(!discovery){
       const ranges = [
         [400, 439],
         [440, 479],
@@ -8203,6 +8232,9 @@ const requiredGames = [
         discovery: true,
         games: uniqueGames
       };
+
+      window.liveWebPontDiscoveryFetchedAt = Date.now();
+      }
 
       console.log(
         "PARTITE TROVATE DA WEBPONT:",
@@ -8771,6 +8803,7 @@ const squadre = normalizeTeamName(
 
   dayContexts.push({
     matchday: md,
+    leagueMatches: md.leagueMatches,
     realGames,
     matchedRealGames,
     gamesData: {},
@@ -8837,6 +8870,10 @@ const gamesToFetch = [
           await r.json();
 
 
+        if(!w.ok || !w.info || !Array.isArray(w.players) || !w.players.length){
+          console.warn("Tabellino WebPont non disponibile:", game);
+          continue;
+        }
         globalGamesData[game] =
           w;
 
@@ -9537,25 +9574,15 @@ if (day === 5) {
    PUNTEGGI MANUALI
 ========================= */
 
-const manualScoresResult = await db
-  .from("fantasy_scores")
-  .select("player_id, final_score")
-  .eq("matchday_id", matchdayId)
-  .eq("manual_override", true);
-
+// Snapshot paginato: mai proseguire se non possiamo verificare gli override.
+const scoreSnapshot = await FantaRuntime.scoreSnapshot(db, matchdayId);
 const manualScoresByPlayer = {};
+for(const row of scoreSnapshot.players.values()){
+  if(row.manual_override === true){
+    manualScoresByPlayer[`${row.manager_id}|${row.player_id}`] = Number(row.final_score);
+  }
+}
 
-if(manualScoresResult.error){
-  console.error(
-    "ERRORE LETTURA PUNTEGGI MANUALI:",
-    manualScoresResult.error
-  );
-}else{
-  (manualScoresResult.data || []).forEach(row => {
-    manualScoresByPlayer[row.player_id] =
-      Number(row.final_score);
-  });
-}      
 /* =========================
    MOSTRA PUNTEGGI MANUALI
    ========================= */
@@ -9572,7 +9599,7 @@ lineups.forEach(lineup => {
   (lineup.lineup_players || []).forEach(lp => {
 
     if(
-      manualScoresByPlayer[lp.player_id] === undefined
+      manualScoresByPlayer[`${lineup.manager_id}|${lp.player_id}`] === undefined
     ){
       return;
     }
@@ -9585,7 +9612,7 @@ lineups.forEach(lineup => {
       return;
     }
 
-    const score = manualScoresByPlayer[lp.player_id];
+    const score = manualScoresByPlayer[`${lineup.manager_id}|${lp.player_id}`];
 
     scoreBox.textContent =
       score > 0
@@ -9613,6 +9640,9 @@ lineups.forEach(lineup => {
           const lp of
           (lineup.lineup_players || [])
         ){
+
+          if(manualScoresByPlayer[`${lineup.manager_id}|${lp.player_id}`] !== undefined)
+            continue;
 
           const player =
             playersById[
@@ -9667,6 +9697,13 @@ lineups.forEach(lineup => {
           }
 
 
+// Nessuno zero artificiale quando il tabellino non è ancora disponibile.
+const gameData = globalGamesData[game];
+if(!Array.isArray(gameData?.players) || !gameData.players.length ||
+   gameData.info?.homeScore == null || gameData.info?.awayScore == null){
+  continue;
+}
+
 const pg =
   ctx.playerToGame[
     lp.player_id
@@ -9690,9 +9727,7 @@ if(!pg){
   const captainMultiplier =
     lp.captain ? 1.5 : 1;
 
-  const saveZero = await db
-    .from("fantasy_scores")
-    .upsert({
+  const saveZero = await FantaRuntime.saveScore(db, scoreSnapshot, "players", {
       manager_id: lineup.manager_id,
       matchday_id: matchdayId,
       player_id: lp.player_id,
@@ -9700,8 +9735,6 @@ if(!pg){
       lineup_multiplier: multiplier,
       captain_multiplier: captainMultiplier,
       final_score: 0
-    }, {
-      onConflict: "manager_id,matchday_id,player_id"
     });
 
   if(saveZero.error){
@@ -9716,7 +9749,7 @@ if(!pg){
   if(
     typeof me !== "undefined" &&
     lineup.manager_id === me.id &&
-    manualScoresByPlayer[lp.player_id] !== undefined
+    manualScoresByPlayer[`${lineup.manager_id}|${lp.player_id}`] !== undefined
   ){
 
     const scoreBox = document.querySelector(
@@ -9726,7 +9759,7 @@ if(!pg){
     if(scoreBox){
 
       const visibleScore =
-        manualScoresByPlayer[lp.player_id];
+        manualScoresByPlayer[`${lineup.manager_id}|${lp.player_id}`];
 
       scoreBox.textContent =
         visibleScore > 0
@@ -9798,10 +9831,8 @@ if (day === 5) {
             );
 
 
-          if(!Number.isFinite(raw)){
-
-            raw = 0;
-
+          if(pg.wp?.fantasyScore == null || !Number.isFinite(raw)){
+            continue;
           }
 
 
@@ -9912,9 +9943,7 @@ if (day === 5) {
           ========================= */
 
           const save =
-            await db
-              .from("fantasy_scores")
-              .upsert({
+            await FantaRuntime.saveScore(db, scoreSnapshot, "players", {
 
                 manager_id:
                   lineup.manager_id,
@@ -9939,9 +9968,6 @@ if (day === 5) {
                 final_score:
                   finalScore
 
-              },{
-                onConflict:
-                  "manager_id,matchday_id,player_id"
               });
 
 
@@ -9986,8 +10012,8 @@ if (day === 5) {
             if(scoreBox){
 
 const visibleScore =
-  manualScoresByPlayer[lp.player_id] !== undefined
-    ? manualScoresByPlayer[lp.player_id]
+  manualScoresByPlayer[`${lineup.manager_id}|${lp.player_id}`] !== undefined
+    ? manualScoresByPlayer[`${lineup.manager_id}|${lp.player_id}`]
     : finalScore;
 
 scoreBox.textContent =
@@ -10146,7 +10172,7 @@ scoreBox.textContent =
           ]?.info;
 
 
-        if(!info)
+        if(!info || info.homeScore == null || info.awayScore == null)
           continue;
 
 
@@ -10248,9 +10274,7 @@ scoreBox.textContent =
 
 
         const coachSave =
-          await db
-            .from("fantasy_coach_scores")
-            .upsert({
+          await FantaRuntime.saveScore(db, scoreSnapshot, "coaches", {
 
               manager_id:
                 coach.manager_id,
@@ -10267,9 +10291,6 @@ scoreBox.textContent =
               final_score:
                 coachScore
 
-            },{
-              onConflict:
-                "manager_id,matchday_id"
             });
 
 
@@ -10583,6 +10604,8 @@ if (coachScores.error) {
           continue;
 
 
+        if(FantaRuntime.sameFields(match, updateData)) continue;
+
         const updateMatch =
           await db
             .from("league_matches")
@@ -10724,7 +10747,7 @@ if (coachScores.error) {
 
   }
 
-};
+}, { minInterval: 60000 });
 
 /* =========================================================
    CARICAMENTO MASSIVO FANTASY SCORE
@@ -10732,6 +10755,7 @@ if (coachScores.error) {
 ========================================================= */
 
 window.loadAllFantasyScores = async function(){
+  throw new Error("Importazione storica sospesa: richiede verifica override e chiavi allenatore in staging.");
 
   console.log("=== INIZIO LOAD ALL FANTASY SCORES ===");
 
@@ -15190,7 +15214,10 @@ function parseLocalDeadline(value){
     Number(m[6] || 0)
   );
 }
+let calendarRequest = 0;
 async function calendar(dayNumber = null, onlyMatchId = null){
+  const request = ++calendarRequest;
+  const previousNode = el("content").firstElementChild;
 
   /* =========================
      PARTITE
@@ -15449,9 +15476,7 @@ window.calendarSelectedDay = selectedDay;
   let lineups = [];
 
   let matchdayIds =
-    Object.values(matchdays)
-      .map(x => x.id)
-      .filter(Boolean);
+    [matchdays[selectedDay]?.id].filter(Boolean);
 
 
   if(managerIds.length && matchdayIds.length){
@@ -15566,6 +15591,7 @@ let fs = await db.from("fantasy_scores")
     final_score,
     manual_override
   `)
+  .in("manager_id",managerIds)
   .in("matchday_id",matchdayIds);
 
     if(fs.error)
@@ -19025,6 +19051,7 @@ if(homeIsBot || awayIsBot){
      RENDER
   ========================= */
 
+if(request !== calendarRequest || el("content").firstElementChild !== previousNode) return;
 el("content").innerHTML =
   html;
 
@@ -19033,18 +19060,10 @@ el("content").innerHTML =
    AGGIORNA FANTASY SCORE LIVE
 ========================= */
 
-setTimeout(() => {
-
-  if(
-    typeof window.loadLiveFantasyScores ===
-    "function"
-  ){
-
-    window.loadLiveFantasyScores();
-
-  }
-
-}, 100);
+const content = el("content");
+content.dataset.liveCalendar = "true";
+calendarView = { day: selectedDay, match: onlyMatchId, node: content.firstElementChild };
+calendarPolling.start(false);
 
 }
 async function standings(){
@@ -19291,6 +19310,13 @@ let coaches=await db.from("manager_coaches")
 if(coaches.error)return message(coaches.error.message,"err");
 
 let html=`
+
+<div class="card">
+  <h2>Aggiornamenti live</h2>
+  <p class="muted">Avvia in una sola scheda admin e lasciala aperta e visibile durante le partite. Aggiornamento ogni minuto; in background è sospeso.</p>
+  <button id="liveUpdateToggle" onclick="toggleLiveUpdates()">${liveUpdatesEnabled ? "Ferma aggiornamenti live" : "Avvia aggiornamenti live (60 s)"}</button>
+  <p id="liveUpdateStatus" role="status"></p>
+</div>
 
 <div class="card">
   <h2>🔗 Codici WebPont mancanti</h2>
@@ -19881,7 +19907,8 @@ async function removeAdminWebPontLink(gameId) {
   );
 }
 
-async function finalizeFantasyMatchday() {   
+async function finalizeFantasyMatchday() {
+  if(!me?.is_admin) return;
 
   const day = Number(el("finalizeMatchday").value);
 
@@ -20824,304 +20851,9 @@ async function testWebpontLive(){
    AGGIORNAMENTO LIVE PUNTEGGI TOTALI CALENDARIO
 ========================================================= */
 
-window.refreshLeagueMatchScoresLive = async function(){
-
-  try{
-
-    /* -----------------------------------------
-       1. MATCHDAY
-    ----------------------------------------- */
-
-    const mdRes = await db
-      .from("matchdays")
-      .select(`
-        id,
-        number
-      `);
-
-    if(mdRes.error){
-      console.error(
-        "Errore matchdays:",
-        mdRes.error
-      );
-      return;
-    }
-
-    const matchdays = mdRes.data || [];
-
-    const dayById = {};
-
-    matchdays.forEach(md => {
-
-      dayById[md.id] =
-        Number(md.number);
-
-    });
-
-
-    /* -----------------------------------------
-       2. LEAGUE MATCHES
-    ----------------------------------------- */
-
-    const lmRes = await db
-      .from("league_matches")
-      .select(`
-        id,
-        matchday_number,
-        home_manager_id,
-        away_manager_id
-      `);
-
-    if(lmRes.error){
-      console.error(
-        "Errore league_matches:",
-        lmRes.error
-      );
-      return;
-    }
-
-    const leagueMatches =
-      lmRes.data || [];
-
-
-    /* -----------------------------------------
-       3. FANTASY SCORES GIOCATORI
-    ----------------------------------------- */
-
-    const fsRes = await db
-      .from("fantasy_scores")
-      .select(`
-        manager_id,
-        matchday_id,
-        final_score
-      `);
-
-    if(fsRes.error){
-      console.error(
-        "Errore fantasy_scores:",
-        fsRes.error
-      );
-      return;
-    }
-
-    const fantasyScores =
-      fsRes.data || [];
-
-
-    /* -----------------------------------------
-       4. FANTASY SCORES ALLENATORI
-    ----------------------------------------- */
-
-    const csRes = await db
-      .from("fantasy_coach_scores")
-      .select(`
-        manager_id,
-        matchday_id,
-        final_score
-      `);
-
-    if(csRes.error){
-      console.error(
-        "Errore fantasy_coach_scores:",
-        csRes.error
-      );
-      return;
-    }
-
-    const coachScores =
-      csRes.data || [];
-
-
-    /* -----------------------------------------
-       5. TOTALI PER MANAGER + GIORNATA
-    ----------------------------------------- */
-
-    const totals = {};
-
-    function addScore(
-      managerId,
-      matchdayNumber,
-      score
-    ){
-
-      if(!managerId) return;
-
-      const n = Number(score);
-
-      if(!Number.isFinite(n)) return;
-
-      const key =
-        `${matchdayNumber}|${managerId}`;
-
-      if(!totals[key]){
-        totals[key] = 0;
-      }
-
-      totals[key] += n;
-
-    }
-
-
-    /* GIOCATORI */
-
-    fantasyScores.forEach(row => {
-
-      const day =
-        dayById[row.matchday_id];
-
-      if(!day) return;
-
-      addScore(
-        row.manager_id,
-        day,
-        row.final_score
-      );
-
-    });
-
-
-    /* ALLENATORI */
-
-    coachScores.forEach(row => {
-
-      const day =
-        dayById[row.matchday_id];
-
-      if(!day) return;
-
-      addScore(
-        row.manager_id,
-        day,
-        row.final_score
-      );
-
-    });
-
-
-    /* -----------------------------------------
-       6. AGGIORNA LEAGUE_MATCHES
-    ----------------------------------------- */
-
-    for(const match of leagueMatches){
-
-      const homeKey =
-        `${match.matchday_number}|${match.home_manager_id}`;
-
-      const awayKey =
-        `${match.matchday_number}|${match.away_manager_id}`;
-
-      const homeTotal =
-        totals[homeKey] !== undefined
-          ? Number(
-              totals[homeKey].toFixed(1)
-            )
-          : null;
-
-      const awayTotal =
-        totals[awayKey] !== undefined
-          ? Number(
-              totals[awayKey].toFixed(1)
-            )
-          : null;
-
-
-      const updateData = {};
-
-
-      if(
-        homeTotal !== null &&
-        Number.isFinite(homeTotal)
-      ){
-
-        updateData.home_score =
-          homeTotal;
-
-      }
-
-
-      if(
-        awayTotal !== null &&
-        Number.isFinite(awayTotal)
-      ){
-
-        updateData.away_score =
-          awayTotal;
-
-      }
-
-
-      if(
-        Object.keys(updateData).length === 0
-      ){
-
-        continue;
-
-      }
-
-
-      const upd = await db
-        .from("league_matches")
-        .update(updateData)
-        .eq("id", match.id);
-
-
-      if(upd.error){
-
-        console.error(
-          "Errore aggiornamento partita:",
-          match.id,
-          upd.error
-        );
-
-      }
-
-    }
-
-
-    /* -----------------------------------------
-       7. RINFRESCA IL CALENDARIO
-    ----------------------------------------- */
-
-    const isCalendarPage =
-      [...document.querySelectorAll("#content h2")]
-        .some(h =>
-          h.textContent
-            .trim()
-            .includes("Calendario")
-        );
-
-
-    if(isCalendarPage){
-
-      try{
-
-        await calendar();
-
-      }catch(e){
-
-        console.error(
-          "Errore refresh calendario:",
-          e
-        );
-
-      }
-
-    }
-
-
-    console.log(
-      "✅ Totali Calendario aggiornati live"
-    );
-
-  }catch(e){
-
-    console.error(
-      "❌ Errore refreshLeagueMatchScoresLive:",
-      e
-    );
-
-  }
-
+// Compatibilità per vecchie chiamate: un unico motore autorizzato, senza secondo giro di scritture.
+window.refreshLeagueMatchScoresLive = function(){
+  return window.loadLiveFantasyScores();
 };
 
 </script>
