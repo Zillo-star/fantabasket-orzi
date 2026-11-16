@@ -1,0 +1,137 @@
+{
+  "note": "Synthetic fixture: 10 managers, 5 players each, 1 live game; bytes are JSON response bodies, not production egress. Calendar read traffic excluded from engine workloads.",
+  "steadyTick": {
+    "before": {
+      "apiCalls": 92,
+      "workerCalls": 22,
+      "postgrestCalls": 70,
+      "responseBodyBytes": 8232,
+      "upserts": 60,
+      "writes": 60
+    },
+    "after": {
+      "apiCalls": 12,
+      "workerCalls": 1,
+      "postgrestCalls": 11,
+      "responseBodyBytes": 16663,
+      "upserts": 0,
+      "writes": 0
+    }
+  },
+  "fiveOpenings": {
+    "oneUser": {
+      "before": {
+        "apiCalls": 460,
+        "workerCalls": 110,
+        "postgrestCalls": 350,
+        "responseBodyBytes": 41160,
+        "upserts": 300,
+        "writes": 300
+      },
+      "after": {
+        "apiCalls": 98,
+        "workerCalls": 22,
+        "postgrestCalls": 76,
+        "responseBodyBytes": 8234,
+        "upserts": 60,
+        "writes": 65
+      }
+    },
+    "eightUsers": {
+      "before": {
+        "apiCalls": 3680,
+        "workerCalls": 880,
+        "postgrestCalls": 2800,
+        "responseBodyBytes": 329280,
+        "upserts": 2400,
+        "writes": 2400
+      },
+      "after": {
+        "apiCalls": 98,
+        "workerCalls": 22,
+        "postgrestCalls": 76,
+        "responseBodyBytes": 8234,
+        "upserts": 60,
+        "writes": 65
+      }
+    }
+  },
+  "notificationsHour": {
+    "oneUser": {
+      "before": {
+        "tabs": 1,
+        "minutes": 60,
+        "postgrestCalls": 721,
+        "responseBodyBytes": 0,
+        "note": "HEAD responses: response headers and network overhead excluded"
+      },
+      "after": {
+        "tabs": 1,
+        "minutes": 60,
+        "postgrestCalls": 61,
+        "responseBodyBytes": 0,
+        "note": "HEAD responses: response headers and network overhead excluded"
+      }
+    },
+    "eightUsers": {
+      "before": {
+        "tabs": 8,
+        "minutes": 60,
+        "postgrestCalls": 5768,
+        "responseBodyBytes": 0,
+        "note": "HEAD responses: response headers and network overhead excluded"
+      },
+      "after": {
+        "tabs": 8,
+        "minutes": 60,
+        "postgrestCalls": 488,
+        "responseBodyBytes": 0,
+        "note": "HEAD responses: response headers and network overhead excluded"
+      }
+    }
+  },
+  "historical": [
+    {
+      "minutes": 5,
+      "tabs": 1,
+      "liveInvocations": 137,
+      "totalsInvocations": 16,
+      "activeIntervals": 17
+    },
+    {
+      "minutes": 5,
+      "tabs": 8,
+      "liveInvocations": 1096,
+      "totalsInvocations": 128,
+      "activeIntervals": 136
+    },
+    {
+      "minutes": 30,
+      "tabs": 1,
+      "liveInvocations": 4187,
+      "totalsInvocations": 91,
+      "activeIntervals": 92
+    },
+    {
+      "minutes": 30,
+      "tabs": 8,
+      "liveInvocations": 33496,
+      "totalsInvocations": 728,
+      "activeIntervals": 736
+    },
+    {
+      "minutes": 60,
+      "tabs": 1,
+      "liveInvocations": 16472,
+      "totalsInvocations": 181,
+      "activeIntervals": 182
+    },
+    {
+      "minutes": 60,
+      "tabs": 8,
+      "liveInvocations": 131776,
+      "totalsInvocations": 1448,
+      "activeIntervals": 1456
+    }
+  ]
+}
